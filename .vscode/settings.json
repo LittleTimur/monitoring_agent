@@ -1,0 +1,9 @@
+{
+  "cmake.configureOnOpen": true,
+  "cmake.buildDirectory": "${workspaceFolder}/build",
+  "C_Cpp.default.includePath": [
+    "${workspaceFolder}/include",
+    "${workspaceFolder}/src"
+  ],
+  "C_Cpp.intelliSenseEngine": "Default"
+}

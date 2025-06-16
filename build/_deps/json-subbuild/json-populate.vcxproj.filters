@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\json-subbuild\CMakeFiles\c5dfe31ed7a4d93105943ae9d660bb2c\json-populate-mkdir.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\json-subbuild\CMakeFiles\c5dfe31ed7a4d93105943ae9d660bb2c\json-populate-download.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\json-subbuild\CMakeFiles\c5dfe31ed7a4d93105943ae9d660bb2c\json-populate-update.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\json-subbuild\CMakeFiles\c5dfe31ed7a4d93105943ae9d660bb2c\json-populate-patch.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\json-subbuild\CMakeFiles\c5dfe31ed7a4d93105943ae9d660bb2c\json-populate-configure.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\json-subbuild\CMakeFiles\c5dfe31ed7a4d93105943ae9d660bb2c\json-populate-build.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\json-subbuild\CMakeFiles\c5dfe31ed7a4d93105943ae9d660bb2c\json-populate-install.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\json-subbuild\CMakeFiles\c5dfe31ed7a4d93105943ae9d660bb2c\json-populate-test.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\json-subbuild\CMakeFiles\df28e151e7ed00641595db0229c30707\json-populate-complete.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\json-subbuild\CMakeFiles\37de9a83da868ed061235144456b963e\json-populate.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\json-subbuild\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\json-subbuild\CMakeFiles\json-populate" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{7EB69AB1-D920-3C45-BB89-5548A42E3AAC}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

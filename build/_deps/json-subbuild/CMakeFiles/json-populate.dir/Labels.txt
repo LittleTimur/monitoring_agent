@@ -1,0 +1,14 @@
+# Target labels
+ json-populate
+# Source files and their labels
+C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/_deps/json-subbuild/CMakeFiles/json-populate
+C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/_deps/json-subbuild/CMakeFiles/37de9a83da868ed061235144456b963e/json-populate.rule
+C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/_deps/json-subbuild/CMakeFiles/df28e151e7ed00641595db0229c30707/json-populate-complete.rule
+C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/_deps/json-subbuild/CMakeFiles/c5dfe31ed7a4d93105943ae9d660bb2c/json-populate-build.rule
+C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/_deps/json-subbuild/CMakeFiles/c5dfe31ed7a4d93105943ae9d660bb2c/json-populate-configure.rule
+C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/_deps/json-subbuild/CMakeFiles/c5dfe31ed7a4d93105943ae9d660bb2c/json-populate-download.rule
+C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/_deps/json-subbuild/CMakeFiles/c5dfe31ed7a4d93105943ae9d660bb2c/json-populate-install.rule
+C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/_deps/json-subbuild/CMakeFiles/c5dfe31ed7a4d93105943ae9d660bb2c/json-populate-mkdir.rule
+C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/_deps/json-subbuild/CMakeFiles/c5dfe31ed7a4d93105943ae9d660bb2c/json-populate-patch.rule
+C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/_deps/json-subbuild/CMakeFiles/c5dfe31ed7a4d93105943ae9d660bb2c/json-populate-test.rule
+C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/_deps/json-subbuild/CMakeFiles/c5dfe31ed7a4d93105943ae9d660bb2c/json-populate-update.rule

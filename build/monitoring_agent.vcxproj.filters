@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\src\main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\src\windows_metrics_collector.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{386A7F59-D82A-3BD7-B063-657A910D1C79}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

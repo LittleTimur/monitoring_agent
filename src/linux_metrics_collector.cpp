@@ -43,7 +43,6 @@
 #include <cstring>
 #endif
 
-using json = nlohmann::json;
 using namespace monitoring;
 
 namespace monitoring {

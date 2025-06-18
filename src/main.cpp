@@ -29,6 +29,7 @@ void signal_handler(int signal) {
         g_running = false;
     }
 }
+void print_metrics_to_stream(const monitoring::SystemMetrics& metrics, std::ostream& out);
 
 // Функция для вывода метрик в консоль
 void print_metrics(const monitoring::SystemMetrics& metrics) {
@@ -97,10 +98,20 @@ void print_metrics(const monitoring::SystemMetrics& metrics) {
     std::cout << "Network Metrics:\n";
     for (const auto& iface : metrics.network.interfaces) {
         std::cout << "\nInterface: " << iface.name << "\n";
-        std::cout << "Bytes Sent: " << (iface.bytes_sent / (1024.0 * 1024.0)) << " MB\n";
-        std::cout << "Bytes Received: " << (iface.bytes_received / (1024.0 * 1024.0)) << " MB\n";
-        std::cout << "Current Send Rate: " << (iface.bandwidth_sent / (1024.0 * 1024.0)) << " MB/s\n";
-        std::cout << "Current Receive Rate: " << (iface.bandwidth_received / (1024.0 * 1024.0)) << " MB/s\n";
+        std::cout << "Bytes Sent: " << std::fixed << std::setprecision(1) << (iface.bytes_sent / (1024.0 * 1024.0)) << " MB\n";
+        std::cout << "Bytes Received: " << std::fixed << std::setprecision(1) << (iface.bytes_received / (1024.0 * 1024.0)) << " MB\n";
+        double sendRateMB = iface.bandwidth_sent / (1024.0 * 1024.0);
+        double recvRateMB = iface.bandwidth_received / (1024.0 * 1024.0);
+        if (sendRateMB < 1.0) {
+            std::cout << "Current Send Rate: " << std::fixed << std::setprecision(2) << (iface.bandwidth_sent / 1024.0) << " KB/s\n";
+        } else {
+            std::cout << "Current Send Rate: " << std::fixed << std::setprecision(2) << sendRateMB << " MB/s\n";
+        }
+        if (recvRateMB < 1.0) {
+            std::cout << "Current Receive Rate: " << std::fixed << std::setprecision(2) << (iface.bandwidth_received / 1024.0) << " KB/s\n";
+        } else {
+            std::cout << "Current Receive Rate: " << std::fixed << std::setprecision(2) << recvRateMB << " MB/s\n";
+        }
     }
     if (metrics.network.interfaces.empty()) {
         std::cout << "No network interfaces found\n";
@@ -170,24 +181,160 @@ int main() {
         
         std::cout << "Starting metrics collection. Press Ctrl+C to stop." << std::endl;
         
+        // Открываем файл для записи метрик
+        std::ofstream metrics_file("metrics.log");
+        if (!metrics_file.is_open()) {
+            std::cerr << "Failed to open metrics.log for writing" << std::endl;
+            return 1;
+        }
+        
         // Основной цикл сбора метрик
         while (g_running) {
             // Собираем метрики
             auto metrics = collector->collect();
             
-            // Выводим метрики в консоль
-            print_metrics(metrics);
+            // Выводим метрики в файл
+            print_metrics_to_stream(metrics, metrics_file);
             
-            // Ждем 1 секунду перед следующим сбором
-            std::this_thread::sleep_for(std::chrono::seconds(1));
+            // Ждем 3 секунды перед следующим сбором
+            std::this_thread::sleep_for(std::chrono::seconds(3));
         }
         
         std::cout << "\nMetrics collection stopped." << std::endl;
-        
+        metrics_file.close();
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
         return 1;
     }
     
     return 0;
+}
+
+// Добавляю функцию для вывода метрик в любой std::ostream
+void print_metrics_to_stream(const monitoring::SystemMetrics& metrics, std::ostream& out) {
+    // Получаем текущее время
+    auto time = std::chrono::system_clock::to_time_t(metrics.timestamp);
+    
+    out << "\n=== System Metrics at " << std::ctime(&time);
+    out << "===\n\n";
+
+    // CPU Metrics
+    out << "CPU Metrics:\n";
+    if (!std::isnan(metrics.cpu.usage_percent)) {
+        out << "Usage: " << std::fixed << std::setprecision(1) << metrics.cpu.usage_percent << "%\n";
+    } else {
+        out << "Usage: N/A\n";
+    }
+    
+    if (metrics.cpu.temperature > 0) {
+        out << "Temperature: " << std::fixed << std::setprecision(1) << metrics.cpu.temperature << "°C\n";
+    } else {
+        out << "Temperature: N/A\n";
+    }
+    
+    out << "Core Temperatures: ";
+    for (size_t i = 0; i < metrics.cpu.core_temperatures.size(); ++i) {
+        if (metrics.cpu.core_temperatures[i] > 0) {
+            out << std::fixed << std::setprecision(1) << metrics.cpu.core_temperatures[i] << "°C";
+        } else {
+            out << "N/A";
+        }
+        if (i < metrics.cpu.core_temperatures.size() - 1) out << " ";
+    }
+    out << "\n";
+    
+    out << "Core Usage: ";
+    for (size_t i = 0; i < metrics.cpu.core_usage.size(); ++i) {
+        if (!std::isnan(metrics.cpu.core_usage[i])) {
+            out << std::fixed << std::setprecision(1) << metrics.cpu.core_usage[i] << "%";
+        } else {
+            out << "N/A";
+        }
+        if (i < metrics.cpu.core_usage.size() - 1) out << " ";
+    }
+    out << "\n\n";
+
+    // Memory Metrics
+    out << "Memory Metrics:\n";
+    const double GB = 1024.0 * 1024.0 * 1024.0;
+    out << "Total: " << std::fixed << std::setprecision(1) << (metrics.memory.total_bytes / GB) << " GB\n";
+    out << "Used: " << std::fixed << std::setprecision(1) << (metrics.memory.used_bytes / GB) << " GB\n";
+    out << "Free: " << std::fixed << std::setprecision(1) << (metrics.memory.free_bytes / GB) << " GB\n";
+    out << "Usage: " << std::fixed << std::setprecision(1) << metrics.memory.usage_percent << "%\n\n";
+
+    // Disk Metrics
+    out << "Disk Metrics:\n";
+    for (const auto& partition : metrics.disk.partitions) {
+        out << "\nPartition: " << partition.mount_point << " (" << partition.filesystem << ")\n";
+        out << "Total: " << std::fixed << std::setprecision(1) << (partition.total_bytes / GB) << " GB\n";
+        out << "Used: " << std::fixed << std::setprecision(1) << (partition.used_bytes / GB) << " GB\n";
+        out << "Free: " << std::fixed << std::setprecision(1) << (partition.free_bytes / GB) << " GB\n";
+        out << "Usage: " << std::fixed << std::setprecision(1) << partition.usage_percent << "%\n";
+    }
+    out << "\n";
+
+    // Network Metrics
+    out << "Network Metrics:\n";
+    for (const auto& iface : metrics.network.interfaces) {
+        out << "\nInterface: " << iface.name << "\n";
+        out << "Bytes Sent: " << std::fixed << std::setprecision(1) << (iface.bytes_sent / (1024.0 * 1024.0)) << " MB\n";
+        out << "Bytes Received: " << std::fixed << std::setprecision(1) << (iface.bytes_received / (1024.0 * 1024.0)) << " MB\n";
+        double sendRateMB = iface.bandwidth_sent / (1024.0 * 1024.0);
+        double recvRateMB = iface.bandwidth_received / (1024.0 * 1024.0);
+        if (sendRateMB < 1.0) {
+            out << "Current Send Rate: " << std::fixed << std::setprecision(2) << (iface.bandwidth_sent / 1024.0) << " KB/s\n";
+        } else {
+            out << "Current Send Rate: " << std::fixed << std::setprecision(2) << sendRateMB << " MB/s\n";
+        }
+        if (recvRateMB < 1.0) {
+            out << "Current Receive Rate: " << std::fixed << std::setprecision(2) << (iface.bandwidth_received / 1024.0) << " KB/s\n";
+        } else {
+            out << "Current Receive Rate: " << std::fixed << std::setprecision(2) << recvRateMB << " MB/s\n";
+        }
+    }
+    if (metrics.network.interfaces.empty()) {
+        out << "No network interfaces found\n";
+    }
+    out << "\n";
+
+    // GPU Metrics
+    out << "GPU Metrics:\n";
+    if (metrics.gpu.temperature > 0) {
+        out << "Temperature: " << std::fixed << std::setprecision(1) << metrics.gpu.temperature << "°C\n";
+    } else {
+        out << "Temperature: N/A\n";
+    }
+    
+    if (!std::isnan(metrics.gpu.usage_percent)) {
+        out << "Usage: " << std::fixed << std::setprecision(1) << metrics.gpu.usage_percent << "%\n";
+    } else {
+        out << "Usage: N/A\n";
+    }
+    
+    if (metrics.gpu.memory_total > 0) {
+        out << "Memory Used: " << std::fixed << std::setprecision(1) << (metrics.gpu.memory_used / GB) << " GB\n";
+        out << "Memory Total: " << std::fixed << std::setprecision(1) << (metrics.gpu.memory_total / GB) << " GB\n";
+    } else {
+        out << "Memory: N/A\n";
+    }
+    out << "\n";
+
+    // HDD Metrics
+    out << "HDD Metrics:\n";
+    for (const auto& drive : metrics.hdd.drives) {
+        out << "\nDrive: " << drive.name << "\n";
+        if (drive.temperature > 0) {
+            out << "Temperature: " << std::fixed << std::setprecision(1) << drive.temperature << "°C\n";
+        } else {
+            out << "Temperature: N/A\n";
+        }
+        out << "Power On Hours: " << drive.power_on_hours << "\n";
+        out << "Health Status: " << drive.health_status << "\n";
+    }
+    if (metrics.hdd.drives.empty()) {
+        out << "No HDD drives found\n";
+    }
+    out << "\n";
+
+    out << "================================\n";
 } 

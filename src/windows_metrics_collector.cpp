@@ -12,6 +12,10 @@
 #include <windows.h>
 #include <pdh.h>
 #include <psapi.h>
+#include <iphlpapi.h>
+#include <ws2tcpip.h>
+#include <wininet.h>
+#include <iptypes.h>
 #include <vector>
 #include <string>
 #include <sstream>
@@ -19,8 +23,11 @@
 #include <cmath>
 #include <thread>
 #include <iostream>
+#include <map>
 
 #pragma comment(lib, "pdh.lib")
+#pragma comment(lib, "iphlpapi.lib")
+#pragma comment(lib, "ws2_32.lib")
 
 namespace monitoring {
 
@@ -183,7 +190,72 @@ DiskMetrics WindowsMetricsCollector::collect_disk_metrics() {
 
 NetworkMetrics WindowsMetricsCollector::collect_network_metrics() {
     NetworkMetrics metrics;
-    // TODO: Реализовать сбор сетевых метрик
+    
+    ULONG bufferSize = 0;
+    // Первый вызов — узнаём размер буфера
+    if (GetAdaptersInfo(nullptr, &bufferSize) != ERROR_BUFFER_OVERFLOW) {
+        std::cerr << "Failed to get network adapters buffer size" << std::endl;
+        return metrics;
+    }
+    PIP_ADAPTER_INFO pAdapterInfo = (PIP_ADAPTER_INFO)malloc(bufferSize);
+    if (pAdapterInfo == nullptr) {
+        std::cerr << "Failed to allocate memory for network adapters" << std::endl;
+        return metrics;
+    }
+    if (GetAdaptersInfo(pAdapterInfo, &bufferSize) == NO_ERROR) {
+        PIP_ADAPTER_INFO pAdapter = pAdapterInfo;
+        while (pAdapter) {
+            // Фильтруем только активные физические адаптеры
+            if (pAdapter->Type == MIB_IF_TYPE_ETHERNET || 
+                pAdapter->Type == MIB_IF_TYPE_PPP ||
+                pAdapter->Type == 71) { // IF_TYPE_IEEE80211 = 71
+                // Получаем статистику интерфейса через MIB API
+                MIB_IFROW ifRow;
+                memset(&ifRow, 0, sizeof(ifRow));
+                ifRow.dwIndex = pAdapter->Index;
+                if (GetIfEntry(&ifRow) == NO_ERROR) {
+                    if (ifRow.dwOperStatus == IF_OPER_STATUS_OPERATIONAL) {
+                        NetworkInterface interface;
+                        interface.name = std::string(pAdapter->Description);
+                        interface.bytes_sent = ifRow.dwOutOctets;
+                        interface.bytes_received = ifRow.dwInOctets;
+                        interface.packets_sent = ifRow.dwOutUcastPkts + ifRow.dwOutNUcastPkts;
+                        interface.packets_received = ifRow.dwInUcastPkts + ifRow.dwInNUcastPkts;
+                        static std::map<DWORD, uint64_t> lastBytesSent;
+                        static std::map<DWORD, uint64_t> lastBytesReceived;
+                        static std::map<DWORD, std::chrono::steady_clock::time_point> lastTime;
+                        auto now = std::chrono::steady_clock::now();
+                        if (lastTime.find(ifRow.dwIndex) != lastTime.end()) {
+                            auto timeDiff = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastTime[ifRow.dwIndex]).count();
+                            if (timeDiff > 0) {
+                                uint64_t bytesSentDiff = interface.bytes_sent - lastBytesSent[ifRow.dwIndex];
+                                uint64_t bytesReceivedDiff = interface.bytes_received - lastBytesReceived[ifRow.dwIndex];
+                                interface.bandwidth_sent = (bytesSentDiff * 1000) / timeDiff;
+                                interface.bandwidth_received = (bytesReceivedDiff * 1000) / timeDiff;
+                            } else {
+                                interface.bandwidth_sent = 0;
+                                interface.bandwidth_received = 0;
+                            }
+                        } else {
+                            interface.bandwidth_sent = 0;
+                            interface.bandwidth_received = 0;
+                        }
+                        lastBytesSent[ifRow.dwIndex] = interface.bytes_sent;
+                        lastBytesReceived[ifRow.dwIndex] = interface.bytes_received;
+                        lastTime[ifRow.dwIndex] = now;
+                        if (interface.bytes_sent > 0 || interface.bytes_received > 0 || 
+                            interface.bandwidth_sent > 0 || interface.bandwidth_received > 0) {
+                            metrics.interfaces.push_back(interface);
+                        }
+                    }
+                }
+            }
+            pAdapter = pAdapter->Next;
+        }
+    } else {
+        std::cerr << "Failed to get network adapters info" << std::endl;
+    }
+    free(pAdapterInfo);
     return metrics;
 }
 
@@ -207,4 +279,4 @@ HddMetrics WindowsMetricsCollector::collect_hdd_metrics() {
     return metrics;
 }
 
-} // namespace monitoring 
+} // namespace monitoring  

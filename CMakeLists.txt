@@ -27,6 +27,15 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/bin/Release"
 )
 
+# Линкуем необходимые библиотеки для Windows
+if(WIN32)
+    target_link_libraries(${PROJECT_NAME} 
+        pdh
+        iphlpapi
+        ws2_32
+    )
+endif()
+
 # Если включены тесты, добавляем их
 if(BUILD_TESTS)
     enable_testing()

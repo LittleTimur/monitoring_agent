@@ -269,10 +269,90 @@ GpuMetrics WindowsMetricsCollector::collect_gpu_metrics() {
     metrics.memory_used = 0;
     metrics.memory_total = 0;
 
-    // Получаем информацию о GPU через WMI
-    // TODO: Реализовать сбор метрик GPU через WMI или NVML
-    // Пока возвращаем нулевые значения
-    
+    HRESULT hres;
+    hres = CoInitializeEx(0, COINIT_MULTITHREADED);
+    if (FAILED(hres)) {
+        std::cerr << "Failed to initialize COM library. Error code = 0x" << std::hex << hres << std::endl;
+        return metrics;
+    }
+
+    hres = CoInitializeSecurity(
+        NULL, -1, NULL, NULL,
+        RPC_C_AUTHN_LEVEL_DEFAULT, RPC_C_IMP_LEVEL_IMPERSONATE,
+        NULL, EOAC_NONE, NULL);
+    if (FAILED(hres) && hres != RPC_E_TOO_LATE) {
+        std::cerr << "Failed to initialize security. Error code = 0x" << std::hex << hres << std::endl;
+        CoUninitialize();
+        return metrics;
+    }
+
+    IWbemLocator *pLoc = NULL;
+    hres = CoCreateInstance(
+        CLSID_WbemLocator, 0, CLSCTX_INPROC_SERVER,
+        IID_IWbemLocator, (LPVOID *)&pLoc);
+    if (FAILED(hres)) {
+        std::cerr << "Failed to create IWbemLocator object. Error code = 0x" << std::hex << hres << std::endl;
+        CoUninitialize();
+        return metrics;
+    }
+
+    IWbemServices *pSvc = NULL;
+    hres = pLoc->ConnectServer(
+        _bstr_t(L"ROOT\\CIMV2"),
+        NULL, NULL, 0, NULL, 0, 0, &pSvc);
+    if (FAILED(hres)) {
+        std::cerr << "Could not connect to WMI. Error code = 0x" << std::hex << hres << std::endl;
+        pLoc->Release();
+        CoUninitialize();
+        return metrics;
+    }
+
+    hres = CoSetProxyBlanket(
+        pSvc, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, NULL,
+        RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE,
+        NULL, EOAC_NONE);
+    if (FAILED(hres)) {
+        std::cerr << "Could not set proxy blanket. Error code = 0x" << std::hex << hres << std::endl;
+        pSvc->Release();
+        pLoc->Release();
+        CoUninitialize();
+        return metrics;
+    }
+
+    IEnumWbemClassObject* pEnumerator = NULL;
+    hres = pSvc->ExecQuery(
+        bstr_t("WQL"),
+        bstr_t("SELECT AdapterRAM FROM Win32_VideoController"),
+        WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY,
+        NULL, &pEnumerator);
+    if (FAILED(hres)) {
+        std::cerr << "WMI query failed. Error code = 0x" << std::hex << hres << std::endl;
+        pSvc->Release();
+        pLoc->Release();
+        CoUninitialize();
+        return metrics;
+    }
+
+    IWbemClassObject *pclsObj = NULL;
+    ULONG uReturn = 0;
+    if (pEnumerator) {
+        HRESULT hr = pEnumerator->Next(WBEM_INFINITE, 1, &pclsObj, &uReturn);
+        if (uReturn != 0) {
+            VARIANT vtProp;
+            hr = pclsObj->Get(L"AdapterRAM", 0, &vtProp, 0, 0);
+            if (SUCCEEDED(hr) && (vtProp.vt == VT_I4 || vtProp.vt == VT_UI4)) {
+                metrics.memory_total = vtProp.lVal; // В байтах
+            }
+            VariantClear(&vtProp);
+            pclsObj->Release();
+        }
+    }
+    if (pEnumerator) pEnumerator->Release();
+    if (pSvc) pSvc->Release();
+    if (pLoc) pLoc->Release();
+    CoUninitialize();
+
+    // Температура и usage_percent доступны только через NVML или сторонние библиотеки
     return metrics;
 }
 

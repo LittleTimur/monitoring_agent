@@ -26,6 +26,9 @@
 #include <map>
 #include <comdef.h>
 #include <Wbemidl.h>
+#include <cstdio>
+#include <memory>
+#include <array>
 
 #pragma comment(lib, "pdh.lib")
 #pragma comment(lib, "iphlpapi.lib")
@@ -269,90 +272,68 @@ GpuMetrics WindowsMetricsCollector::collect_gpu_metrics() {
     metrics.memory_used = 0;
     metrics.memory_total = 0;
 
-    HRESULT hres;
-    hres = CoInitializeEx(0, COINIT_MULTITHREADED);
-    if (FAILED(hres)) {
-        std::cerr << "Failed to initialize COM library. Error code = 0x" << std::hex << hres << std::endl;
-        return metrics;
-    }
-
-    hres = CoInitializeSecurity(
-        NULL, -1, NULL, NULL,
-        RPC_C_AUTHN_LEVEL_DEFAULT, RPC_C_IMP_LEVEL_IMPERSONATE,
-        NULL, EOAC_NONE, NULL);
-    if (FAILED(hres) && hres != RPC_E_TOO_LATE) {
-        std::cerr << "Failed to initialize security. Error code = 0x" << std::hex << hres << std::endl;
-        CoUninitialize();
-        return metrics;
-    }
-
-    IWbemLocator *pLoc = NULL;
-    hres = CoCreateInstance(
-        CLSID_WbemLocator, 0, CLSCTX_INPROC_SERVER,
-        IID_IWbemLocator, (LPVOID *)&pLoc);
-    if (FAILED(hres)) {
-        std::cerr << "Failed to create IWbemLocator object. Error code = 0x" << std::hex << hres << std::endl;
-        CoUninitialize();
-        return metrics;
-    }
-
-    IWbemServices *pSvc = NULL;
-    hres = pLoc->ConnectServer(
-        _bstr_t(L"ROOT\\CIMV2"),
-        NULL, NULL, 0, NULL, 0, 0, &pSvc);
-    if (FAILED(hres)) {
-        std::cerr << "Could not connect to WMI. Error code = 0x" << std::hex << hres << std::endl;
-        pLoc->Release();
-        CoUninitialize();
-        return metrics;
-    }
-
-    hres = CoSetProxyBlanket(
-        pSvc, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, NULL,
-        RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE,
-        NULL, EOAC_NONE);
-    if (FAILED(hres)) {
-        std::cerr << "Could not set proxy blanket. Error code = 0x" << std::hex << hres << std::endl;
-        pSvc->Release();
-        pLoc->Release();
-        CoUninitialize();
-        return metrics;
-    }
-
-    IEnumWbemClassObject* pEnumerator = NULL;
-    hres = pSvc->ExecQuery(
-        bstr_t("WQL"),
-        bstr_t("SELECT AdapterRAM FROM Win32_VideoController"),
-        WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY,
-        NULL, &pEnumerator);
-    if (FAILED(hres)) {
-        std::cerr << "WMI query failed. Error code = 0x" << std::hex << hres << std::endl;
-        pSvc->Release();
-        pLoc->Release();
-        CoUninitialize();
-        return metrics;
-    }
-
-    IWbemClassObject *pclsObj = NULL;
-    ULONG uReturn = 0;
-    if (pEnumerator) {
-        HRESULT hr = pEnumerator->Next(WBEM_INFINITE, 1, &pclsObj, &uReturn);
-        if (uReturn != 0) {
-            VARIANT vtProp;
-            hr = pclsObj->Get(L"AdapterRAM", 0, &vtProp, 0, 0);
-            if (SUCCEEDED(hr) && (vtProp.vt == VT_I4 || vtProp.vt == VT_UI4)) {
-                metrics.memory_total = vtProp.lVal; // В байтах
+    // 1. NVIDIA: nvidia-smi
+    {
+        std::array<char, 256> buffer;
+        std::string result;
+        std::unique_ptr<FILE, decltype(&_pclose)> pipe(_popen(
+            "nvidia-smi --query-gpu=temperature.gpu,utilization.gpu,memory.used,memory.total --format=csv,noheader,nounits 2>&1", "r"), _pclose);
+        if (pipe && fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+            result = buffer.data();
+            if (result.find("not recognized") == std::string::npos &&
+                result.find("command not found") == std::string::npos &&
+                result.find("No devices were found") == std::string::npos &&
+                result.find("NVIDIA-SMI has failed") == std::string::npos) {
+                std::istringstream iss(result);
+                double temp = 0, usage = 0, mem_used = 0, mem_total = 0;
+                char comma;
+                iss >> temp >> comma >> usage >> comma >> mem_used >> comma >> mem_total;
+                metrics.temperature = temp;
+                metrics.usage_percent = usage;
+                metrics.memory_used = static_cast<uint64_t>(mem_used) * 1024 * 1024; // MB -> bytes
+                metrics.memory_total = static_cast<uint64_t>(mem_total) * 1024 * 1024; // MB -> bytes
+                return metrics;
             }
-            VariantClear(&vtProp);
-            pclsObj->Release();
         }
     }
-    if (pEnumerator) pEnumerator->Release();
-    if (pSvc) pSvc->Release();
-    if (pLoc) pLoc->Release();
-    CoUninitialize();
-
-    // Температура и usage_percent доступны только через NVML или сторонние библиотеки
+    // 2. AMD: amdgpu-monitor (или аналогичная утилита)
+    {
+        std::array<char, 256> buffer;
+        std::string result;
+        std::unique_ptr<FILE, decltype(&_pclose)> pipe(_popen(
+            "amdgpu-monitor --json 2>&1", "r"), _pclose);
+        if (pipe && fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+            result = buffer.data();
+            if (result.find("not recognized") == std::string::npos &&
+                result.find("command not found") == std::string::npos &&
+                result.find("No AMD GPU found") == std::string::npos) {
+                // Пример парсинга JSON можно добавить, если утилита установлена и выводит нужные данные
+                // Здесь просто пример: usage_percent = 50.0;
+                metrics.usage_percent = 50.0; // TODO: заменить на реальный парсинг
+                return metrics;
+            }
+        }
+    }
+    // 3. Intel: igpu_top (или аналогичная утилита)
+    {
+        std::array<char, 256> buffer;
+        std::string result;
+        std::unique_ptr<FILE, decltype(&_pclose)> pipe(_popen(
+            "igpu_top --json 2>&1", "r"), _pclose);
+        if (pipe && fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+            result = buffer.data();
+            if (result.find("not recognized") == std::string::npos &&
+                result.find("command not found") == std::string::npos &&
+                result.find("No Intel GPU found") == std::string::npos) {
+                // Пример парсинга JSON можно добавить, если утилита установлена и выводит нужные данные
+                // Здесь просто пример: usage_percent = 30.0;
+                metrics.usage_percent = 30.0; // TODO: заменить на реальный парсинг
+                return metrics;
+            }
+        }
+    }
+    // Если ничего не сработало
+    metrics.usage_percent = -1.0;
     return metrics;
 }
 

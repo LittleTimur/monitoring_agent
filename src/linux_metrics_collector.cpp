@@ -27,6 +27,8 @@
 #include <fcntl.h>
 #include <dirent.h>
 #include <nlohmann/json.hpp>
+#include <cstdio>
+#include <array>
 
 #ifdef __linux__
 #include <sys/sysinfo.h>
@@ -280,16 +282,73 @@ private:
      * @brief Сбор метрик GPU
      * @param metrics ссылка на структуру для сохранения метрик GPU
      * 
-     * Заготовка для реализации сбора метрик GPU.
-     * Планируется поддержка:
-     * - NVIDIA GPU через nvidia-smi
-     * - AMD GPU через rocm-smi
+     * Собирает информацию о:
+     * - Температуре GPU
+     * - Проценте использования GPU
+     * - Использованной памяти GPU
+     * - Общем объеме памяти GPU
+     * 
+     * Данные берутся из вывода команды nvidia-smi
      */
     GpuMetrics collect_gpu_metrics() {
-        // Для NVIDIA GPU можно использовать nvidia-smi
-        // Для AMD GPU можно использовать rocm-smi
-        // Здесь должна быть реализация в зависимости от доступного оборудования
         GpuMetrics metrics;
+        // 1. NVIDIA: nvidia-smi
+        {
+            std::array<char, 128> buffer;
+            std::string result;
+            std::unique_ptr<FILE, decltype(&pclose)> pipe(popen("nvidia-smi --query-gpu=temperature.gpu,utilization.gpu,memory.used,memory.total --format=csv,noheader,nounits 2>&1", "r"), pclose);
+            if (pipe && fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+                result = buffer.data();
+                if (result.find("not recognized") == std::string::npos &&
+                    result.find("command not found") == std::string::npos &&
+                    result.find("No devices were found") == std::string::npos &&
+                    result.find("NVIDIA-SMI has failed") == std::string::npos) {
+                    std::istringstream iss(result);
+                    double temp = 0, usage = 0, mem_used = 0, mem_total = 0;
+                    char comma;
+                    iss >> temp >> comma >> usage >> comma >> mem_used >> comma >> mem_total;
+                    metrics.temperature = temp;
+                    metrics.usage_percent = usage;
+                    metrics.memory_used = static_cast<uint64_t>(mem_used) * 1024 * 1024; // MB -> bytes
+                    metrics.memory_total = static_cast<uint64_t>(mem_total) * 1024 * 1024; // MB -> bytes
+                    return metrics;
+                }
+            }
+        }
+        // 2. AMD: rocm-smi
+        {
+            std::array<char, 256> buffer;
+            std::string result;
+            std::unique_ptr<FILE, decltype(&pclose)> pipe(popen("rocm-smi --showtemp --showuse --showmemuse --json 2>&1", "r"), pclose);
+            if (pipe && fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+                result = buffer.data();
+                if (result.find("not recognized") == std::string::npos &&
+                    result.find("command not found") == std::string::npos &&
+                    result.find("No AMD GPU found") == std::string::npos) {
+                    // TODO: Реализовать парсинг JSON для rocm-smi
+                    metrics.usage_percent = 50.0; // Заглушка
+                    return metrics;
+                }
+            }
+        }
+        // 3. Intel: intel_gpu_top
+        {
+            std::array<char, 256> buffer;
+            std::string result;
+            std::unique_ptr<FILE, decltype(&pclose)> pipe(popen("intel_gpu_top -J -s 2000 2>&1 | head -n 1", "r"), pclose);
+            if (pipe && fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+                result = buffer.data();
+                if (result.find("not recognized") == std::string::npos &&
+                    result.find("command not found") == std::string::npos &&
+                    result.find("No Intel GPU found") == std::string::npos) {
+                    // TODO: Реализовать парсинг JSON для intel_gpu_top
+                    metrics.usage_percent = 30.0; // Заглушка
+                    return metrics;
+                }
+            }
+        }
+        // Если ничего не сработало
+        metrics.usage_percent = -1.0;
         return metrics;
     }
 

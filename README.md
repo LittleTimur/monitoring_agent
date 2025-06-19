@@ -85,6 +85,32 @@ make
 
 Агент будет собирать метрики каждые 5 секунд и выводить их в консоль. Для остановки агента нажмите Ctrl+C.
 
+## Использование с Docker
+
+### Linux
+Сборка образа:
+```bash
+docker build -t monitoring-agent .
+```
+
+Запуск контейнера:
+```bash
+docker run --privileged --network host monitoring-agent
+```
+
+### Windows
+Сборка образа:
+```powershell
+docker build -t monitoring-agent-windows -f Dockerfile.windows .
+```
+
+Запуск контейнера:
+```powershell
+docker run --isolation=process monitoring-agent-windows
+```
+
+Примечание: Для корректной работы агента в Docker контейнере требуются повышенные привилегии, так как программа собирает системные метрики.
+
 ## Дальнейшее развитие
 
 1. Добавление конфигурационного файла

@@ -1,5 +1,5 @@
 
-=== System Metrics at Wed Jun 18 12:41:30 2025
+=== System Metrics at Thu Jun 19 14:54:28 2025
 ===
 
 CPU Metrics:
@@ -10,23 +10,29 @@ Core Usage: 0.0% 0.0% 0.0% 0.0%
 
 Memory Metrics:
 Total: 7.9 GB
-Used: 5.5 GB
-Free: 2.4 GB
-Usage: 69.0%
+Used: 7.3 GB
+Free: 0.6 GB
+Usage: 92.0%
 
 Disk Metrics:
 
 Partition: C:\ (NTFS)
 Total: 475.8 GB
-Used: 201.4 GB
-Free: 274.4 GB
-Usage: 42.3%
+Used: 212.9 GB
+Free: 262.9 GB
+Usage: 44.8%
 
 Network Metrics:
 
+Interface: Hyper-V Virtual Ethernet Adapter
+Bytes Sent: 0.3 MB
+Bytes Received: 0.0 MB
+Current Send Rate: 0.00 KB/s
+Current Receive Rate: 0.00 KB/s
+
 Interface: Qualcomm Atheros QCA9377 Wireless Network Adapter
-Bytes Sent: 24.8 MB
-Bytes Received: 209.2 MB
+Bytes Sent: 71.8 MB
+Bytes Received: 3293.1 MB
 Current Send Rate: 0.00 KB/s
 Current Receive Rate: 0.00 KB/s
 
@@ -36,40 +42,50 @@ Usage: 0.0%
 Memory: N/A
 
 HDD Metrics:
-No HDD drives found
+
+Drive: WDC PC SN520 SDAPNUW-512G-1014
+Temperature: N/A
+Power On Hours: 0
+Health Status: 1920_1D80_3322_0001_001B_448B_44A2_34E3. (OK)
 
 ================================
 
-=== System Metrics at Wed Jun 18 12:41:33 2025
+=== System Metrics at Thu Jun 19 14:54:32 2025
 ===
 
 CPU Metrics:
-Usage: 16.5%
+Usage: 100.0%
 Temperature: N/A
 Core Temperatures: N/A N/A N/A N/A
-Core Usage: 16.5% 16.5% 16.5% 16.5%
+Core Usage: 100.0% 100.0% 100.0% 100.0%
 
 Memory Metrics:
 Total: 7.9 GB
-Used: 5.5 GB
-Free: 2.3 GB
-Usage: 70.0%
+Used: 7.4 GB
+Free: 0.4 GB
+Usage: 94.0%
 
 Disk Metrics:
 
 Partition: C:\ (NTFS)
 Total: 475.8 GB
-Used: 201.4 GB
-Free: 274.4 GB
-Usage: 42.3%
+Used: 212.9 GB
+Free: 262.9 GB
+Usage: 44.8%
 
 Network Metrics:
 
+Interface: Hyper-V Virtual Ethernet Adapter
+Bytes Sent: 0.3 MB
+Bytes Received: 0.0 MB
+Current Send Rate: 0.02 KB/s
+Current Receive Rate: 0.00 KB/s
+
 Interface: Qualcomm Atheros QCA9377 Wireless Network Adapter
-Bytes Sent: 24.8 MB
-Bytes Received: 209.2 MB
-Current Send Rate: 0.54 KB/s
-Current Receive Rate: 0.33 KB/s
+Bytes Sent: 71.8 MB
+Bytes Received: 3293.1 MB
+Current Send Rate: 0.79 KB/s
+Current Receive Rate: 0.72 KB/s
 
 GPU Metrics:
 Temperature: N/A
@@ -77,40 +93,50 @@ Usage: 0.0%
 Memory: N/A
 
 HDD Metrics:
-No HDD drives found
+
+Drive: WDC PC SN520 SDAPNUW-512G-1014
+Temperature: N/A
+Power On Hours: 0
+Health Status: 1920_1D80_3322_0001_001B_448B_44A2_34E3. (OK)
 
 ================================
 
-=== System Metrics at Wed Jun 18 12:41:36 2025
+=== System Metrics at Thu Jun 19 14:54:36 2025
 ===
 
 CPU Metrics:
-Usage: 5.2%
+Usage: 100.0%
 Temperature: N/A
 Core Temperatures: N/A N/A N/A N/A
-Core Usage: 5.2% 5.2% 5.2% 5.2%
+Core Usage: 100.0% 100.0% 100.0% 100.0%
 
 Memory Metrics:
 Total: 7.9 GB
-Used: 5.5 GB
-Free: 2.4 GB
-Usage: 69.0%
+Used: 7.5 GB
+Free: 0.4 GB
+Usage: 94.0%
 
 Disk Metrics:
 
 Partition: C:\ (NTFS)
 Total: 475.8 GB
-Used: 201.4 GB
-Free: 274.4 GB
-Usage: 42.3%
+Used: 212.9 GB
+Free: 262.9 GB
+Usage: 44.8%
 
 Network Metrics:
 
+Interface: Hyper-V Virtual Ethernet Adapter
+Bytes Sent: 0.3 MB
+Bytes Received: 0.0 MB
+Current Send Rate: 0.00 KB/s
+Current Receive Rate: 0.00 KB/s
+
 Interface: Qualcomm Atheros QCA9377 Wireless Network Adapter
-Bytes Sent: 24.8 MB
-Bytes Received: 209.2 MB
-Current Send Rate: 1.23 KB/s
-Current Receive Rate: 0.58 KB/s
+Bytes Sent: 71.8 MB
+Bytes Received: 3293.1 MB
+Current Send Rate: 1.01 KB/s
+Current Receive Rate: 0.60 KB/s
 
 GPU Metrics:
 Temperature: N/A
@@ -118,40 +144,50 @@ Usage: 0.0%
 Memory: N/A
 
 HDD Metrics:
-No HDD drives found
+
+Drive: WDC PC SN520 SDAPNUW-512G-1014
+Temperature: N/A
+Power On Hours: 0
+Health Status: 1920_1D80_3322_0001_001B_448B_44A2_34E3. (OK)
 
 ================================
 
-=== System Metrics at Wed Jun 18 12:41:39 2025
+=== System Metrics at Thu Jun 19 14:54:40 2025
 ===
 
 CPU Metrics:
-Usage: 6.7%
+Usage: 99.6%
 Temperature: N/A
 Core Temperatures: N/A N/A N/A N/A
-Core Usage: 6.7% 6.7% 6.7% 6.7%
+Core Usage: 99.6% 99.6% 99.6% 99.6%
 
 Memory Metrics:
 Total: 7.9 GB
-Used: 5.5 GB
-Free: 2.4 GB
-Usage: 69.0%
+Used: 7.4 GB
+Free: 0.4 GB
+Usage: 94.0%
 
 Disk Metrics:
 
 Partition: C:\ (NTFS)
 Total: 475.8 GB
-Used: 201.4 GB
-Free: 274.4 GB
-Usage: 42.3%
+Used: 212.9 GB
+Free: 262.9 GB
+Usage: 44.8%
 
 Network Metrics:
 
+Interface: Hyper-V Virtual Ethernet Adapter
+Bytes Sent: 0.3 MB
+Bytes Received: 0.0 MB
+Current Send Rate: 0.00 KB/s
+Current Receive Rate: 0.00 KB/s
+
 Interface: Qualcomm Atheros QCA9377 Wireless Network Adapter
-Bytes Sent: 24.8 MB
-Bytes Received: 209.2 MB
-Current Send Rate: 5.49 KB/s
-Current Receive Rate: 3.62 KB/s
+Bytes Sent: 71.8 MB
+Bytes Received: 3293.1 MB
+Current Send Rate: 0.47 KB/s
+Current Receive Rate: 0.23 KB/s
 
 GPU Metrics:
 Temperature: N/A
@@ -159,293 +195,10 @@ Usage: 0.0%
 Memory: N/A
 
 HDD Metrics:
-No HDD drives found
 
-================================
-
-=== System Metrics at Wed Jun 18 12:41:42 2025
-===
-
-CPU Metrics:
-Usage: 13.3%
+Drive: WDC PC SN520 SDAPNUW-512G-1014
 Temperature: N/A
-Core Temperatures: N/A N/A N/A N/A
-Core Usage: 13.3% 13.3% 13.3% 13.3%
-
-Memory Metrics:
-Total: 7.9 GB
-Used: 5.4 GB
-Free: 2.5 GB
-Usage: 68.0%
-
-Disk Metrics:
-
-Partition: C:\ (NTFS)
-Total: 475.8 GB
-Used: 201.4 GB
-Free: 274.4 GB
-Usage: 42.3%
-
-Network Metrics:
-
-Interface: Qualcomm Atheros QCA9377 Wireless Network Adapter
-Bytes Sent: 24.8 MB
-Bytes Received: 209.2 MB
-Current Send Rate: 0.27 KB/s
-Current Receive Rate: 0.15 KB/s
-
-GPU Metrics:
-Temperature: N/A
-Usage: 0.0%
-Memory: N/A
-
-HDD Metrics:
-No HDD drives found
-
-================================
-
-=== System Metrics at Wed Jun 18 12:41:45 2025
-===
-
-CPU Metrics:
-Usage: 2.7%
-Temperature: N/A
-Core Temperatures: N/A N/A N/A N/A
-Core Usage: 2.7% 2.7% 2.7% 2.7%
-
-Memory Metrics:
-Total: 7.9 GB
-Used: 5.4 GB
-Free: 2.5 GB
-Usage: 68.0%
-
-Disk Metrics:
-
-Partition: C:\ (NTFS)
-Total: 475.8 GB
-Used: 201.4 GB
-Free: 274.4 GB
-Usage: 42.3%
-
-Network Metrics:
-
-Interface: Qualcomm Atheros QCA9377 Wireless Network Adapter
-Bytes Sent: 24.8 MB
-Bytes Received: 209.2 MB
-Current Send Rate: 0.48 KB/s
-Current Receive Rate: 0.26 KB/s
-
-GPU Metrics:
-Temperature: N/A
-Usage: 0.0%
-Memory: N/A
-
-HDD Metrics:
-No HDD drives found
-
-================================
-
-=== System Metrics at Wed Jun 18 12:41:48 2025
-===
-
-CPU Metrics:
-Usage: 32.4%
-Temperature: N/A
-Core Temperatures: N/A N/A N/A N/A
-Core Usage: 32.4% 32.4% 32.4% 32.4%
-
-Memory Metrics:
-Total: 7.9 GB
-Used: 5.5 GB
-Free: 2.4 GB
-Usage: 69.0%
-
-Disk Metrics:
-
-Partition: C:\ (NTFS)
-Total: 475.8 GB
-Used: 201.4 GB
-Free: 274.4 GB
-Usage: 42.3%
-
-Network Metrics:
-
-Interface: Qualcomm Atheros QCA9377 Wireless Network Adapter
-Bytes Sent: 24.8 MB
-Bytes Received: 209.2 MB
-Current Send Rate: 4.75 KB/s
-Current Receive Rate: 3.79 KB/s
-
-GPU Metrics:
-Temperature: N/A
-Usage: 0.0%
-Memory: N/A
-
-HDD Metrics:
-No HDD drives found
-
-================================
-
-=== System Metrics at Wed Jun 18 12:41:51 2025
-===
-
-CPU Metrics:
-Usage: 33.7%
-Temperature: N/A
-Core Temperatures: N/A N/A N/A N/A
-Core Usage: 33.7% 33.7% 33.7% 33.7%
-
-Memory Metrics:
-Total: 7.9 GB
-Used: 5.5 GB
-Free: 2.3 GB
-Usage: 70.0%
-
-Disk Metrics:
-
-Partition: C:\ (NTFS)
-Total: 475.8 GB
-Used: 201.4 GB
-Free: 274.4 GB
-Usage: 42.3%
-
-Network Metrics:
-
-Interface: Qualcomm Atheros QCA9377 Wireless Network Adapter
-Bytes Sent: 24.9 MB
-Bytes Received: 209.6 MB
-Current Send Rate: 17.14 KB/s
-Current Receive Rate: 129.69 KB/s
-
-GPU Metrics:
-Temperature: N/A
-Usage: 0.0%
-Memory: N/A
-
-HDD Metrics:
-No HDD drives found
-
-================================
-
-=== System Metrics at Wed Jun 18 12:41:54 2025
-===
-
-CPU Metrics:
-Usage: 4.3%
-Temperature: N/A
-Core Temperatures: N/A N/A N/A N/A
-Core Usage: 4.3% 4.3% 4.3% 4.3%
-
-Memory Metrics:
-Total: 7.9 GB
-Used: 5.5 GB
-Free: 2.4 GB
-Usage: 69.0%
-
-Disk Metrics:
-
-Partition: C:\ (NTFS)
-Total: 475.8 GB
-Used: 201.4 GB
-Free: 274.4 GB
-Usage: 42.3%
-
-Network Metrics:
-
-Interface: Qualcomm Atheros QCA9377 Wireless Network Adapter
-Bytes Sent: 24.9 MB
-Bytes Received: 209.9 MB
-Current Send Rate: 5.13 KB/s
-Current Receive Rate: 103.91 KB/s
-
-GPU Metrics:
-Temperature: N/A
-Usage: 0.0%
-Memory: N/A
-
-HDD Metrics:
-No HDD drives found
-
-================================
-
-=== System Metrics at Wed Jun 18 12:41:57 2025
-===
-
-CPU Metrics:
-Usage: 5.8%
-Temperature: N/A
-Core Temperatures: N/A N/A N/A N/A
-Core Usage: 5.8% 5.8% 5.8% 5.8%
-
-Memory Metrics:
-Total: 7.9 GB
-Used: 5.5 GB
-Free: 2.4 GB
-Usage: 69.0%
-
-Disk Metrics:
-
-Partition: C:\ (NTFS)
-Total: 475.8 GB
-Used: 201.4 GB
-Free: 274.4 GB
-Usage: 42.3%
-
-Network Metrics:
-
-Interface: Qualcomm Atheros QCA9377 Wireless Network Adapter
-Bytes Sent: 24.9 MB
-Bytes Received: 210.3 MB
-Current Send Rate: 8.95 KB/s
-Current Receive Rate: 122.47 KB/s
-
-GPU Metrics:
-Temperature: N/A
-Usage: 0.0%
-Memory: N/A
-
-HDD Metrics:
-No HDD drives found
-
-================================
-
-=== System Metrics at Wed Jun 18 12:42:00 2025
-===
-
-CPU Metrics:
-Usage: 7.6%
-Temperature: N/A
-Core Temperatures: N/A N/A N/A N/A
-Core Usage: 7.6% 7.6% 7.6% 7.6%
-
-Memory Metrics:
-Total: 7.9 GB
-Used: 5.4 GB
-Free: 2.4 GB
-Usage: 69.0%
-
-Disk Metrics:
-
-Partition: C:\ (NTFS)
-Total: 475.8 GB
-Used: 201.4 GB
-Free: 274.4 GB
-Usage: 42.3%
-
-Network Metrics:
-
-Interface: Qualcomm Atheros QCA9377 Wireless Network Adapter
-Bytes Sent: 24.9 MB
-Bytes Received: 210.6 MB
-Current Send Rate: 5.07 KB/s
-Current Receive Rate: 114.69 KB/s
-
-GPU Metrics:
-Temperature: N/A
-Usage: 0.0%
-Memory: N/A
-
-HDD Metrics:
-No HDD drives found
+Power On Hours: 0
+Health Status: 1920_1D80_3322_0001_001B_448B_44A2_34E3. (OK)
 
 ================================

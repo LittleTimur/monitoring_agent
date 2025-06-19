@@ -286,6 +286,9 @@ JSON_MultipleHeaders:BOOL=ON
 //Include as system headers (skip for clang-tidy).
 JSON_SystemInclude:BOOL=OFF
 
+//Build platform (WINDOWS or LINUX)
+PLATFORM:BOOL=OFF
+
 //Value Computed by CMake
 monitoring_agent_BINARY_DIR:STATIC=C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build
 

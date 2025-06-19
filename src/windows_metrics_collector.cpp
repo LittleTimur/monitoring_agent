@@ -24,10 +24,13 @@
 #include <thread>
 #include <iostream>
 #include <map>
+#include <comdef.h>
+#include <Wbemidl.h>
 
 #pragma comment(lib, "pdh.lib")
 #pragma comment(lib, "iphlpapi.lib")
 #pragma comment(lib, "ws2_32.lib")
+#pragma comment(lib, "wbemuuid.lib")
 
 namespace monitoring {
 
@@ -215,12 +218,12 @@ NetworkMetrics WindowsMetricsCollector::collect_network_metrics() {
                 ifRow.dwIndex = pAdapter->Index;
                 if (GetIfEntry(&ifRow) == NO_ERROR) {
                     if (ifRow.dwOperStatus == IF_OPER_STATUS_OPERATIONAL) {
-                        NetworkInterface interface;
-                        interface.name = std::string(pAdapter->Description);
-                        interface.bytes_sent = ifRow.dwOutOctets;
-                        interface.bytes_received = ifRow.dwInOctets;
-                        interface.packets_sent = ifRow.dwOutUcastPkts + ifRow.dwOutNUcastPkts;
-                        interface.packets_received = ifRow.dwInUcastPkts + ifRow.dwInNUcastPkts;
+                        NetworkInterface netif;
+                        netif.name = std::string(pAdapter->Description);
+                        netif.bytes_sent = ifRow.dwOutOctets;
+                        netif.bytes_received = ifRow.dwInOctets;
+                        netif.packets_sent = ifRow.dwOutUcastPkts + ifRow.dwOutNUcastPkts;
+                        netif.packets_received = ifRow.dwInUcastPkts + ifRow.dwInNUcastPkts;
                         static std::map<DWORD, uint64_t> lastBytesSent;
                         static std::map<DWORD, uint64_t> lastBytesReceived;
                         static std::map<DWORD, std::chrono::steady_clock::time_point> lastTime;
@@ -228,24 +231,24 @@ NetworkMetrics WindowsMetricsCollector::collect_network_metrics() {
                         if (lastTime.find(ifRow.dwIndex) != lastTime.end()) {
                             auto timeDiff = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastTime[ifRow.dwIndex]).count();
                             if (timeDiff > 0) {
-                                uint64_t bytesSentDiff = interface.bytes_sent - lastBytesSent[ifRow.dwIndex];
-                                uint64_t bytesReceivedDiff = interface.bytes_received - lastBytesReceived[ifRow.dwIndex];
-                                interface.bandwidth_sent = (bytesSentDiff * 1000) / timeDiff;
-                                interface.bandwidth_received = (bytesReceivedDiff * 1000) / timeDiff;
+                                uint64_t bytesSentDiff = netif.bytes_sent - lastBytesSent[ifRow.dwIndex];
+                                uint64_t bytesReceivedDiff = netif.bytes_received - lastBytesReceived[ifRow.dwIndex];
+                                netif.bandwidth_sent = (bytesSentDiff * 1000) / timeDiff;
+                                netif.bandwidth_received = (bytesReceivedDiff * 1000) / timeDiff;
                             } else {
-                                interface.bandwidth_sent = 0;
-                                interface.bandwidth_received = 0;
+                                netif.bandwidth_sent = 0;
+                                netif.bandwidth_received = 0;
                             }
                         } else {
-                            interface.bandwidth_sent = 0;
-                            interface.bandwidth_received = 0;
+                            netif.bandwidth_sent = 0;
+                            netif.bandwidth_received = 0;
                         }
-                        lastBytesSent[ifRow.dwIndex] = interface.bytes_sent;
-                        lastBytesReceived[ifRow.dwIndex] = interface.bytes_received;
+                        lastBytesSent[ifRow.dwIndex] = netif.bytes_sent;
+                        lastBytesReceived[ifRow.dwIndex] = netif.bytes_received;
                         lastTime[ifRow.dwIndex] = now;
-                        if (interface.bytes_sent > 0 || interface.bytes_received > 0 || 
-                            interface.bandwidth_sent > 0 || interface.bandwidth_received > 0) {
-                            metrics.interfaces.push_back(interface);
+                        if (netif.bytes_sent > 0 || netif.bytes_received > 0 || 
+                            netif.bandwidth_sent > 0 || netif.bandwidth_received > 0) {
+                            metrics.interfaces.push_back(netif);
                         }
                     }
                 }
@@ -275,7 +278,120 @@ GpuMetrics WindowsMetricsCollector::collect_gpu_metrics() {
 
 HddMetrics WindowsMetricsCollector::collect_hdd_metrics() {
     HddMetrics metrics;
-    // TODO: Реализовать сбор метрик HDD
+    HRESULT hres;
+
+    // 1. Инициализация COM
+    hres = CoInitializeEx(0, COINIT_MULTITHREADED);
+    if (FAILED(hres)) {
+        std::cerr << "Failed to initialize COM library. Error code = 0x" << std::hex << hres << std::endl;
+        return metrics;
+    }
+
+    // 2. Установить общие уровни безопасности
+    hres = CoInitializeSecurity(
+        NULL, -1, NULL, NULL,
+        RPC_C_AUTHN_LEVEL_DEFAULT, RPC_C_IMP_LEVEL_IMPERSONATE,
+        NULL, EOAC_NONE, NULL);
+    if (FAILED(hres) && hres != RPC_E_TOO_LATE) {
+        std::cerr << "Failed to initialize security. Error code = 0x" << std::hex << hres << std::endl;
+        CoUninitialize();
+        return metrics;
+    }
+
+    // 3. Получить указатель на IWbemLocator
+    IWbemLocator *pLoc = NULL;
+    hres = CoCreateInstance(
+        CLSID_WbemLocator, 0, CLSCTX_INPROC_SERVER,
+        IID_IWbemLocator, (LPVOID *)&pLoc);
+    if (FAILED(hres)) {
+        std::cerr << "Failed to create IWbemLocator object. Error code = 0x" << std::hex << hres << std::endl;
+        CoUninitialize();
+        return metrics;
+    }
+
+    // 4. Подключиться к WMI namespace
+    IWbemServices *pSvc = NULL;
+    hres = pLoc->ConnectServer(
+        _bstr_t(L"ROOT\\CIMV2"),
+        NULL, NULL, 0, NULL, 0, 0, &pSvc);
+    if (FAILED(hres)) {
+        std::cerr << "Could not connect to WMI. Error code = 0x" << std::hex << hres << std::endl;
+        pLoc->Release();
+        CoUninitialize();
+        return metrics;
+    }
+
+    // 5. Установить прокси-безопасность
+    hres = CoSetProxyBlanket(
+        pSvc, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, NULL,
+        RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE,
+        NULL, EOAC_NONE);
+    if (FAILED(hres)) {
+        std::cerr << "Could not set proxy blanket. Error code = 0x" << std::hex << hres << std::endl;
+        pSvc->Release();
+        pLoc->Release();
+        CoUninitialize();
+        return metrics;
+    }
+
+    // 6. Выполнить WMI-запрос к Win32_DiskDrive
+    IEnumWbemClassObject* pEnumerator = NULL;
+    hres = pSvc->ExecQuery(
+        bstr_t("WQL"),
+        bstr_t("SELECT Model, SerialNumber, Status FROM Win32_DiskDrive"),
+        WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY,
+        NULL, &pEnumerator);
+    if (FAILED(hres)) {
+        std::cerr << "WMI query failed. Error code = 0x" << std::hex << hres << std::endl;
+        pSvc->Release();
+        pLoc->Release();
+        CoUninitialize();
+        return metrics;
+    }
+
+    // 7. Обработка результатов
+    IWbemClassObject *pclsObj = NULL;
+    ULONG uReturn = 0;
+    while (pEnumerator) {
+        HRESULT hr = pEnumerator->Next(WBEM_INFINITE, 1, &pclsObj, &uReturn);
+        if (0 == uReturn) break;
+        HddDrive drive;
+        // Model
+        VARIANT vtProp;
+        hr = pclsObj->Get(L"Model", 0, &vtProp, 0, 0);
+        if (SUCCEEDED(hr) && vtProp.vt == VT_BSTR) {
+            drive.name = _bstr_t(vtProp.bstrVal);
+        } else {
+            drive.name = "Unknown";
+        }
+        VariantClear(&vtProp);
+        // SerialNumber
+        hr = pclsObj->Get(L"SerialNumber", 0, &vtProp, 0, 0);
+        if (SUCCEEDED(hr) && vtProp.vt == VT_BSTR) {
+            drive.health_status = _bstr_t(vtProp.bstrVal);
+        } else {
+            drive.health_status = "Unknown";
+        }
+        VariantClear(&vtProp);
+        // Status
+        hr = pclsObj->Get(L"Status", 0, &vtProp, 0, 0);
+        if (SUCCEEDED(hr) && vtProp.vt == VT_BSTR) {
+            drive.health_status += " (";
+            drive.health_status += _bstr_t(vtProp.bstrVal);
+            drive.health_status += ")";
+        }
+        VariantClear(&vtProp);
+        // Температура и PowerOnHours через WMI/SMART — не всегда доступны
+        drive.temperature = 0.0;
+        drive.power_on_hours = 0;
+        metrics.drives.push_back(drive);
+        pclsObj->Release();
+    }
+    // 8. Очистка
+    if (pEnumerator) pEnumerator->Release();
+    if (pSvc) pSvc->Release();
+    if (pLoc) pLoc->Release();
+    CoUninitialize();
     return metrics;
 }
 

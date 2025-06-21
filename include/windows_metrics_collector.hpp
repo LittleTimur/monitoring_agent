@@ -4,6 +4,7 @@
 #include <windows.h>
 #include <chrono>
 #include <vector>
+#include <pdh.h>
 
 namespace monitoring {
 
@@ -30,6 +31,10 @@ private:
     uint64_t last_kernel_time;
     uint64_t last_user_time;
     std::chrono::steady_clock::time_point last_collection_time;
+
+    // Для PDH (CPU по ядрам)
+    PDH_HQUERY cpu_query;
+    std::vector<PDH_HCOUNTER> core_counters;
 };
 
 } // namespace monitoring 

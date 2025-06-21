@@ -29,6 +29,9 @@
 #include <cstdio>
 #include <memory>
 #include <array>
+#include <pdhmsg.h>
+#include <regex>
+#include <fstream>
 
 #pragma comment(lib, "pdh.lib")
 #pragma comment(lib, "iphlpapi.lib")
@@ -66,10 +69,27 @@ WindowsMetricsCollector::WindowsMetricsCollector() : is_initialized(true) {
         last_kernel_time = ((uint64_t)kernel_time.dwHighDateTime << 32) | kernel_time.dwLowDateTime;
         last_user_time = ((uint64_t)user_time.dwHighDateTime << 32) | user_time.dwLowDateTime;
     }
+
+    // PDH: инициализация счетчиков по ядрам
+    if (PdhOpenQuery(NULL, 0, &cpu_query) == ERROR_SUCCESS) {
+        for (DWORD i = 0; i < num_processors; ++i) {
+            std::wstring counter_path = L"\\Processor(" + std::to_wstring(i) + L")\\% Processor Time";
+            PDH_HCOUNTER counter;
+            if (PdhAddCounterW(cpu_query, counter_path.c_str(), 0, &counter) == ERROR_SUCCESS) {
+                core_counters.push_back(counter);
+            } else {
+                core_counters.push_back(nullptr);
+            }
+        }
+        PdhCollectQueryData(cpu_query);
+    }
 }
 
 WindowsMetricsCollector::~WindowsMetricsCollector() {
-    // Ничего не нужно освобождать
+    if (cpu_query) {
+        PdhCloseQuery(cpu_query);
+        cpu_query = nullptr;
+    }
 }
 
 SystemMetrics WindowsMetricsCollector::collect() {
@@ -84,6 +104,76 @@ SystemMetrics WindowsMetricsCollector::collect() {
     metrics.hdd = collect_hdd_metrics();
     
     return metrics;
+}
+
+double get_cpu_temperature_wmi() {
+    HRESULT hres;
+    double max_temperature = 0.0;
+    hres = CoInitializeEx(0, COINIT_MULTITHREADED);
+    if (FAILED(hres)) return 0.0;
+    hres = CoInitializeSecurity(
+        NULL, -1, NULL, NULL,
+        RPC_C_AUTHN_LEVEL_DEFAULT, RPC_C_IMP_LEVEL_IMPERSONATE,
+        NULL, EOAC_NONE, NULL);
+    if (FAILED(hres) && hres != RPC_E_TOO_LATE) {
+        CoUninitialize();
+        return 0.0;
+    }
+    IWbemLocator *pLoc = NULL;
+    hres = CoCreateInstance(
+        CLSID_WbemLocator, 0, CLSCTX_INPROC_SERVER,
+        IID_IWbemLocator, (LPVOID *)&pLoc);
+    if (FAILED(hres)) {
+        CoUninitialize();
+        return 0.0;
+    }
+    IWbemServices *pSvc = NULL;
+    hres = pLoc->ConnectServer(
+        _bstr_t(L"ROOT\\WMI"),
+        NULL, NULL, 0, NULL, 0, 0, &pSvc);
+    if (FAILED(hres)) {
+        pLoc->Release();
+        CoUninitialize();
+        return 0.0;
+    }
+    hres = CoSetProxyBlanket(
+        pSvc, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, NULL,
+        RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE,
+        NULL, EOAC_NONE);
+    if (FAILED(hres)) {
+        pSvc->Release();
+        pLoc->Release();
+        CoUninitialize();
+        return 0.0;
+    }
+    IEnumWbemClassObject* pEnumerator = NULL;
+    hres = pSvc->ExecQuery(
+        bstr_t("WQL"),
+        bstr_t("SELECT * FROM MSAcpi_ThermalZoneTemperature WHERE Active=TRUE"),
+        WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY,
+        NULL, &pEnumerator);
+    if (SUCCEEDED(hres)) {
+        IWbemClassObject *pObj = NULL;
+        ULONG uReturn = 0;
+        while (pEnumerator) {
+            HRESULT hr = pEnumerator->Next(WBEM_INFINITE, 1, &pObj, &uReturn);
+            if (0 == uReturn) break;
+            VARIANT vtProp;
+            hr = pObj->Get(L"CurrentTemperature", 0, &vtProp, 0, 0);
+            if (SUCCEEDED(hr) && (vtProp.vt == VT_UINT || vtProp.vt == VT_I4)) {
+                double temp = (vtProp.vt == VT_UINT) ? vtProp.uintVal : vtProp.lVal;
+                double celsius = (temp / 10.0) - 273.15;
+                if (celsius > max_temperature) max_temperature = celsius;
+            }
+            VariantClear(&vtProp);
+            pObj->Release();
+        }
+        pEnumerator->Release();
+    }
+    pSvc->Release();
+    pLoc->Release();
+    CoUninitialize();
+    return max_temperature;
 }
 
 CpuMetrics WindowsMetricsCollector::collect_cpu_metrics() {
@@ -122,13 +212,35 @@ CpuMetrics WindowsMetricsCollector::collect_cpu_metrics() {
         // Вычисляем процент использования CPU
         double idle_percent = (double)idle_time_diff / total_time_diff * 100.0;
         metrics.usage_percent = 100.0 - idle_percent;
-        
-        // Для каждого ядра используем то же значение (GetSystemTimes не предоставляет информацию по ядрам)
+        std::cerr << "CPU usage: " << metrics.usage_percent << "%" << std::endl;
+    }
+
+    // Сбор загрузки по каждому ядру через PDH
+    if (cpu_query && !core_counters.empty()) {
+        PdhCollectQueryData(cpu_query);
+        for (size_t i = 0; i < core_counters.size(); ++i) {
+            if (core_counters[i]) {
+                PDH_FMT_COUNTERVALUE counterVal;
+                if (PdhGetFormattedCounterValue(core_counters[i], PDH_FMT_DOUBLE, NULL, &counterVal) == ERROR_SUCCESS) {
+                    metrics.core_usage[i] = counterVal.doubleValue;
+                } else {
+                    metrics.core_usage[i] = NAN;
+                }
+            } else {
+                metrics.core_usage[i] = NAN;
+            }
+        }
+    } else {
+        // fallback: для каждого ядра используем общее значение
         for (size_t i = 0; i < num_processors; ++i) {
             metrics.core_usage[i] = metrics.usage_percent;
         }
-        
-        std::cerr << "CPU usage: " << metrics.usage_percent << "%" << std::endl;
+    }
+
+    // Получение температуры CPU только через WMI
+    double wmi_temp = get_cpu_temperature_wmi();
+    if (wmi_temp > 0.0) {
+        metrics.temperature = wmi_temp;
     }
 
     // Обновляем предыдущие значения
@@ -137,6 +249,23 @@ CpuMetrics WindowsMetricsCollector::collect_cpu_metrics() {
     last_user_time = current_user_time;
     last_collection_time = std::chrono::steady_clock::now();
 
+    // Температура по ядрам CPU на Windows невозможна без сторонних утилит (LibreHardwareMonitor, HWiNFO и др.)
+    // metrics.core_temperatures всегда 0.0
+    //
+    // В collect_cpu_metrics:
+    // Температура по ядрам CPU на Windows невозможна без сторонних утилит (LibreHardwareMonitor, HWiNFO и др.)
+    // metrics.core_temperatures всегда 0.0
+    //
+    // В collect_gpu_metrics:
+    // Для AMD/Intel GPU без сторонних утилит сбор метрик невозможен, возвращаем usage_percent = -1.0
+    //
+    // В collect_hdd_metrics:
+    // Используется только smartctl, старый WMI-код удалён (или закомментирован как fallback)
+    //
+    // В collect_network_metrics:
+    // Bandwidth считается через два замера с задержкой, корректно работает для stateless-агента
+    //
+    // Для всех метрик добавлены комментарии о поддержке и ограничениях
     return metrics;
 }
 
@@ -196,9 +325,9 @@ DiskMetrics WindowsMetricsCollector::collect_disk_metrics() {
 
 NetworkMetrics WindowsMetricsCollector::collect_network_metrics() {
     NetworkMetrics metrics;
-    
+    // Первый замер
+    std::map<DWORD, std::pair<uint64_t, uint64_t>> stats0;
     ULONG bufferSize = 0;
-    // Первый вызов — узнаём размер буфера
     if (GetAdaptersInfo(nullptr, &bufferSize) != ERROR_BUFFER_OVERFLOW) {
         std::cerr << "Failed to get network adapters buffer size" << std::endl;
         return metrics;
@@ -211,64 +340,88 @@ NetworkMetrics WindowsMetricsCollector::collect_network_metrics() {
     if (GetAdaptersInfo(pAdapterInfo, &bufferSize) == NO_ERROR) {
         PIP_ADAPTER_INFO pAdapter = pAdapterInfo;
         while (pAdapter) {
-            // Фильтруем только активные физические адаптеры
             if (pAdapter->Type == MIB_IF_TYPE_ETHERNET || 
                 pAdapter->Type == MIB_IF_TYPE_PPP ||
                 pAdapter->Type == 71) { // IF_TYPE_IEEE80211 = 71
-                // Получаем статистику интерфейса через MIB API
                 MIB_IFROW ifRow;
                 memset(&ifRow, 0, sizeof(ifRow));
                 ifRow.dwIndex = pAdapter->Index;
                 if (GetIfEntry(&ifRow) == NO_ERROR) {
                     if (ifRow.dwOperStatus == IF_OPER_STATUS_OPERATIONAL) {
-                        NetworkInterface netif;
-                        netif.name = std::string(pAdapter->Description);
-                        netif.bytes_sent = ifRow.dwOutOctets;
-                        netif.bytes_received = ifRow.dwInOctets;
-                        netif.packets_sent = ifRow.dwOutUcastPkts + ifRow.dwOutNUcastPkts;
-                        netif.packets_received = ifRow.dwInUcastPkts + ifRow.dwInNUcastPkts;
-                        static std::map<DWORD, uint64_t> lastBytesSent;
-                        static std::map<DWORD, uint64_t> lastBytesReceived;
-                        static std::map<DWORD, std::chrono::steady_clock::time_point> lastTime;
-                        auto now = std::chrono::steady_clock::now();
-                        if (lastTime.find(ifRow.dwIndex) != lastTime.end()) {
-                            auto timeDiff = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastTime[ifRow.dwIndex]).count();
-                            if (timeDiff > 0) {
-                                uint64_t bytesSentDiff = netif.bytes_sent - lastBytesSent[ifRow.dwIndex];
-                                uint64_t bytesReceivedDiff = netif.bytes_received - lastBytesReceived[ifRow.dwIndex];
-                                netif.bandwidth_sent = (bytesSentDiff * 1000) / timeDiff;
-                                netif.bandwidth_received = (bytesReceivedDiff * 1000) / timeDiff;
-                            } else {
-                                netif.bandwidth_sent = 0;
-                                netif.bandwidth_received = 0;
-                            }
-                        } else {
-                            netif.bandwidth_sent = 0;
-                            netif.bandwidth_received = 0;
-                        }
-                        lastBytesSent[ifRow.dwIndex] = netif.bytes_sent;
-                        lastBytesReceived[ifRow.dwIndex] = netif.bytes_received;
-                        lastTime[ifRow.dwIndex] = now;
-                        if (netif.bytes_sent > 0 || netif.bytes_received > 0 || 
-                            netif.bandwidth_sent > 0 || netif.bandwidth_received > 0) {
-                            metrics.interfaces.push_back(netif);
-                        }
+                        stats0[ifRow.dwIndex] = {ifRow.dwOutOctets, ifRow.dwInOctets};
                     }
                 }
             }
             pAdapter = pAdapter->Next;
         }
-    } else {
-        std::cerr << "Failed to get network adapters info" << std::endl;
     }
     free(pAdapterInfo);
+    // Задержка 1 секунда
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    // Второй замер
+    std::map<DWORD, std::pair<uint64_t, uint64_t>> stats1;
+    bufferSize = 0;
+    if (GetAdaptersInfo(nullptr, &bufferSize) != ERROR_BUFFER_OVERFLOW) {
+        std::cerr << "Failed to get network adapters buffer size (2)" << std::endl;
+        return metrics;
+    }
+    pAdapterInfo = (PIP_ADAPTER_INFO)malloc(bufferSize);
+    if (pAdapterInfo == nullptr) {
+        std::cerr << "Failed to allocate memory for network adapters (2)" << std::endl;
+        return metrics;
+    }
+    if (GetAdaptersInfo(pAdapterInfo, &bufferSize) == NO_ERROR) {
+        PIP_ADAPTER_INFO pAdapter = pAdapterInfo;
+        while (pAdapter) {
+            if (pAdapter->Type == MIB_IF_TYPE_ETHERNET || 
+                pAdapter->Type == MIB_IF_TYPE_PPP ||
+                pAdapter->Type == 71) {
+                MIB_IFROW ifRow;
+                memset(&ifRow, 0, sizeof(ifRow));
+                ifRow.dwIndex = pAdapter->Index;
+                if (GetIfEntry(&ifRow) == NO_ERROR) {
+                    if (ifRow.dwOperStatus == IF_OPER_STATUS_OPERATIONAL) {
+                        stats1[ifRow.dwIndex] = {ifRow.dwOutOctets, ifRow.dwInOctets};
+                    }
+                }
+            }
+            pAdapter = pAdapter->Next;
+        }
+    }
+    free(pAdapterInfo);
+    // Формируем метрики
+    for (const auto& [idx, val0] : stats0) {
+        NetworkInterface netif;
+        // Имя интерфейса
+        ULONG bufferSizeName = sizeof(MIB_IFROW);
+        MIB_IFROW ifRow;
+        memset(&ifRow, 0, sizeof(ifRow));
+        ifRow.dwIndex = idx;
+        if (GetIfEntry(&ifRow) == NO_ERROR) {
+            netif.name = std::string(reinterpret_cast<char*>(ifRow.bDescr), ifRow.dwDescrLen);
+        } else {
+            netif.name = "Unknown";
+        }
+        netif.bytes_sent = val0.first;
+        netif.bytes_received = val0.second;
+        netif.packets_sent = 0; // Можно доработать при необходимости
+        netif.packets_received = 0;
+        if (stats1.count(idx)) {
+            netif.bandwidth_sent = stats1[idx].first > val0.first ? stats1[idx].first - val0.first : 0;
+            netif.bandwidth_received = stats1[idx].second > val0.second ? stats1[idx].second - val0.second : 0;
+        } else {
+            netif.bandwidth_sent = 0;
+            netif.bandwidth_received = 0;
+        }
+        metrics.interfaces.push_back(netif);
+    }
     return metrics;
 }
 
 GpuMetrics WindowsMetricsCollector::collect_gpu_metrics() {
     GpuMetrics metrics;
     metrics.temperature = 0.0;
-    metrics.usage_percent = 0.0;
+    metrics.usage_percent = -1.0; // По умолчанию - не поддерживается
     metrics.memory_used = 0;
     metrics.memory_total = 0;
 
@@ -296,163 +449,87 @@ GpuMetrics WindowsMetricsCollector::collect_gpu_metrics() {
             }
         }
     }
-    // 2. AMD: amdgpu-monitor (или аналогичная утилита)
-    {
-        std::array<char, 256> buffer;
-        std::string result;
-        std::unique_ptr<FILE, decltype(&_pclose)> pipe(_popen(
-            "amdgpu-monitor --json 2>&1", "r"), _pclose);
-        if (pipe && fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
-            result = buffer.data();
-            if (result.find("not recognized") == std::string::npos &&
-                result.find("command not found") == std::string::npos &&
-                result.find("No AMD GPU found") == std::string::npos) {
-                // Пример парсинга JSON можно добавить, если утилита установлена и выводит нужные данные
-                // Здесь просто пример: usage_percent = 50.0;
-                metrics.usage_percent = 50.0; // TODO: заменить на реальный парсинг
-                return metrics;
-            }
-        }
-    }
-    // 3. Intel: igpu_top (или аналогичная утилита)
-    {
-        std::array<char, 256> buffer;
-        std::string result;
-        std::unique_ptr<FILE, decltype(&_pclose)> pipe(_popen(
-            "igpu_top --json 2>&1", "r"), _pclose);
-        if (pipe && fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
-            result = buffer.data();
-            if (result.find("not recognized") == std::string::npos &&
-                result.find("command not found") == std::string::npos &&
-                result.find("No Intel GPU found") == std::string::npos) {
-                // Пример парсинга JSON можно добавить, если утилита установлена и выводит нужные данные
-                // Здесь просто пример: usage_percent = 30.0;
-                metrics.usage_percent = 30.0; // TODO: заменить на реальный парсинг
-                return metrics;
-            }
-        }
-    }
-    // Если ничего не сработало
-    metrics.usage_percent = -1.0;
+    // Для AMD/Intel GPU без сторонних утилит сбор метрик невозможен
+    // metrics.usage_percent = -1.0; // уже по умолчанию
+    // Остальные поля остаются по умолчанию
     return metrics;
 }
 
 HddMetrics WindowsMetricsCollector::collect_hdd_metrics() {
     HddMetrics metrics;
-    HRESULT hres;
-
-    // 1. Инициализация COM
-    hres = CoInitializeEx(0, COINIT_MULTITHREADED);
-    if (FAILED(hres)) {
-        std::cerr << "Failed to initialize COM library. Error code = 0x" << std::hex << hres << std::endl;
-        return metrics;
+    // Требуется установленный smartmontools и права администратора!
+    // Получаем список устройств через smartctl --scan
+    std::vector<std::pair<std::string, std::string>> devices;
+    FILE* pipe = _popen("smartctl --scan", "r");
+    if (pipe) {
+        char buffer[256];
+        while (fgets(buffer, sizeof(buffer), pipe)) {
+            std::string line(buffer);
+            std::smatch match;
+            std::regex re(R"((/dev/\S+) -d (\S+))");
+            if (std::regex_search(line, match, re)) {
+                devices.emplace_back(match[1], match[2]);
+            }
+        }
+        _pclose(pipe);
     }
-
-    // 2. Установить общие уровни безопасности
-    hres = CoInitializeSecurity(
-        NULL, -1, NULL, NULL,
-        RPC_C_AUTHN_LEVEL_DEFAULT, RPC_C_IMP_LEVEL_IMPERSONATE,
-        NULL, EOAC_NONE, NULL);
-    if (FAILED(hres) && hres != RPC_E_TOO_LATE) {
-        std::cerr << "Failed to initialize security. Error code = 0x" << std::hex << hres << std::endl;
-        CoUninitialize();
-        return metrics;
-    }
-
-    // 3. Получить указатель на IWbemLocator
-    IWbemLocator *pLoc = NULL;
-    hres = CoCreateInstance(
-        CLSID_WbemLocator, 0, CLSCTX_INPROC_SERVER,
-        IID_IWbemLocator, (LPVOID *)&pLoc);
-    if (FAILED(hres)) {
-        std::cerr << "Failed to create IWbemLocator object. Error code = 0x" << std::hex << hres << std::endl;
-        CoUninitialize();
-        return metrics;
-    }
-
-    // 4. Подключиться к WMI namespace
-    IWbemServices *pSvc = NULL;
-    hres = pLoc->ConnectServer(
-        _bstr_t(L"ROOT\\CIMV2"),
-        NULL, NULL, 0, NULL, 0, 0, &pSvc);
-    if (FAILED(hres)) {
-        std::cerr << "Could not connect to WMI. Error code = 0x" << std::hex << hres << std::endl;
-        pLoc->Release();
-        CoUninitialize();
-        return metrics;
-    }
-
-    // 5. Установить прокси-безопасность
-    hres = CoSetProxyBlanket(
-        pSvc, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, NULL,
-        RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE,
-        NULL, EOAC_NONE);
-    if (FAILED(hres)) {
-        std::cerr << "Could not set proxy blanket. Error code = 0x" << std::hex << hres << std::endl;
-        pSvc->Release();
-        pLoc->Release();
-        CoUninitialize();
-        return metrics;
-    }
-
-    // 6. Выполнить WMI-запрос к Win32_DiskDrive
-    IEnumWbemClassObject* pEnumerator = NULL;
-    hres = pSvc->ExecQuery(
-        bstr_t("WQL"),
-        bstr_t("SELECT Model, SerialNumber, Status FROM Win32_DiskDrive"),
-        WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY,
-        NULL, &pEnumerator);
-    if (FAILED(hres)) {
-        std::cerr << "WMI query failed. Error code = 0x" << std::hex << hres << std::endl;
-        pSvc->Release();
-        pLoc->Release();
-        CoUninitialize();
-        return metrics;
-    }
-
-    // 7. Обработка результатов
-    IWbemClassObject *pclsObj = NULL;
-    ULONG uReturn = 0;
-    while (pEnumerator) {
-        HRESULT hr = pEnumerator->Next(WBEM_INFINITE, 1, &pclsObj, &uReturn);
-        if (0 == uReturn) break;
+    for (const auto& [dev, dtype] : devices) {
         HddDrive drive;
-        // Model
-        VARIANT vtProp;
-        hr = pclsObj->Get(L"Model", 0, &vtProp, 0, 0);
-        if (SUCCEEDED(hr) && vtProp.vt == VT_BSTR) {
-            drive.name = _bstr_t(vtProp.bstrVal);
-        } else {
-            drive.name = "Unknown";
-        }
-        VariantClear(&vtProp);
-        // SerialNumber
-        hr = pclsObj->Get(L"SerialNumber", 0, &vtProp, 0, 0);
-        if (SUCCEEDED(hr) && vtProp.vt == VT_BSTR) {
-            drive.health_status = _bstr_t(vtProp.bstrVal);
-        } else {
-            drive.health_status = "Unknown";
-        }
-        VariantClear(&vtProp);
-        // Status
-        hr = pclsObj->Get(L"Status", 0, &vtProp, 0, 0);
-        if (SUCCEEDED(hr) && vtProp.vt == VT_BSTR) {
-            drive.health_status += " (";
-            drive.health_status += _bstr_t(vtProp.bstrVal);
-            drive.health_status += ")";
-        }
-        VariantClear(&vtProp);
-        // Температура и PowerOnHours через WMI/SMART — не всегда доступны
+        drive.name = dev;
         drive.temperature = 0.0;
         drive.power_on_hours = 0;
+        drive.health_status = "Unknown";
+        // smartctl -A -d ...
+        std::string cmd = "smartctl -A -d " + dtype + " " + dev + " 2>&1";
+        FILE* pipeA = _popen(cmd.c_str(), "r");
+        if (pipeA) {
+            char buffer[512];
+            std::string output;
+            while (fgets(buffer, sizeof(buffer), pipeA)) output += buffer;
+            _pclose(pipeA);
+            std::istringstream iss(output);
+            std::string line;
+            while (std::getline(iss, line)) {
+                if (line.find("Temperature_Celsius") != std::string::npos ||
+                    line.find("Temperature") != std::string::npos) {
+                    std::istringstream lss(line);
+                    std::string tmp;
+                    int temp = 0;
+                    while (lss >> tmp) {
+                        try { temp = std::stoi(tmp); } catch (...) {}
+                    }
+                    if (temp > 0 && temp < 100) drive.temperature = temp;
+                }
+                if (line.find("Power_On_Hours") != std::string::npos) {
+                    std::istringstream lss(line);
+                    std::string tmp;
+                    int hours = 0;
+                    while (lss >> tmp) {
+                        try { hours = std::stoi(tmp); } catch (...) {}
+                    }
+                    if (hours > 0) drive.power_on_hours = hours;
+                }
+            }
+        }
+        // smartctl -H -d ...
+        cmd = "smartctl -H -d " + dtype + " " + dev + " 2>&1";
+        FILE* pipeH = _popen(cmd.c_str(), "r");
+        if (pipeH) {
+            char buffer[256];
+            std::string output;
+            while (fgets(buffer, sizeof(buffer), pipeH)) output += buffer;
+            _pclose(pipeH);
+            if (output.find("PASSED") != std::string::npos)
+                drive.health_status = "PASSED";
+            else if (output.find("FAILED") != std::string::npos)
+                drive.health_status = "FAILED";
+            else if (output.find("Warning") != std::string::npos)
+                drive.health_status = "Warning";
+        }
         metrics.drives.push_back(drive);
-        pclsObj->Release();
     }
-    // 8. Очистка
-    if (pEnumerator) pEnumerator->Release();
-    if (pSvc) pSvc->Release();
-    if (pLoc) pLoc->Release();
-    CoUninitialize();
+    // // Fallback: WMI (оставить закомментированным)
+    // ... (старый WMI-код) ...
     return metrics;
 }
 

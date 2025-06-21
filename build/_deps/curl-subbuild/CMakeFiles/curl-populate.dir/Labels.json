@@ -1,0 +1,46 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "C:/Users/rosih/OneDrive/Desktop/\u0420\u0430\u0431\u043e\u0442\u0430/Cursor/monitoring_agent/build/_deps/curl-subbuild/CMakeFiles/curl-populate"
+		},
+		{
+			"file" : "C:/Users/rosih/OneDrive/Desktop/\u0420\u0430\u0431\u043e\u0442\u0430/Cursor/monitoring_agent/build/_deps/curl-subbuild/CMakeFiles/51b1cc8ac3bb4758c29e2367cf225a20/curl-populate.rule"
+		},
+		{
+			"file" : "C:/Users/rosih/OneDrive/Desktop/\u0420\u0430\u0431\u043e\u0442\u0430/Cursor/monitoring_agent/build/_deps/curl-subbuild/CMakeFiles/8cd6729306e2dd6bda4a9c113233fb74/curl-populate-complete.rule"
+		},
+		{
+			"file" : "C:/Users/rosih/OneDrive/Desktop/\u0420\u0430\u0431\u043e\u0442\u0430/Cursor/monitoring_agent/build/_deps/curl-subbuild/CMakeFiles/ecbd1bb280e091086d78a386f3eb7fc6/curl-populate-build.rule"
+		},
+		{
+			"file" : "C:/Users/rosih/OneDrive/Desktop/\u0420\u0430\u0431\u043e\u0442\u0430/Cursor/monitoring_agent/build/_deps/curl-subbuild/CMakeFiles/ecbd1bb280e091086d78a386f3eb7fc6/curl-populate-configure.rule"
+		},
+		{
+			"file" : "C:/Users/rosih/OneDrive/Desktop/\u0420\u0430\u0431\u043e\u0442\u0430/Cursor/monitoring_agent/build/_deps/curl-subbuild/CMakeFiles/ecbd1bb280e091086d78a386f3eb7fc6/curl-populate-download.rule"
+		},
+		{
+			"file" : "C:/Users/rosih/OneDrive/Desktop/\u0420\u0430\u0431\u043e\u0442\u0430/Cursor/monitoring_agent/build/_deps/curl-subbuild/CMakeFiles/ecbd1bb280e091086d78a386f3eb7fc6/curl-populate-install.rule"
+		},
+		{
+			"file" : "C:/Users/rosih/OneDrive/Desktop/\u0420\u0430\u0431\u043e\u0442\u0430/Cursor/monitoring_agent/build/_deps/curl-subbuild/CMakeFiles/ecbd1bb280e091086d78a386f3eb7fc6/curl-populate-mkdir.rule"
+		},
+		{
+			"file" : "C:/Users/rosih/OneDrive/Desktop/\u0420\u0430\u0431\u043e\u0442\u0430/Cursor/monitoring_agent/build/_deps/curl-subbuild/CMakeFiles/ecbd1bb280e091086d78a386f3eb7fc6/curl-populate-patch.rule"
+		},
+		{
+			"file" : "C:/Users/rosih/OneDrive/Desktop/\u0420\u0430\u0431\u043e\u0442\u0430/Cursor/monitoring_agent/build/_deps/curl-subbuild/CMakeFiles/ecbd1bb280e091086d78a386f3eb7fc6/curl-populate-test.rule"
+		},
+		{
+			"file" : "C:/Users/rosih/OneDrive/Desktop/\u0420\u0430\u0431\u043e\u0442\u0430/Cursor/monitoring_agent/build/_deps/curl-subbuild/CMakeFiles/ecbd1bb280e091086d78a386f3eb7fc6/curl-populate-update.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"curl-populate"
+		],
+		"name" : "curl-populate"
+	}
+}

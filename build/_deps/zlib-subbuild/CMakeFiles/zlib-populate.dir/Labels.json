@@ -1,0 +1,46 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "C:/Users/rosih/OneDrive/Desktop/\u0420\u0430\u0431\u043e\u0442\u0430/Cursor/monitoring_agent/build/_deps/zlib-subbuild/CMakeFiles/zlib-populate"
+		},
+		{
+			"file" : "C:/Users/rosih/OneDrive/Desktop/\u0420\u0430\u0431\u043e\u0442\u0430/Cursor/monitoring_agent/build/_deps/zlib-subbuild/CMakeFiles/932230a6e35c884ff2bd75899e9c328d/zlib-populate.rule"
+		},
+		{
+			"file" : "C:/Users/rosih/OneDrive/Desktop/\u0420\u0430\u0431\u043e\u0442\u0430/Cursor/monitoring_agent/build/_deps/zlib-subbuild/CMakeFiles/3642afc5432650ed402f863476df3d58/zlib-populate-complete.rule"
+		},
+		{
+			"file" : "C:/Users/rosih/OneDrive/Desktop/\u0420\u0430\u0431\u043e\u0442\u0430/Cursor/monitoring_agent/build/_deps/zlib-subbuild/CMakeFiles/8b28d1450768050f34d02eecc8d74c3e/zlib-populate-build.rule"
+		},
+		{
+			"file" : "C:/Users/rosih/OneDrive/Desktop/\u0420\u0430\u0431\u043e\u0442\u0430/Cursor/monitoring_agent/build/_deps/zlib-subbuild/CMakeFiles/8b28d1450768050f34d02eecc8d74c3e/zlib-populate-configure.rule"
+		},
+		{
+			"file" : "C:/Users/rosih/OneDrive/Desktop/\u0420\u0430\u0431\u043e\u0442\u0430/Cursor/monitoring_agent/build/_deps/zlib-subbuild/CMakeFiles/8b28d1450768050f34d02eecc8d74c3e/zlib-populate-download.rule"
+		},
+		{
+			"file" : "C:/Users/rosih/OneDrive/Desktop/\u0420\u0430\u0431\u043e\u0442\u0430/Cursor/monitoring_agent/build/_deps/zlib-subbuild/CMakeFiles/8b28d1450768050f34d02eecc8d74c3e/zlib-populate-install.rule"
+		},
+		{
+			"file" : "C:/Users/rosih/OneDrive/Desktop/\u0420\u0430\u0431\u043e\u0442\u0430/Cursor/monitoring_agent/build/_deps/zlib-subbuild/CMakeFiles/8b28d1450768050f34d02eecc8d74c3e/zlib-populate-mkdir.rule"
+		},
+		{
+			"file" : "C:/Users/rosih/OneDrive/Desktop/\u0420\u0430\u0431\u043e\u0442\u0430/Cursor/monitoring_agent/build/_deps/zlib-subbuild/CMakeFiles/8b28d1450768050f34d02eecc8d74c3e/zlib-populate-patch.rule"
+		},
+		{
+			"file" : "C:/Users/rosih/OneDrive/Desktop/\u0420\u0430\u0431\u043e\u0442\u0430/Cursor/monitoring_agent/build/_deps/zlib-subbuild/CMakeFiles/8b28d1450768050f34d02eecc8d74c3e/zlib-populate-test.rule"
+		},
+		{
+			"file" : "C:/Users/rosih/OneDrive/Desktop/\u0420\u0430\u0431\u043e\u0442\u0430/Cursor/monitoring_agent/build/_deps/zlib-subbuild/CMakeFiles/8b28d1450768050f34d02eecc8d74c3e/zlib-populate-update.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"zlib-populate"
+		],
+		"name" : "zlib-populate"
+	}
+}

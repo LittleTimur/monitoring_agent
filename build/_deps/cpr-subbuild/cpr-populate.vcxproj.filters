@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\cpr-subbuild\CMakeFiles\c50ad71d592ab6b08f9231e18e6fd7c2\cpr-populate-mkdir.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\cpr-subbuild\CMakeFiles\c50ad71d592ab6b08f9231e18e6fd7c2\cpr-populate-download.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\cpr-subbuild\CMakeFiles\c50ad71d592ab6b08f9231e18e6fd7c2\cpr-populate-update.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\cpr-subbuild\CMakeFiles\c50ad71d592ab6b08f9231e18e6fd7c2\cpr-populate-patch.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\cpr-subbuild\CMakeFiles\c50ad71d592ab6b08f9231e18e6fd7c2\cpr-populate-configure.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\cpr-subbuild\CMakeFiles\c50ad71d592ab6b08f9231e18e6fd7c2\cpr-populate-build.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\cpr-subbuild\CMakeFiles\c50ad71d592ab6b08f9231e18e6fd7c2\cpr-populate-install.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\cpr-subbuild\CMakeFiles\c50ad71d592ab6b08f9231e18e6fd7c2\cpr-populate-test.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\cpr-subbuild\CMakeFiles\f31ec6341ee889254985442bcf25c4c0\cpr-populate-complete.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\cpr-subbuild\CMakeFiles\e458600695c3a8a94995b8659a6f25a0\cpr-populate.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\cpr-subbuild\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\cpr-subbuild\CMakeFiles\cpr-populate" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{42EFBB99-58D1-3E26-9EAF-46CD7FEAF366}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

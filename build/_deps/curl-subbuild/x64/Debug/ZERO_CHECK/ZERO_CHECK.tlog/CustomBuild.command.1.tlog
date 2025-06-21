@@ -1,0 +1,10 @@
+^C:\USERS\ROSIH\ONEDRIVE\DESKTOP\РАБОТА\CURSOR\MONITORING_AGENT\BUILD\_DEPS\CURL-SUBBUILD\CMAKEFILES\51B1CC8AC3BB4758C29E2367CF225A20\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/_deps/curl-subbuild -BC:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/_deps/curl-subbuild --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/_deps/curl-subbuild/curl-populate.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

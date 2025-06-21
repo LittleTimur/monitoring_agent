@@ -1,0 +1,46 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "C:/Users/rosih/OneDrive/Desktop/\u0420\u0430\u0431\u043e\u0442\u0430/Cursor/monitoring_agent/build/_deps/cpr-subbuild/CMakeFiles/cpr-populate"
+		},
+		{
+			"file" : "C:/Users/rosih/OneDrive/Desktop/\u0420\u0430\u0431\u043e\u0442\u0430/Cursor/monitoring_agent/build/_deps/cpr-subbuild/CMakeFiles/e458600695c3a8a94995b8659a6f25a0/cpr-populate.rule"
+		},
+		{
+			"file" : "C:/Users/rosih/OneDrive/Desktop/\u0420\u0430\u0431\u043e\u0442\u0430/Cursor/monitoring_agent/build/_deps/cpr-subbuild/CMakeFiles/f31ec6341ee889254985442bcf25c4c0/cpr-populate-complete.rule"
+		},
+		{
+			"file" : "C:/Users/rosih/OneDrive/Desktop/\u0420\u0430\u0431\u043e\u0442\u0430/Cursor/monitoring_agent/build/_deps/cpr-subbuild/CMakeFiles/c50ad71d592ab6b08f9231e18e6fd7c2/cpr-populate-build.rule"
+		},
+		{
+			"file" : "C:/Users/rosih/OneDrive/Desktop/\u0420\u0430\u0431\u043e\u0442\u0430/Cursor/monitoring_agent/build/_deps/cpr-subbuild/CMakeFiles/c50ad71d592ab6b08f9231e18e6fd7c2/cpr-populate-configure.rule"
+		},
+		{
+			"file" : "C:/Users/rosih/OneDrive/Desktop/\u0420\u0430\u0431\u043e\u0442\u0430/Cursor/monitoring_agent/build/_deps/cpr-subbuild/CMakeFiles/c50ad71d592ab6b08f9231e18e6fd7c2/cpr-populate-download.rule"
+		},
+		{
+			"file" : "C:/Users/rosih/OneDrive/Desktop/\u0420\u0430\u0431\u043e\u0442\u0430/Cursor/monitoring_agent/build/_deps/cpr-subbuild/CMakeFiles/c50ad71d592ab6b08f9231e18e6fd7c2/cpr-populate-install.rule"
+		},
+		{
+			"file" : "C:/Users/rosih/OneDrive/Desktop/\u0420\u0430\u0431\u043e\u0442\u0430/Cursor/monitoring_agent/build/_deps/cpr-subbuild/CMakeFiles/c50ad71d592ab6b08f9231e18e6fd7c2/cpr-populate-mkdir.rule"
+		},
+		{
+			"file" : "C:/Users/rosih/OneDrive/Desktop/\u0420\u0430\u0431\u043e\u0442\u0430/Cursor/monitoring_agent/build/_deps/cpr-subbuild/CMakeFiles/c50ad71d592ab6b08f9231e18e6fd7c2/cpr-populate-patch.rule"
+		},
+		{
+			"file" : "C:/Users/rosih/OneDrive/Desktop/\u0420\u0430\u0431\u043e\u0442\u0430/Cursor/monitoring_agent/build/_deps/cpr-subbuild/CMakeFiles/c50ad71d592ab6b08f9231e18e6fd7c2/cpr-populate-test.rule"
+		},
+		{
+			"file" : "C:/Users/rosih/OneDrive/Desktop/\u0420\u0430\u0431\u043e\u0442\u0430/Cursor/monitoring_agent/build/_deps/cpr-subbuild/CMakeFiles/c50ad71d592ab6b08f9231e18e6fd7c2/cpr-populate-update.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"cpr-populate"
+		],
+		"name" : "cpr-populate"
+	}
+}

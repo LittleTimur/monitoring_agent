@@ -1,0 +1,14 @@
+# Target labels
+ curl-populate
+# Source files and their labels
+C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/_deps/curl-subbuild/CMakeFiles/curl-populate
+C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/_deps/curl-subbuild/CMakeFiles/51b1cc8ac3bb4758c29e2367cf225a20/curl-populate.rule
+C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/_deps/curl-subbuild/CMakeFiles/8cd6729306e2dd6bda4a9c113233fb74/curl-populate-complete.rule
+C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/_deps/curl-subbuild/CMakeFiles/ecbd1bb280e091086d78a386f3eb7fc6/curl-populate-build.rule
+C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/_deps/curl-subbuild/CMakeFiles/ecbd1bb280e091086d78a386f3eb7fc6/curl-populate-configure.rule
+C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/_deps/curl-subbuild/CMakeFiles/ecbd1bb280e091086d78a386f3eb7fc6/curl-populate-download.rule
+C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/_deps/curl-subbuild/CMakeFiles/ecbd1bb280e091086d78a386f3eb7fc6/curl-populate-install.rule
+C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/_deps/curl-subbuild/CMakeFiles/ecbd1bb280e091086d78a386f3eb7fc6/curl-populate-mkdir.rule
+C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/_deps/curl-subbuild/CMakeFiles/ecbd1bb280e091086d78a386f3eb7fc6/curl-populate-patch.rule
+C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/_deps/curl-subbuild/CMakeFiles/ecbd1bb280e091086d78a386f3eb7fc6/curl-populate-test.rule
+C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/_deps/curl-subbuild/CMakeFiles/ecbd1bb280e091086d78a386f3eb7fc6/curl-populate-update.rule

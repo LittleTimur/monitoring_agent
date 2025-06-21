@@ -19,6 +19,9 @@
 #include <filesystem> // Для работы с файловой системой
 #include <iomanip>
 #include <cmath>
+#include <nlohmann/json.hpp>
+#include <cpr/cpr.h>
+using nlohmann::json;
 
 // Глобальная переменная для контроля работы программы
 volatile bool g_running = true;
@@ -31,133 +34,76 @@ void signal_handler(int signal) {
 }
 void print_metrics_to_stream(const monitoring::SystemMetrics& metrics, std::ostream& out);
 
-// Функция для вывода метрик в консоль
-void print_metrics(const monitoring::SystemMetrics& metrics) {
-    // Получаем текущее время
-    auto time = std::chrono::system_clock::to_time_t(metrics.timestamp);
-    
-    std::cout << "\n=== System Metrics at " << std::ctime(&time);
-    std::cout << "===\n\n";
-
-    // CPU Metrics
-    std::cout << "CPU Metrics:\n";
-    if (!std::isnan(metrics.cpu.usage_percent)) {
-        std::cout << "Usage: " << std::fixed << std::setprecision(1) << metrics.cpu.usage_percent << "%\n";
-    } else {
-        std::cout << "Usage: N/A\n";
+// Сериализация SystemMetrics в JSON
+json metrics_to_json(const monitoring::SystemMetrics& metrics) {
+    json j;
+    j["timestamp"] = std::chrono::duration_cast<std::chrono::seconds>(metrics.timestamp.time_since_epoch()).count();
+    // CPU
+    j["cpu"]["usage_percent"] = metrics.cpu.usage_percent;
+    j["cpu"]["temperature"] = metrics.cpu.temperature;
+    j["cpu"]["core_temperatures"] = metrics.cpu.core_temperatures;
+    j["cpu"]["core_usage"] = metrics.cpu.core_usage;
+    // Memory
+    j["memory"]["total_bytes"] = metrics.memory.total_bytes;
+    j["memory"]["used_bytes"] = metrics.memory.used_bytes;
+    j["memory"]["free_bytes"] = metrics.memory.free_bytes;
+    j["memory"]["usage_percent"] = metrics.memory.usage_percent;
+    // Disk
+    for (const auto& part : metrics.disk.partitions) {
+        json jp;
+        jp["mount_point"] = part.mount_point;
+        jp["filesystem"] = part.filesystem;
+        jp["total_bytes"] = part.total_bytes;
+        jp["used_bytes"] = part.used_bytes;
+        jp["free_bytes"] = part.free_bytes;
+        jp["usage_percent"] = part.usage_percent;
+        j["disk"]["partitions"].push_back(jp);
     }
-    
-    if (metrics.cpu.temperature > 0) {
-        std::cout << "Temperature: " << std::fixed << std::setprecision(1) << metrics.cpu.temperature << "°C\n";
-    } else {
-        std::cout << "Temperature: N/A\n";
-    }
-    
-    std::cout << "Core Temperatures: ";
-    for (size_t i = 0; i < metrics.cpu.core_temperatures.size(); ++i) {
-        if (metrics.cpu.core_temperatures[i] > 0) {
-            std::cout << std::fixed << std::setprecision(1) << metrics.cpu.core_temperatures[i] << "°C";
-        } else {
-            std::cout << "N/A";
-        }
-        if (i < metrics.cpu.core_temperatures.size() - 1) std::cout << " ";
-    }
-    std::cout << "\n";
-    
-    std::cout << "Core Usage: ";
-    for (size_t i = 0; i < metrics.cpu.core_usage.size(); ++i) {
-        if (!std::isnan(metrics.cpu.core_usage[i])) {
-            std::cout << std::fixed << std::setprecision(1) << metrics.cpu.core_usage[i] << "%";
-        } else {
-            std::cout << "N/A";
-        }
-        if (i < metrics.cpu.core_usage.size() - 1) std::cout << " ";
-    }
-    std::cout << "\n\n";
-
-    // Memory Metrics
-    std::cout << "Memory Metrics:\n";
-    const double GB = 1024.0 * 1024.0 * 1024.0;
-    std::cout << "Total: " << std::fixed << std::setprecision(1) << (metrics.memory.total_bytes / GB) << " GB\n";
-    std::cout << "Used: " << std::fixed << std::setprecision(1) << (metrics.memory.used_bytes / GB) << " GB\n";
-    std::cout << "Free: " << std::fixed << std::setprecision(1) << (metrics.memory.free_bytes / GB) << " GB\n";
-    std::cout << "Usage: " << std::fixed << std::setprecision(1) << metrics.memory.usage_percent << "%\n\n";
-
-    // Disk Metrics
-    std::cout << "Disk Metrics:\n";
-    for (const auto& partition : metrics.disk.partitions) {
-        std::cout << "\nPartition: " << partition.mount_point << " (" << partition.filesystem << ")\n";
-        std::cout << "Total: " << std::fixed << std::setprecision(1) << (partition.total_bytes / GB) << " GB\n";
-        std::cout << "Used: " << std::fixed << std::setprecision(1) << (partition.used_bytes / GB) << " GB\n";
-        std::cout << "Free: " << std::fixed << std::setprecision(1) << (partition.free_bytes / GB) << " GB\n";
-        std::cout << "Usage: " << std::fixed << std::setprecision(1) << partition.usage_percent << "%\n";
-    }
-    std::cout << "\n";
-
-    // Network Metrics
-    std::cout << "Network Metrics:\n";
+    // Network
     for (const auto& iface : metrics.network.interfaces) {
-        std::cout << "\nInterface: " << iface.name << "\n";
-        std::cout << "Bytes Sent: " << std::fixed << std::setprecision(1) << (iface.bytes_sent / (1024.0 * 1024.0)) << " MB\n";
-        std::cout << "Bytes Received: " << std::fixed << std::setprecision(1) << (iface.bytes_received / (1024.0 * 1024.0)) << " MB\n";
-        double sendRateMB = iface.bandwidth_sent / (1024.0 * 1024.0);
-        double recvRateMB = iface.bandwidth_received / (1024.0 * 1024.0);
-        if (sendRateMB < 1.0) {
-            std::cout << "Current Send Rate: " << std::fixed << std::setprecision(2) << (iface.bandwidth_sent / 1024.0) << " KB/s\n";
-        } else {
-            std::cout << "Current Send Rate: " << std::fixed << std::setprecision(2) << sendRateMB << " MB/s\n";
-        }
-        if (recvRateMB < 1.0) {
-            std::cout << "Current Receive Rate: " << std::fixed << std::setprecision(2) << (iface.bandwidth_received / 1024.0) << " KB/s\n";
-        } else {
-            std::cout << "Current Receive Rate: " << std::fixed << std::setprecision(2) << recvRateMB << " MB/s\n";
-        }
+        json ji;
+        ji["name"] = iface.name;
+        ji["bytes_sent"] = iface.bytes_sent;
+        ji["bytes_received"] = iface.bytes_received;
+        ji["packets_sent"] = iface.packets_sent;
+        ji["packets_received"] = iface.packets_received;
+        ji["bandwidth_sent"] = iface.bandwidth_sent;
+        ji["bandwidth_received"] = iface.bandwidth_received;
+        j["network"]["interfaces"].push_back(ji);
     }
-    if (metrics.network.interfaces.empty()) {
-        std::cout << "No network interfaces found\n";
-    }
-    std::cout << "\n";
-
-    // GPU Metrics
-    std::cout << "GPU Metrics:\n";
-    if (metrics.gpu.temperature > 0) {
-        std::cout << "Temperature: " << std::fixed << std::setprecision(1) << metrics.gpu.temperature << "°C\n";
-    } else {
-        std::cout << "Temperature: N/A\n";
-    }
-    
-    if (!std::isnan(metrics.gpu.usage_percent)) {
-        std::cout << "Usage: " << std::fixed << std::setprecision(1) << metrics.gpu.usage_percent << "%\n";
-    } else {
-        std::cout << "Usage: N/A\n";
-    }
-    
-    if (metrics.gpu.memory_total > 0) {
-        std::cout << "Memory Used: " << std::fixed << std::setprecision(1) << (metrics.gpu.memory_used / GB) << " GB\n";
-        std::cout << "Memory Total: " << std::fixed << std::setprecision(1) << (metrics.gpu.memory_total / GB) << " GB\n";
-    } else {
-        std::cout << "Memory: N/A\n";
-    }
-    std::cout << "\n";
-
-    // HDD Metrics
-    std::cout << "HDD Metrics:\n";
+    // GPU
+    j["gpu"]["temperature"] = metrics.gpu.temperature;
+    j["gpu"]["usage_percent"] = metrics.gpu.usage_percent;
+    j["gpu"]["memory_used"] = metrics.gpu.memory_used;
+    j["gpu"]["memory_total"] = metrics.gpu.memory_total;
+    // HDD
     for (const auto& drive : metrics.hdd.drives) {
-        std::cout << "\nDrive: " << drive.name << "\n";
-        if (drive.temperature > 0) {
-            std::cout << "Temperature: " << std::fixed << std::setprecision(1) << drive.temperature << "°C\n";
-        } else {
-            std::cout << "Temperature: N/A\n";
-        }
-        std::cout << "Power On Hours: " << drive.power_on_hours << "\n";
-        std::cout << "Health Status: " << drive.health_status << "\n";
+        json jd;
+        jd["name"] = drive.name;
+        jd["temperature"] = drive.temperature;
+        jd["power_on_hours"] = drive.power_on_hours;
+        jd["health_status"] = drive.health_status;
+        j["hdd"]["drives"].push_back(jd);
     }
-    if (metrics.hdd.drives.empty()) {
-        std::cout << "No HDD drives found\n";
-    }
-    std::cout << "\n";
+    return j;
+}
 
-    std::cout << "================================\n";
+// Отправка метрик на сервер по HTTP POST
+void send_metrics_http(const nlohmann::json& j) {
+    try {
+        auto response = cpr::Post(
+            cpr::Url{"http://localhost:8080/metrics"},
+            cpr::Header{{"Content-Type", "application/json"}},
+            cpr::Body{j.dump()},
+            cpr::Timeout{2000}
+        );
+        // Можно раскомментировать для отладки, если запрос проходит:
+        // if (response.status_code != 200) {
+        //     std::cerr << "HTTP send warning: status " << response.status_code << std::endl;
+        // }
+    } catch (const std::exception& e) {
+        std::cerr << "HTTP send error: " << e.what() << std::endl;
+    }
 }
 
 /**
@@ -188,13 +134,28 @@ int main() {
             return 1;
         }
         
+        // Открываем файл для JSON-метрик
+        std::ofstream json_file("metrics.json");
+        if (!json_file.is_open()) {
+            std::cerr << "Failed to open metrics.json for writing" << std::endl;
+            return 1;
+        }
+        
         // Основной цикл сбора метрик
         while (g_running) {
             // Собираем метрики
             auto metrics = collector->collect();
             
-            // Выводим метрики в файл
+            // Выводим метрики в файл (человекочитаемый вид)
             print_metrics_to_stream(metrics, metrics_file);
+            
+            // Сохраняем метрики в JSON
+            json j = metrics_to_json(metrics);
+            json_file << j.dump() << std::endl;
+            json_file.flush();
+            
+            // Отправляем метрики на сервер
+            send_metrics_http(j);
             
             // Ждем 3 секунды перед следующим сбором
             std::this_thread::sleep_for(std::chrono::seconds(3));
@@ -202,6 +163,7 @@ int main() {
         
         std::cout << "\nMetrics collection stopped." << std::endl;
         metrics_file.close();
+        json_file.close();
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
         return 1;

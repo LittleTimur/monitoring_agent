@@ -27,13 +27,39 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/bin/Release"
 )
 
+# Добавляем cpr через FetchContent
+include(FetchContent)
+FetchContent_Declare(
+  cpr
+  GIT_REPOSITORY https://github.com/libcpr/cpr.git
+  GIT_TAG 1.10.5
+)
+FetchContent_MakeAvailable(cpr)
+
 # Линкуем необходимые библиотеки для Windows
 if(WIN32)
-    target_link_libraries(${PROJECT_NAME} 
+    target_link_libraries(${PROJECT_NAME} PRIVATE
+        cpr::cpr
         pdh
         iphlpapi
         ws2_32
     )
+endif()
+
+# Автоматическое копирование DLL для Windows (после FetchContent)
+if(WIN32)
+    function(copy_dependency_dll_to_output main_target dependency_target)
+        add_custom_command(TARGET ${main_target} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "$<TARGET_FILE:${dependency_target}>"
+                "$<TARGET_FILE_DIR:${main_target}>"
+            COMMENT "Copying ${dependency_target} DLL to output directory"
+        )
+    endfunction()
+
+    copy_dependency_dll_to_output(${PROJECT_NAME} cpr::cpr)
+    copy_dependency_dll_to_output(${PROJECT_NAME} CURL::libcurl_shared)
+    copy_dependency_dll_to_output(${PROJECT_NAME} zlib)
 endif()
 
 # Если включены тесты, добавляем их
@@ -54,12 +80,3 @@ endif()
 # Устанавливаем флаги компиляции для Release
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
-
-# Копируем необходимые DLL в выходную директорию
-if(WIN32)
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            $<TARGET_FILE:${PROJECT_NAME}>
-            $<TARGET_FILE_DIR:${PROJECT_NAME}>
-    )
-endif()

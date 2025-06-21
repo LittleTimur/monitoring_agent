@@ -1,0 +1,3 @@
+C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/_deps/cpr-subbuild/CMakeFiles/cpr-populate.dir
+C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/_deps/cpr-subbuild/CMakeFiles/ALL_BUILD.dir
+C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/_deps/cpr-subbuild/CMakeFiles/ZERO_CHECK.dir

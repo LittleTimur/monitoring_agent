@@ -1,0 +1,152 @@
+^C:\USERS\ROSIH\ONEDRIVE\DESKTOP\РАБОТА\CURSOR\MONITORING_AGENT\BUILD\_DEPS\CURL-SUBBUILD\CMAKEFILES\ECBD1BB280E091086D78A386F3EB7FC6\CURL-POPULATE-MKDIR.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -Dcfgdir=/Debug -P C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/_deps/curl-subbuild/curl-populate-prefix/tmp/curl-populate-mkdirs.cmake
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/_deps/curl-subbuild/curl-populate-prefix/src/curl-populate-stamp/Debug/curl-populate-mkdir
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\ROSIH\ONEDRIVE\DESKTOP\РАБОТА\CURSOR\MONITORING_AGENT\BUILD\_DEPS\CURL-SUBBUILD\CMAKEFILES\ECBD1BB280E091086D78A386F3EB7FC6\CURL-POPULATE-DOWNLOAD.RULE
+setlocal
+cd C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE -P C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/_deps/curl-subbuild/curl-populate-prefix/src/curl-populate-stamp/download-curl-populate.cmake
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE -P C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/_deps/curl-subbuild/curl-populate-prefix/src/curl-populate-stamp/verify-curl-populate.cmake
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE -P C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/_deps/curl-subbuild/curl-populate-prefix/src/curl-populate-stamp/extract-curl-populate.cmake
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/_deps/curl-subbuild/curl-populate-prefix/src/curl-populate-stamp/Debug/curl-populate-download
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\ROSIH\ONEDRIVE\DESKTOP\РАБОТА\CURSOR\MONITORING_AGENT\BUILD\_DEPS\CURL-SUBBUILD\CMAKEFILES\ECBD1BB280E091086D78A386F3EB7FC6\CURL-POPULATE-UPDATE.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -E echo_append
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/_deps/curl-subbuild/curl-populate-prefix/src/curl-populate-stamp/Debug/curl-populate-update
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\ROSIH\ONEDRIVE\DESKTOP\РАБОТА\CURSOR\MONITORING_AGENT\BUILD\_DEPS\CURL-SUBBUILD\CMAKEFILES\ECBD1BB280E091086D78A386F3EB7FC6\CURL-POPULATE-PATCH.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -E echo_append
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/_deps/curl-subbuild/curl-populate-prefix/src/curl-populate-stamp/Debug/curl-populate-patch
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\ROSIH\ONEDRIVE\DESKTOP\РАБОТА\CURSOR\MONITORING_AGENT\BUILD\_DEPS\CURL-SUBBUILD\CMAKEFILES\ECBD1BB280E091086D78A386F3EB7FC6\CURL-POPULATE-CONFIGURE.RULE
+setlocal
+cd C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\curl-build
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E echo_append
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/_deps/curl-subbuild/curl-populate-prefix/src/curl-populate-stamp/Debug/curl-populate-configure
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\ROSIH\ONEDRIVE\DESKTOP\РАБОТА\CURSOR\MONITORING_AGENT\BUILD\_DEPS\CURL-SUBBUILD\CMAKEFILES\ECBD1BB280E091086D78A386F3EB7FC6\CURL-POPULATE-BUILD.RULE
+setlocal
+cd C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\curl-build
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E echo_append
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/_deps/curl-subbuild/curl-populate-prefix/src/curl-populate-stamp/Debug/curl-populate-build
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\ROSIH\ONEDRIVE\DESKTOP\РАБОТА\CURSOR\MONITORING_AGENT\BUILD\_DEPS\CURL-SUBBUILD\CMAKEFILES\ECBD1BB280E091086D78A386F3EB7FC6\CURL-POPULATE-INSTALL.RULE
+setlocal
+cd C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\curl-build
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E echo_append
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/_deps/curl-subbuild/curl-populate-prefix/src/curl-populate-stamp/Debug/curl-populate-install
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\ROSIH\ONEDRIVE\DESKTOP\РАБОТА\CURSOR\MONITORING_AGENT\BUILD\_DEPS\CURL-SUBBUILD\CMAKEFILES\ECBD1BB280E091086D78A386F3EB7FC6\CURL-POPULATE-TEST.RULE
+setlocal
+cd C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\curl-build
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E echo_append
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/_deps/curl-subbuild/curl-populate-prefix/src/curl-populate-stamp/Debug/curl-populate-test
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\ROSIH\ONEDRIVE\DESKTOP\РАБОТА\CURSOR\MONITORING_AGENT\BUILD\_DEPS\CURL-SUBBUILD\CMAKEFILES\8CD6729306E2DD6BDA4A9C113233FB74\CURL-POPULATE-COMPLETE.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -E make_directory C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/_deps/curl-subbuild/CMakeFiles/Debug
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/_deps/curl-subbuild/CMakeFiles/Debug/curl-populate-complete
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/_deps/curl-subbuild/curl-populate-prefix/src/curl-populate-stamp/Debug/curl-populate-done
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\ROSIH\ONEDRIVE\DESKTOP\РАБОТА\CURSOR\MONITORING_AGENT\BUILD\_DEPS\CURL-SUBBUILD\CMAKEFILES\51B1CC8AC3BB4758C29E2367CF225A20\CURL-POPULATE.RULE
+setlocal
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\ROSIH\ONEDRIVE\DESKTOP\РАБОТА\CURSOR\MONITORING_AGENT\BUILD\_DEPS\CURL-SUBBUILD\CMAKELISTS.TXT
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/_deps/curl-subbuild -BC:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/_deps/curl-subbuild --check-stamp-file C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/_deps/curl-subbuild/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

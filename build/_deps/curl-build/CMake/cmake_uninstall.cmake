@@ -26,7 +26,7 @@ if(NOT EXISTS "C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_ag
 endif()
 
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
-  set(CMAKE_INSTALL_PREFIX "C:/Program Files (x86)/monitoring_agent")
+  set(CMAKE_INSTALL_PREFIX "C:/Program Files/monitoring_agent")
 endif()
 message(${CMAKE_INSTALL_PREFIX})
 

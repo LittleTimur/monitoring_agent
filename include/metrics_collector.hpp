@@ -164,4 +164,6 @@ public:
     virtual SystemMetrics collect() = 0;
 };
 
+std::unique_ptr<MetricsCollector> create_metrics_collector();
+
 } // namespace monitoring 

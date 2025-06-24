@@ -14,8 +14,13 @@ include_directories(${PROJECT_SOURCE_DIR}/include)
 # Список исходных файлов
 set(SOURCES
     src/main.cpp
-    src/windows_metrics_collector.cpp
 )
+
+if(WIN32)
+    list(APPEND SOURCES src/windows_metrics_collector.cpp)
+else()
+    list(APPEND SOURCES src/linux_metrics_collector.cpp)
+endif()
 
 # Создаем исполняемый файл
 add_executable(${PROJECT_NAME} ${SOURCES})
@@ -36,7 +41,7 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(cpr)
 
-# Линкуем необходимые библиотеки для Windows
+# Линкуем необходимые библиотеки для Windows и Linux
 if(WIN32)
     target_link_libraries(${PROJECT_NAME} PRIVATE
         cpr::cpr
@@ -44,6 +49,8 @@ if(WIN32)
         iphlpapi
         ws2_32
     )
+else()
+    target_link_libraries(${PROJECT_NAME} PRIVATE cpr::cpr)
 endif()
 
 # Автоматическое копирование DLL для Windows (после FetchContent)
@@ -78,5 +85,7 @@ if(WIN32)
 endif()
 
 # Устанавливаем флаги компиляции для Release
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
+if(WIN32)
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
+endif()

@@ -1,4 +1,4 @@
-prefix=C:/Program Files (x86)/monitoring_agent
+prefix=C:/Program Files/monitoring_agent
 exec_prefix=${prefix}
 libdir=${exec_prefix}/lib
 sharedlibdir=${libdir}

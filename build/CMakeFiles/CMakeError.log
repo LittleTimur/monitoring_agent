@@ -1,434 +1,426 @@
 Performing Curl Test HAVE_FCNTL_O_NONBLOCK failed with the following output:
 Change Dir: 'C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/CMakeFiles/CMakeTmp'
 
-Run Build Command(s): "C:/Program Files/Microsoft Visual Studio/2022/Community/MSBuild/Current/Bin/amd64/MSBuild.exe" cmTC_a74ee.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=17.0 /v:n
-╨Т╨╡╤А╤Б╨╕╤П MSBuild 17.11.9+a69bbaaf5 ╨┤╨╗╤П .NET Framework
-╨б╨▒╨╛╤А╨║╨░ ╨╜╨░╤З╨░╤В╨░ 21.06.2025 20:38:47.
+Run Build Command(s): "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/MSBuild/Current/Bin/MSBuild.exe" cmTC_d963f.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=16.0 /v:n
+Microsoft (R) Build Engine версии 16.11.6+a918ceb31 для .NET Framework
+(C) Корпорация Майкрософт (Microsoft Corporation). Все права защищены.
 
-╨Я╤А╨╛╨╡╨║╤В "C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_a74ee.vcxproj" ╨▓ ╤Г╨╖╨╗╨╡ 1 (╤Ж╨╡╨╗╨╡╨▓╤Л╨╡ ╨╛╨▒╤К╨╡╨║╤В╤Л ╨┐╨╛ ╤Г╨╝╨╛╨╗╤З╨░╨╜╨╕╤О).
+Сборка начата 24.06.2025 18:23:00.
+Проект "C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_d963f.vcxproj" в узле 1 (целевые объекты по умолчанию).
 PrepareForBuild:
-  ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ ╨║╨░╤В╨░╨╗╨╛╨│╨░ "cmTC_a74ee.dir\Debug\".
-  ╨б╤В╤А╤Г╨║╤В╤Г╤А╨╕╤А╨╛╨▓╨░╨╜╨╜╤Л╨╣ ╨▓╤Л╨▓╨╛╨┤ ╨▓╨║╨╗╤О╤З╨╡╨╜. ╨д╨╛╤А╨╝╨░╤В╨╕╤А╨╛╨▓╨░╨╜╨╕╨╡ ╨┤╨╕╨░╨│╨╜╨╛╤Б╤В╨╕╨║╨╕ ╨║╨╛╨╝╨┐╨╕╨╗╤П╤В╨╛╤А╨░ ╨▒╤Г╨┤╨╡╤В ╨╛╤В╤А╨░╨╢╨░╤В╤М ╨╕╨╡╤А╨░╤А╤Е╨╕╤О ╨╛╤И╨╕╨▒╨╛╨║. ╨Я╨╛╨┤╤А╨╛╨▒╨╜╨╡╨╡ ╤Б╨╝. https://aka.ms/cpp/structured-output.
-  ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ ╨║╨░╤В╨░╨╗╨╛╨│╨░ "C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\Debug\".
-  ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ ╨║╨░╤В╨░╨╗╨╛╨│╨░ "cmTC_a74ee.dir\Debug\cmTC_a74ee.tlog\".
+  Создание каталога "cmTC_d963f.dir\Debug\".
+  Создание каталога "C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\Debug\".
+  Создание каталога "cmTC_d963f.dir\Debug\cmTC_d963f.tlog\".
 InitializeBuildStatus:
-  ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ "cmTC_a74ee.dir\Debug\cmTC_a74ee.tlog\unsuccessfulbuild", ╤В╨░╨║ ╨║╨░╨║ ╨▒╤Л╨╗╨╛ ╨╖╨░╨┤╨░╨╜╨╛ "AlwaysCreate".
-  ╨Ю╨▒╤А╨░╤Й╨╡╨╜╨╕╨╡ ╨║ "cmTC_a74ee.dir\Debug\cmTC_a74ee.tlog\unsuccessfulbuild".
+  Создание "cmTC_d963f.dir\Debug\cmTC_d963f.tlog\unsuccessfulbuild", так как было задано "AlwaysCreate".
 ClCompile:
-  C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\bin\HostX64\x64\CL.exe /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D HAVE_FCNTL_O_NONBLOCK /D HAVE_WINDOWS_H /D HAVE_WS2TCPIP_H /D HAVE_WINSOCK2_H /D HAVE_INTTYPES_H /D HAVE_SYS_STAT_H /D HAVE_SYS_TYPES_H /D HAVE_SYS_UTIME_H /D HAVE_FCNTL_H /D HAVE_IO_H /D HAVE_LOCALE_H /D HAVE_STDBOOL_H /D HAVE_STDINT_H /D "CMAKE_INTDIR=\"Debug\"" /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_a74ee.dir\Debug\\" /Fd"cmTC_a74ee.dir\Debug\vc143.pdb" /external:W1 /Gd /TC /errorReport:queue "C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c"
-  ╨Ю╨┐╤В╨╕╨╝╨╕╨╖╨╕╤А╤Г╤О╤Й╨╕╨╣ ╨║╨╛╨╝╨┐╨╕╨╗╤П╤В╨╛╤А Microsoft (R) C/C++ ╨▓╨╡╤А╤Б╨╕╨╕ 19.41.34123 ╨┤╨╗╤П x64
-  (C) ╨Ъ╨╛╤А╨┐╨╛╤А╨░╤Ж╨╕╤П ╨Ь╨░╨╣╨║╤А╨╛╤Б╨╛╤Д╤В (Microsoft Corporation).  ╨Т╤Б╨╡ ╨┐╤А╨░╨▓╨░ ╨╖╨░╤Й╨╕╤Й╨╡╨╜╤Л.
-  cl /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D HAVE_FCNTL_O_NONBLOCK /D HAVE_WINDOWS_H /D HAVE_WS2TCPIP_H /D HAVE_WINSOCK2_H /D HAVE_INTTYPES_H /D HAVE_SYS_STAT_H /D HAVE_SYS_TYPES_H /D HAVE_SYS_UTIME_H /D HAVE_FCNTL_H /D HAVE_IO_H /D HAVE_LOCALE_H /D HAVE_STDBOOL_H /D HAVE_STDINT_H /D "CMAKE_INTDIR=\"Debug\"" /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_a74ee.dir\Debug\\" /Fd"cmTC_a74ee.dir\Debug\vc143.pdb" /external:W1 /Gd /TC /errorReport:queue "C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c"
+  C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\bin\HostX64\x64\CL.exe /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D HAVE_FCNTL_O_NONBLOCK /D HAVE_WINDOWS_H /D HAVE_WS2TCPIP_H /D HAVE_WINSOCK2_H /D HAVE_INTTYPES_H /D HAVE_SYS_STAT_H /D HAVE_SYS_TYPES_H /D HAVE_SYS_UTIME_H /D HAVE_FCNTL_H /D HAVE_IO_H /D HAVE_LOCALE_H /D HAVE_STDBOOL_H /D HAVE_STDINT_H /D "CMAKE_INTDIR=\"Debug\"" /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_d963f.dir\Debug\\" /Fd"cmTC_d963f.dir\Debug\vc142.pdb" /external:W1 /Gd /TC /errorReport:queue "C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c"
+  Оптимизирующий компилятор Microsoft (R) C/C++ версии 19.29.30159 для x64
   CurlTests.c
-C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(29,10): error C1083: ╨Э╨╡ ╤Г╨┤╨░╨╡╤В╤Б╤П ╨╛╤В╨║╤А╤Л╤В╤М ╤Д╨░╨╣╨╗ ╨▓╨║╨╗╤О╤З╨╡╨╜╨╕╨╡: unistd.h: No such file or directory, [C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_a74ee.vcxproj]
-╨б╨▒╨╛╤А╨║╨░ ╨┐╤А╨╛╨╡╨║╤В╨░ "C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_a74ee.vcxproj" ╨╖╨░╨▓╨╡╤А╤И╨╡╨╜╨░ (╤Ж╨╡╨╗╨╡╨▓╤Л╨╡ ╨╛╨▒╤К╨╡╨║╤В╤Л ╨┐╨╛ ╤Г╨╝╨╛╨╗╤З╨░╨╜╨╕╤О) ╤Б ╨╛╤И╨╕╨▒╨║╨╛╨╣.
+  (C) Корпорация Майкрософт (Microsoft Corporation).  Все права защищены.
+  cl /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D HAVE_FCNTL_O_NONBLOCK /D HAVE_WINDOWS_H /D HAVE_WS2TCPIP_H /D HAVE_WINSOCK2_H /D HAVE_INTTYPES_H /D HAVE_SYS_STAT_H /D HAVE_SYS_TYPES_H /D HAVE_SYS_UTIME_H /D HAVE_FCNTL_H /D HAVE_IO_H /D HAVE_LOCALE_H /D HAVE_STDBOOL_H /D HAVE_STDINT_H /D "CMAKE_INTDIR=\"Debug\"" /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_d963f.dir\Debug\\" /Fd"cmTC_d963f.dir\Debug\vc142.pdb" /external:W1 /Gd /TC /errorReport:queue "C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c"
+C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(29,10): fatal error C1083: Не удается открыть файл включение: unistd.h: No such file or directory, [C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_d963f.vcxproj]
+Сборка проекта "C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_d963f.vcxproj" завершена (целевые объекты по умолчанию) с ошибкой.
 
-╨Ю╤И╨╕╨▒╨║╨░ ╤Б╨▒╨╛╤А╨║╨╕.
+Ошибка сборки.
 
-"C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_a74ee.vcxproj" (╤Ж╨╡╨╗╨╡╨▓╨╛╨╣ ╨╛╨▒╤К╨╡╨║╤В ╨┐╨╛ ╤Г╨╝╨╛╨╗╤З╨░╨╜╨╕╤О) (1) ->
-(╨ж╨╡╨╗╨╡╨▓╨╛╨╣ ╨╛╨▒╤К╨╡╨║╤В ClCompile) -> 
-  C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(29,10): error C1083: ╨Э╨╡ ╤Г╨┤╨░╨╡╤В╤Б╤П ╨╛╤В╨║╤А╤Л╤В╤М ╤Д╨░╨╣╨╗ ╨▓╨║╨╗╤О╤З╨╡╨╜╨╕╨╡: unistd.h: No such file or directory, [C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_a74ee.vcxproj]
+"C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_d963f.vcxproj" (целевой объект по умолчанию) (1) ->
+(Целевой объект ClCompile) -> 
+  C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(29,10): fatal error C1083: Не удается открыть файл включение: unistd.h: No such file or directory, [C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_d963f.vcxproj]
 
-    ╨Я╤А╨╡╨┤╤Г╨┐╤А╨╡╨╢╨┤╨╡╨╜╨╕╨╣: 0
-    ╨Ю╤И╨╕╨▒╨╛╨║: 1
+    Предупреждений: 0
+    Ошибок: 1
 
-╨Я╤А╨╛╤И╨╗╨╛ ╨▓╤А╨╡╨╝╨╡╨╜╨╕ 00:00:00.72
+Прошло времени 00:00:00.97
 
 
 Performing Curl Test HAVE_IOCTLSOCKET_CAMEL failed with the following output:
 Change Dir: 'C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/CMakeFiles/CMakeTmp'
 
-Run Build Command(s): "C:/Program Files/Microsoft Visual Studio/2022/Community/MSBuild/Current/Bin/amd64/MSBuild.exe" cmTC_9df92.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=17.0 /v:n
-╨Т╨╡╤А╤Б╨╕╤П MSBuild 17.11.9+a69bbaaf5 ╨┤╨╗╤П .NET Framework
-╨б╨▒╨╛╤А╨║╨░ ╨╜╨░╤З╨░╤В╨░ 21.06.2025 20:38:49.
+Run Build Command(s): "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/MSBuild/Current/Bin/MSBuild.exe" cmTC_70fa0.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=16.0 /v:n
+Microsoft (R) Build Engine версии 16.11.6+a918ceb31 для .NET Framework
+(C) Корпорация Майкрософт (Microsoft Corporation). Все права защищены.
 
-╨Я╤А╨╛╨╡╨║╤В "C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_9df92.vcxproj" ╨▓ ╤Г╨╖╨╗╨╡ 1 (╤Ж╨╡╨╗╨╡╨▓╤Л╨╡ ╨╛╨▒╤К╨╡╨║╤В╤Л ╨┐╨╛ ╤Г╨╝╨╛╨╗╤З╨░╨╜╨╕╤О).
+Сборка начата 24.06.2025 18:23:03.
+Проект "C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_70fa0.vcxproj" в узле 1 (целевые объекты по умолчанию).
 PrepareForBuild:
-  ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ ╨║╨░╤В╨░╨╗╨╛╨│╨░ "cmTC_9df92.dir\Debug\".
-  ╨б╤В╤А╤Г╨║╤В╤Г╤А╨╕╤А╨╛╨▓╨░╨╜╨╜╤Л╨╣ ╨▓╤Л╨▓╨╛╨┤ ╨▓╨║╨╗╤О╤З╨╡╨╜. ╨д╨╛╤А╨╝╨░╤В╨╕╤А╨╛╨▓╨░╨╜╨╕╨╡ ╨┤╨╕╨░╨│╨╜╨╛╤Б╤В╨╕╨║╨╕ ╨║╨╛╨╝╨┐╨╕╨╗╤П╤В╨╛╤А╨░ ╨▒╤Г╨┤╨╡╤В ╨╛╤В╤А╨░╨╢╨░╤В╤М ╨╕╨╡╤А╨░╤А╤Е╨╕╤О ╨╛╤И╨╕╨▒╨╛╨║. ╨Я╨╛╨┤╤А╨╛╨▒╨╜╨╡╨╡ ╤Б╨╝. https://aka.ms/cpp/structured-output.
-  ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ ╨║╨░╤В╨░╨╗╨╛╨│╨░ "C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\Debug\".
-  ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ ╨║╨░╤В╨░╨╗╨╛╨│╨░ "cmTC_9df92.dir\Debug\cmTC_9df92.tlog\".
+  Создание каталога "cmTC_70fa0.dir\Debug\".
+  Создание каталога "C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\Debug\".
+  Создание каталога "cmTC_70fa0.dir\Debug\cmTC_70fa0.tlog\".
 InitializeBuildStatus:
-  ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ "cmTC_9df92.dir\Debug\cmTC_9df92.tlog\unsuccessfulbuild", ╤В╨░╨║ ╨║╨░╨║ ╨▒╤Л╨╗╨╛ ╨╖╨░╨┤╨░╨╜╨╛ "AlwaysCreate".
-  ╨Ю╨▒╤А╨░╤Й╨╡╨╜╨╕╨╡ ╨║ "cmTC_9df92.dir\Debug\cmTC_9df92.tlog\unsuccessfulbuild".
+  Создание "cmTC_70fa0.dir\Debug\cmTC_70fa0.tlog\unsuccessfulbuild", так как было задано "AlwaysCreate".
 ClCompile:
-  C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\bin\HostX64\x64\CL.exe /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D HAVE_IOCTLSOCKET_CAMEL /D HAVE_WINDOWS_H /D HAVE_WS2TCPIP_H /D HAVE_WINSOCK2_H /D HAVE_INTTYPES_H /D HAVE_SYS_STAT_H /D HAVE_SYS_TYPES_H /D HAVE_SYS_UTIME_H /D HAVE_FCNTL_H /D HAVE_IO_H /D HAVE_LOCALE_H /D HAVE_STDBOOL_H /D HAVE_STDINT_H /D "CMAKE_INTDIR=\"Debug\"" /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_9df92.dir\Debug\\" /Fd"cmTC_9df92.dir\Debug\vc143.pdb" /external:W1 /Gd /TC /errorReport:queue "C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c"
-  ╨Ю╨┐╤В╨╕╨╝╨╕╨╖╨╕╤А╤Г╤О╤Й╨╕╨╣ ╨║╨╛╨╝╨┐╨╕╨╗╤П╤В╨╛╤А Microsoft (R) C/C++ ╨▓╨╡╤А╤Б╨╕╨╕ 19.41.34123 ╨┤╨╗╤П x64
-  (C) ╨Ъ╨╛╤А╨┐╨╛╤А╨░╤Ж╨╕╤П ╨Ь╨░╨╣╨║╤А╨╛╤Б╨╛╤Д╤В (Microsoft Corporation).  ╨Т╤Б╨╡ ╨┐╤А╨░╨▓╨░ ╨╖╨░╤Й╨╕╤Й╨╡╨╜╤Л.
-  cl /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D HAVE_IOCTLSOCKET_CAMEL /D HAVE_WINDOWS_H /D HAVE_WS2TCPIP_H /D HAVE_WINSOCK2_H /D HAVE_INTTYPES_H /D HAVE_SYS_STAT_H /D HAVE_SYS_TYPES_H /D HAVE_SYS_UTIME_H /D HAVE_FCNTL_H /D HAVE_IO_H /D HAVE_LOCALE_H /D HAVE_STDBOOL_H /D HAVE_STDINT_H /D "CMAKE_INTDIR=\"Debug\"" /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_9df92.dir\Debug\\" /Fd"cmTC_9df92.dir\Debug\vc143.pdb" /external:W1 /Gd /TC /errorReport:queue "C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c"
+  C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\bin\HostX64\x64\CL.exe /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D HAVE_IOCTLSOCKET_CAMEL /D HAVE_WINDOWS_H /D HAVE_WS2TCPIP_H /D HAVE_WINSOCK2_H /D HAVE_INTTYPES_H /D HAVE_SYS_STAT_H /D HAVE_SYS_TYPES_H /D HAVE_SYS_UTIME_H /D HAVE_FCNTL_H /D HAVE_IO_H /D HAVE_LOCALE_H /D HAVE_STDBOOL_H /D HAVE_STDINT_H /D "CMAKE_INTDIR=\"Debug\"" /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_70fa0.dir\Debug\\" /Fd"cmTC_70fa0.dir\Debug\vc142.pdb" /external:W1 /Gd /TC /errorReport:queue "C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c"
+  Оптимизирующий компилятор Microsoft (R) C/C++ версии 19.29.30159 для x64
   CurlTests.c
+  (C) Корпорация Майкрософт (Microsoft Corporation).  Все права защищены.
+  cl /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D HAVE_IOCTLSOCKET_CAMEL /D HAVE_WINDOWS_H /D HAVE_WS2TCPIP_H /D HAVE_WINSOCK2_H /D HAVE_INTTYPES_H /D HAVE_SYS_STAT_H /D HAVE_SYS_TYPES_H /D HAVE_SYS_UTIME_H /D HAVE_FCNTL_H /D HAVE_IO_H /D HAVE_LOCALE_H /D HAVE_STDBOOL_H /D HAVE_STDINT_H /D "CMAKE_INTDIR=\"Debug\"" /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_70fa0.dir\Debug\\" /Fd"cmTC_70fa0.dir\Debug\vc142.pdb" /external:W1 /Gd /TC /errorReport:queue "C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c"
 Link:
-  C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\bin\HostX64\x64\link.exe /ERRORREPORT:QUEUE /OUT:"C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\Debug\cmTC_9df92.exe" /INCREMENTAL /ILK:"cmTC_9df92.dir\Debug\cmTC_9df92.ilk" /NOLOGO ws2_32.lib kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:/Users/rosih/OneDrive/Desktop/╨а╨░╨▒╨╛╤В╨░/Cursor/monitoring_agent/build/CMakeFiles/CMakeTmp/Debug/cmTC_9df92.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:/Users/rosih/OneDrive/Desktop/╨а╨░╨▒╨╛╤В╨░/Cursor/monitoring_agent/build/CMakeFiles/CMakeTmp/Debug/cmTC_9df92.lib" /MACHINE:X64  /machine:x64 cmTC_9df92.dir\Debug\CurlTests.obj
-CurlTests.obj : error LNK2019: ╤Б╤Б╤Л╨╗╨║╨░ ╨╜╨░ ╨╜╨╡╤А╨░╨╖╤А╨╡╤И╨╡╨╜╨╜╤Л╨╣ ╨▓╨╜╨╡╤И╨╜╨╕╨╣ ╤Б╨╕╨╝╨▓╨╛╨╗ IoctlSocket ╨▓ ╤Д╤Г╨╜╨║╤Ж╨╕╨╕ main. [C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_9df92.vcxproj]
-C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\Debug\cmTC_9df92.exe : fatal error LNK1120: ╨╜╨╡╤А╨░╨╖╤А╨╡╤И╨╡╨╜╨╜╤Л╤Е ╨▓╨╜╨╡╤И╨╜╨╕╤Е ╤Н╨╗╨╡╨╝╨╡╨╜╤В╨╛╨▓: 1 [C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_9df92.vcxproj]
-╨б╨▒╨╛╤А╨║╨░ ╨┐╤А╨╛╨╡╨║╤В╨░ "C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_9df92.vcxproj" ╨╖╨░╨▓╨╡╤А╤И╨╡╨╜╨░ (╤Ж╨╡╨╗╨╡╨▓╤Л╨╡ ╨╛╨▒╤К╨╡╨║╤В╤Л ╨┐╨╛ ╤Г╨╝╨╛╨╗╤З╨░╨╜╨╕╤О) ╤Б ╨╛╤И╨╕╨▒╨║╨╛╨╣.
+  C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\bin\HostX64\x64\link.exe /ERRORREPORT:QUEUE /OUT:"C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\Debug\cmTC_70fa0.exe" /INCREMENTAL /ILK:"cmTC_70fa0.dir\Debug\cmTC_70fa0.ilk" /NOLOGO ws2_32.lib kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/CMakeFiles/CMakeTmp/Debug/cmTC_70fa0.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/CMakeFiles/CMakeTmp/Debug/cmTC_70fa0.lib" /MACHINE:X64  /machine:x64 cmTC_70fa0.dir\Debug\CurlTests.obj
+CurlTests.obj : error LNK2019: ссылка на неразрешенный внешний символ IoctlSocket в функции main. [C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_70fa0.vcxproj]
+C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\Debug\cmTC_70fa0.exe : fatal error LNK1120: неразрешенных внешних элементов: 1 [C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_70fa0.vcxproj]
+Сборка проекта "C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_70fa0.vcxproj" завершена (целевые объекты по умолчанию) с ошибкой.
 
-╨Ю╤И╨╕╨▒╨║╨░ ╤Б╨▒╨╛╤А╨║╨╕.
+Ошибка сборки.
 
-"C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_9df92.vcxproj" (╤Ж╨╡╨╗╨╡╨▓╨╛╨╣ ╨╛╨▒╤К╨╡╨║╤В ╨┐╨╛ ╤Г╨╝╨╛╨╗╤З╨░╨╜╨╕╤О) (1) ->
-(╨ж╨╡╨╗╨╡╨▓╨╛╨╣ ╨╛╨▒╤К╨╡╨║╤В Link) -> 
-  CurlTests.obj : error LNK2019: ╤Б╤Б╤Л╨╗╨║╨░ ╨╜╨░ ╨╜╨╡╤А╨░╨╖╤А╨╡╤И╨╡╨╜╨╜╤Л╨╣ ╨▓╨╜╨╡╤И╨╜╨╕╨╣ ╤Б╨╕╨╝╨▓╨╛╨╗ IoctlSocket ╨▓ ╤Д╤Г╨╜╨║╤Ж╨╕╨╕ main. [C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_9df92.vcxproj]
-  C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\Debug\cmTC_9df92.exe : fatal error LNK1120: ╨╜╨╡╤А╨░╨╖╤А╨╡╤И╨╡╨╜╨╜╤Л╤Е ╨▓╨╜╨╡╤И╨╜╨╕╤Е ╤Н╨╗╨╡╨╝╨╡╨╜╤В╨╛╨▓: 1 [C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_9df92.vcxproj]
+"C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_70fa0.vcxproj" (целевой объект по умолчанию) (1) ->
+(Целевой объект Link) -> 
+  CurlTests.obj : error LNK2019: ссылка на неразрешенный внешний символ IoctlSocket в функции main. [C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_70fa0.vcxproj]
+  C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\Debug\cmTC_70fa0.exe : fatal error LNK1120: неразрешенных внешних элементов: 1 [C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_70fa0.vcxproj]
 
-    ╨Я╤А╨╡╨┤╤Г╨┐╤А╨╡╨╢╨┤╨╡╨╜╨╕╨╣: 0
-    ╨Ю╤И╨╕╨▒╨╛╨║: 2
+    Предупреждений: 0
+    Ошибок: 2
 
-╨Я╤А╨╛╤И╨╗╨╛ ╨▓╤А╨╡╨╝╨╡╨╜╨╕ 00:00:00.93
+Прошло времени 00:00:01.59
 
 
 Performing Curl Test HAVE_IOCTLSOCKET_CAMEL_FIONBIO failed with the following output:
 Change Dir: 'C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/CMakeFiles/CMakeTmp'
 
-Run Build Command(s): "C:/Program Files/Microsoft Visual Studio/2022/Community/MSBuild/Current/Bin/amd64/MSBuild.exe" cmTC_6cd82.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=17.0 /v:n
-╨Т╨╡╤А╤Б╨╕╤П MSBuild 17.11.9+a69bbaaf5 ╨┤╨╗╤П .NET Framework
-╨б╨▒╨╛╤А╨║╨░ ╨╜╨░╤З╨░╤В╨░ 21.06.2025 20:38:51.
+Run Build Command(s): "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/MSBuild/Current/Bin/MSBuild.exe" cmTC_fa08a.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=16.0 /v:n
+Microsoft (R) Build Engine версии 16.11.6+a918ceb31 для .NET Framework
+(C) Корпорация Майкрософт (Microsoft Corporation). Все права защищены.
 
-╨Я╤А╨╛╨╡╨║╤В "C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_6cd82.vcxproj" ╨▓ ╤Г╨╖╨╗╨╡ 1 (╤Ж╨╡╨╗╨╡╨▓╤Л╨╡ ╨╛╨▒╤К╨╡╨║╤В╤Л ╨┐╨╛ ╤Г╨╝╨╛╨╗╤З╨░╨╜╨╕╤О).
+Сборка начата 24.06.2025 18:23:06.
+Проект "C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_fa08a.vcxproj" в узле 1 (целевые объекты по умолчанию).
 PrepareForBuild:
-  ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ ╨║╨░╤В╨░╨╗╨╛╨│╨░ "cmTC_6cd82.dir\Debug\".
-  ╨б╤В╤А╤Г╨║╤В╤Г╤А╨╕╤А╨╛╨▓╨░╨╜╨╜╤Л╨╣ ╨▓╤Л╨▓╨╛╨┤ ╨▓╨║╨╗╤О╤З╨╡╨╜. ╨д╨╛╤А╨╝╨░╤В╨╕╤А╨╛╨▓╨░╨╜╨╕╨╡ ╨┤╨╕╨░╨│╨╜╨╛╤Б╤В╨╕╨║╨╕ ╨║╨╛╨╝╨┐╨╕╨╗╤П╤В╨╛╤А╨░ ╨▒╤Г╨┤╨╡╤В ╨╛╤В╤А╨░╨╢╨░╤В╤М ╨╕╨╡╤А╨░╤А╤Е╨╕╤О ╨╛╤И╨╕╨▒╨╛╨║. ╨Я╨╛╨┤╤А╨╛╨▒╨╜╨╡╨╡ ╤Б╨╝. https://aka.ms/cpp/structured-output.
-  ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ ╨║╨░╤В╨░╨╗╨╛╨│╨░ "C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\Debug\".
-  ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ ╨║╨░╤В╨░╨╗╨╛╨│╨░ "cmTC_6cd82.dir\Debug\cmTC_6cd82.tlog\".
+  Создание каталога "cmTC_fa08a.dir\Debug\".
+  Создание каталога "C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\Debug\".
+  Создание каталога "cmTC_fa08a.dir\Debug\cmTC_fa08a.tlog\".
 InitializeBuildStatus:
-  ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ "cmTC_6cd82.dir\Debug\cmTC_6cd82.tlog\unsuccessfulbuild", ╤В╨░╨║ ╨║╨░╨║ ╨▒╤Л╨╗╨╛ ╨╖╨░╨┤╨░╨╜╨╛ "AlwaysCreate".
-  ╨Ю╨▒╤А╨░╤Й╨╡╨╜╨╕╨╡ ╨║ "cmTC_6cd82.dir\Debug\cmTC_6cd82.tlog\unsuccessfulbuild".
+  Создание "cmTC_fa08a.dir\Debug\cmTC_fa08a.tlog\unsuccessfulbuild", так как было задано "AlwaysCreate".
 ClCompile:
-  C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\bin\HostX64\x64\CL.exe /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D HAVE_IOCTLSOCKET_CAMEL_FIONBIO /D HAVE_WINDOWS_H /D HAVE_WS2TCPIP_H /D HAVE_WINSOCK2_H /D HAVE_INTTYPES_H /D HAVE_SYS_STAT_H /D HAVE_SYS_TYPES_H /D HAVE_SYS_UTIME_H /D HAVE_FCNTL_H /D HAVE_IO_H /D HAVE_LOCALE_H /D HAVE_STDBOOL_H /D HAVE_STDINT_H /D "CMAKE_INTDIR=\"Debug\"" /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_6cd82.dir\Debug\\" /Fd"cmTC_6cd82.dir\Debug\vc143.pdb" /external:W1 /Gd /TC /errorReport:queue "C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c"
-  ╨Ю╨┐╤В╨╕╨╝╨╕╨╖╨╕╤А╤Г╤О╤Й╨╕╨╣ ╨║╨╛╨╝╨┐╨╕╨╗╤П╤В╨╛╤А Microsoft (R) C/C++ ╨▓╨╡╤А╤Б╨╕╨╕ 19.41.34123 ╨┤╨╗╤П x64
-  (C) ╨Ъ╨╛╤А╨┐╨╛╤А╨░╤Ж╨╕╤П ╨Ь╨░╨╣╨║╤А╨╛╤Б╨╛╤Д╤В (Microsoft Corporation).  ╨Т╤Б╨╡ ╨┐╤А╨░╨▓╨░ ╨╖╨░╤Й╨╕╤Й╨╡╨╜╤Л.
-  cl /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D HAVE_IOCTLSOCKET_CAMEL_FIONBIO /D HAVE_WINDOWS_H /D HAVE_WS2TCPIP_H /D HAVE_WINSOCK2_H /D HAVE_INTTYPES_H /D HAVE_SYS_STAT_H /D HAVE_SYS_TYPES_H /D HAVE_SYS_UTIME_H /D HAVE_FCNTL_H /D HAVE_IO_H /D HAVE_LOCALE_H /D HAVE_STDBOOL_H /D HAVE_STDINT_H /D "CMAKE_INTDIR=\"Debug\"" /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_6cd82.dir\Debug\\" /Fd"cmTC_6cd82.dir\Debug\vc143.pdb" /external:W1 /Gd /TC /errorReport:queue "C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c"
+  C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\bin\HostX64\x64\CL.exe /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D HAVE_IOCTLSOCKET_CAMEL_FIONBIO /D HAVE_WINDOWS_H /D HAVE_WS2TCPIP_H /D HAVE_WINSOCK2_H /D HAVE_INTTYPES_H /D HAVE_SYS_STAT_H /D HAVE_SYS_TYPES_H /D HAVE_SYS_UTIME_H /D HAVE_FCNTL_H /D HAVE_IO_H /D HAVE_LOCALE_H /D HAVE_STDBOOL_H /D HAVE_STDINT_H /D "CMAKE_INTDIR=\"Debug\"" /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_fa08a.dir\Debug\\" /Fd"cmTC_fa08a.dir\Debug\vc142.pdb" /external:W1 /Gd /TC /errorReport:queue "C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c"
+  Оптимизирующий компилятор Microsoft (R) C/C++ версии 19.29.30159 для x64
   CurlTests.c
+  (C) Корпорация Майкрософт (Microsoft Corporation).  Все права защищены.
+  cl /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D HAVE_IOCTLSOCKET_CAMEL_FIONBIO /D HAVE_WINDOWS_H /D HAVE_WS2TCPIP_H /D HAVE_WINSOCK2_H /D HAVE_INTTYPES_H /D HAVE_SYS_STAT_H /D HAVE_SYS_TYPES_H /D HAVE_SYS_UTIME_H /D HAVE_FCNTL_H /D HAVE_IO_H /D HAVE_LOCALE_H /D HAVE_STDBOOL_H /D HAVE_STDINT_H /D "CMAKE_INTDIR=\"Debug\"" /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_fa08a.dir\Debug\\" /Fd"cmTC_fa08a.dir\Debug\vc142.pdb" /external:W1 /Gd /TC /errorReport:queue "C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c"
 Link:
-  C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\bin\HostX64\x64\link.exe /ERRORREPORT:QUEUE /OUT:"C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\Debug\cmTC_6cd82.exe" /INCREMENTAL /ILK:"cmTC_6cd82.dir\Debug\cmTC_6cd82.ilk" /NOLOGO ws2_32.lib kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:/Users/rosih/OneDrive/Desktop/╨а╨░╨▒╨╛╤В╨░/Cursor/monitoring_agent/build/CMakeFiles/CMakeTmp/Debug/cmTC_6cd82.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:/Users/rosih/OneDrive/Desktop/╨а╨░╨▒╨╛╤В╨░/Cursor/monitoring_agent/build/CMakeFiles/CMakeTmp/Debug/cmTC_6cd82.lib" /MACHINE:X64  /machine:x64 cmTC_6cd82.dir\Debug\CurlTests.obj
-CurlTests.obj : error LNK2019: ╤Б╤Б╤Л╨╗╨║╨░ ╨╜╨░ ╨╜╨╡╤А╨░╨╖╤А╨╡╤И╨╡╨╜╨╜╤Л╨╣ ╨▓╨╜╨╡╤И╨╜╨╕╨╣ ╤Б╨╕╨╝╨▓╨╛╨╗ IoctlSocket ╨▓ ╤Д╤Г╨╜╨║╤Ж╨╕╨╕ main. [C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_6cd82.vcxproj]
-C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\Debug\cmTC_6cd82.exe : fatal error LNK1120: ╨╜╨╡╤А╨░╨╖╤А╨╡╤И╨╡╨╜╨╜╤Л╤Е ╨▓╨╜╨╡╤И╨╜╨╕╤Е ╤Н╨╗╨╡╨╝╨╡╨╜╤В╨╛╨▓: 1 [C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_6cd82.vcxproj]
-╨б╨▒╨╛╤А╨║╨░ ╨┐╤А╨╛╨╡╨║╤В╨░ "C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_6cd82.vcxproj" ╨╖╨░╨▓╨╡╤А╤И╨╡╨╜╨░ (╤Ж╨╡╨╗╨╡╨▓╤Л╨╡ ╨╛╨▒╤К╨╡╨║╤В╤Л ╨┐╨╛ ╤Г╨╝╨╛╨╗╤З╨░╨╜╨╕╤О) ╤Б ╨╛╤И╨╕╨▒╨║╨╛╨╣.
+  C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\bin\HostX64\x64\link.exe /ERRORREPORT:QUEUE /OUT:"C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\Debug\cmTC_fa08a.exe" /INCREMENTAL /ILK:"cmTC_fa08a.dir\Debug\cmTC_fa08a.ilk" /NOLOGO ws2_32.lib kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/CMakeFiles/CMakeTmp/Debug/cmTC_fa08a.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/CMakeFiles/CMakeTmp/Debug/cmTC_fa08a.lib" /MACHINE:X64  /machine:x64 cmTC_fa08a.dir\Debug\CurlTests.obj
+CurlTests.obj : error LNK2019: ссылка на неразрешенный внешний символ IoctlSocket в функции main. [C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_fa08a.vcxproj]
+C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\Debug\cmTC_fa08a.exe : fatal error LNK1120: неразрешенных внешних элементов: 1 [C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_fa08a.vcxproj]
+Сборка проекта "C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_fa08a.vcxproj" завершена (целевые объекты по умолчанию) с ошибкой.
 
-╨Ю╤И╨╕╨▒╨║╨░ ╤Б╨▒╨╛╤А╨║╨╕.
+Ошибка сборки.
 
-"C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_6cd82.vcxproj" (╤Ж╨╡╨╗╨╡╨▓╨╛╨╣ ╨╛╨▒╤К╨╡╨║╤В ╨┐╨╛ ╤Г╨╝╨╛╨╗╤З╨░╨╜╨╕╤О) (1) ->
-(╨ж╨╡╨╗╨╡╨▓╨╛╨╣ ╨╛╨▒╤К╨╡╨║╤В Link) -> 
-  CurlTests.obj : error LNK2019: ╤Б╤Б╤Л╨╗╨║╨░ ╨╜╨░ ╨╜╨╡╤А╨░╨╖╤А╨╡╤И╨╡╨╜╨╜╤Л╨╣ ╨▓╨╜╨╡╤И╨╜╨╕╨╣ ╤Б╨╕╨╝╨▓╨╛╨╗ IoctlSocket ╨▓ ╤Д╤Г╨╜╨║╤Ж╨╕╨╕ main. [C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_6cd82.vcxproj]
-  C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\Debug\cmTC_6cd82.exe : fatal error LNK1120: ╨╜╨╡╤А╨░╨╖╤А╨╡╤И╨╡╨╜╨╜╤Л╤Е ╨▓╨╜╨╡╤И╨╜╨╕╤Е ╤Н╨╗╨╡╨╝╨╡╨╜╤В╨╛╨▓: 1 [C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_6cd82.vcxproj]
+"C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_fa08a.vcxproj" (целевой объект по умолчанию) (1) ->
+(Целевой объект Link) -> 
+  CurlTests.obj : error LNK2019: ссылка на неразрешенный внешний символ IoctlSocket в функции main. [C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_fa08a.vcxproj]
+  C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\Debug\cmTC_fa08a.exe : fatal error LNK1120: неразрешенных внешних элементов: 1 [C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_fa08a.vcxproj]
 
-    ╨Я╤А╨╡╨┤╤Г╨┐╤А╨╡╨╢╨┤╨╡╨╜╨╕╨╣: 0
-    ╨Ю╤И╨╕╨▒╨╛╨║: 2
+    Предупреждений: 0
+    Ошибок: 2
 
-╨Я╤А╨╛╤И╨╗╨╛ ╨▓╤А╨╡╨╝╨╡╨╜╨╕ 00:00:01.06
+Прошло времени 00:00:01.27
 
 
 Performing Curl Test HAVE_IOCTL_FIONBIO failed with the following output:
 Change Dir: 'C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/CMakeFiles/CMakeTmp'
 
-Run Build Command(s): "C:/Program Files/Microsoft Visual Studio/2022/Community/MSBuild/Current/Bin/amd64/MSBuild.exe" cmTC_1379e.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=17.0 /v:n
-╨Т╨╡╤А╤Б╨╕╤П MSBuild 17.11.9+a69bbaaf5 ╨┤╨╗╤П .NET Framework
-╨б╨▒╨╛╤А╨║╨░ ╨╜╨░╤З╨░╤В╨░ 21.06.2025 20:38:53.
+Run Build Command(s): "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/MSBuild/Current/Bin/MSBuild.exe" cmTC_f9a3d.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=16.0 /v:n
+Microsoft (R) Build Engine версии 16.11.6+a918ceb31 для .NET Framework
+(C) Корпорация Майкрософт (Microsoft Corporation). Все права защищены.
 
-╨Я╤А╨╛╨╡╨║╤В "C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_1379e.vcxproj" ╨▓ ╤Г╨╖╨╗╨╡ 1 (╤Ж╨╡╨╗╨╡╨▓╤Л╨╡ ╨╛╨▒╤К╨╡╨║╤В╤Л ╨┐╨╛ ╤Г╨╝╨╛╨╗╤З╨░╨╜╨╕╤О).
+Сборка начата 24.06.2025 18:23:09.
+Проект "C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_f9a3d.vcxproj" в узле 1 (целевые объекты по умолчанию).
 PrepareForBuild:
-  ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ ╨║╨░╤В╨░╨╗╨╛╨│╨░ "cmTC_1379e.dir\Debug\".
-  ╨б╤В╤А╤Г╨║╤В╤Г╤А╨╕╤А╨╛╨▓╨░╨╜╨╜╤Л╨╣ ╨▓╤Л╨▓╨╛╨┤ ╨▓╨║╨╗╤О╤З╨╡╨╜. ╨д╨╛╤А╨╝╨░╤В╨╕╤А╨╛╨▓╨░╨╜╨╕╨╡ ╨┤╨╕╨░╨│╨╜╨╛╤Б╤В╨╕╨║╨╕ ╨║╨╛╨╝╨┐╨╕╨╗╤П╤В╨╛╤А╨░ ╨▒╤Г╨┤╨╡╤В ╨╛╤В╤А╨░╨╢╨░╤В╤М ╨╕╨╡╤А╨░╤А╤Е╨╕╤О ╨╛╤И╨╕╨▒╨╛╨║. ╨Я╨╛╨┤╤А╨╛╨▒╨╜╨╡╨╡ ╤Б╨╝. https://aka.ms/cpp/structured-output.
-  ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ ╨║╨░╤В╨░╨╗╨╛╨│╨░ "C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\Debug\".
-  ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ ╨║╨░╤В╨░╨╗╨╛╨│╨░ "cmTC_1379e.dir\Debug\cmTC_1379e.tlog\".
+  Создание каталога "cmTC_f9a3d.dir\Debug\".
+  Создание каталога "C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\Debug\".
+  Создание каталога "cmTC_f9a3d.dir\Debug\cmTC_f9a3d.tlog\".
 InitializeBuildStatus:
-  ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ "cmTC_1379e.dir\Debug\cmTC_1379e.tlog\unsuccessfulbuild", ╤В╨░╨║ ╨║╨░╨║ ╨▒╤Л╨╗╨╛ ╨╖╨░╨┤╨░╨╜╨╛ "AlwaysCreate".
-  ╨Ю╨▒╤А╨░╤Й╨╡╨╜╨╕╨╡ ╨║ "cmTC_1379e.dir\Debug\cmTC_1379e.tlog\unsuccessfulbuild".
+  Создание "cmTC_f9a3d.dir\Debug\cmTC_f9a3d.tlog\unsuccessfulbuild", так как было задано "AlwaysCreate".
 ClCompile:
-  C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\bin\HostX64\x64\CL.exe /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D HAVE_IOCTL_FIONBIO /D HAVE_WINDOWS_H /D HAVE_WS2TCPIP_H /D HAVE_WINSOCK2_H /D HAVE_INTTYPES_H /D HAVE_SYS_STAT_H /D HAVE_SYS_TYPES_H /D HAVE_SYS_UTIME_H /D HAVE_FCNTL_H /D HAVE_IO_H /D HAVE_LOCALE_H /D HAVE_STDBOOL_H /D HAVE_STDINT_H /D "CMAKE_INTDIR=\"Debug\"" /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_1379e.dir\Debug\\" /Fd"cmTC_1379e.dir\Debug\vc143.pdb" /external:W1 /Gd /TC /errorReport:queue "C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c"
-  ╨Ю╨┐╤В╨╕╨╝╨╕╨╖╨╕╤А╤Г╤О╤Й╨╕╨╣ ╨║╨╛╨╝╨┐╨╕╨╗╤П╤В╨╛╤А Microsoft (R) C/C++ ╨▓╨╡╤А╤Б╨╕╨╕ 19.41.34123 ╨┤╨╗╤П x64
-  (C) ╨Ъ╨╛╤А╨┐╨╛╤А╨░╤Ж╨╕╤П ╨Ь╨░╨╣╨║╤А╨╛╤Б╨╛╤Д╤В (Microsoft Corporation).  ╨Т╤Б╨╡ ╨┐╤А╨░╨▓╨░ ╨╖╨░╤Й╨╕╤Й╨╡╨╜╤Л.
-  cl /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D HAVE_IOCTL_FIONBIO /D HAVE_WINDOWS_H /D HAVE_WS2TCPIP_H /D HAVE_WINSOCK2_H /D HAVE_INTTYPES_H /D HAVE_SYS_STAT_H /D HAVE_SYS_TYPES_H /D HAVE_SYS_UTIME_H /D HAVE_FCNTL_H /D HAVE_IO_H /D HAVE_LOCALE_H /D HAVE_STDBOOL_H /D HAVE_STDINT_H /D "CMAKE_INTDIR=\"Debug\"" /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_1379e.dir\Debug\\" /Fd"cmTC_1379e.dir\Debug\vc143.pdb" /external:W1 /Gd /TC /errorReport:queue "C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c"
+  C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\bin\HostX64\x64\CL.exe /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D HAVE_IOCTL_FIONBIO /D HAVE_WINDOWS_H /D HAVE_WS2TCPIP_H /D HAVE_WINSOCK2_H /D HAVE_INTTYPES_H /D HAVE_SYS_STAT_H /D HAVE_SYS_TYPES_H /D HAVE_SYS_UTIME_H /D HAVE_FCNTL_H /D HAVE_IO_H /D HAVE_LOCALE_H /D HAVE_STDBOOL_H /D HAVE_STDINT_H /D "CMAKE_INTDIR=\"Debug\"" /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_f9a3d.dir\Debug\\" /Fd"cmTC_f9a3d.dir\Debug\vc142.pdb" /external:W1 /Gd /TC /errorReport:queue "C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c"
+  Оптимизирующий компилятор Microsoft (R) C/C++ версии 19.29.30159 для x64
   CurlTests.c
-C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(306,26): error C2065: FIONBIO: ╨╜╨╡╨╛╨▒╤К╤П╨▓╨╗╨╡╨╜╨╜╤Л╨╣ ╨╕╨┤╨╡╨╜╤В╨╕╤Д╨╕╨║╨░╤В╨╛╤А [C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_1379e.vcxproj]
-╨б╨▒╨╛╤А╨║╨░ ╨┐╤А╨╛╨╡╨║╤В╨░ "C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_1379e.vcxproj" ╨╖╨░╨▓╨╡╤А╤И╨╡╨╜╨░ (╤Ж╨╡╨╗╨╡╨▓╤Л╨╡ ╨╛╨▒╤К╨╡╨║╤В╤Л ╨┐╨╛ ╤Г╨╝╨╛╨╗╤З╨░╨╜╨╕╤О) ╤Б ╨╛╤И╨╕╨▒╨║╨╛╨╣.
+  (C) Корпорация Майкрософт (Microsoft Corporation).  Все права защищены.
+  cl /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D HAVE_IOCTL_FIONBIO /D HAVE_WINDOWS_H /D HAVE_WS2TCPIP_H /D HAVE_WINSOCK2_H /D HAVE_INTTYPES_H /D HAVE_SYS_STAT_H /D HAVE_SYS_TYPES_H /D HAVE_SYS_UTIME_H /D HAVE_FCNTL_H /D HAVE_IO_H /D HAVE_LOCALE_H /D HAVE_STDBOOL_H /D HAVE_STDINT_H /D "CMAKE_INTDIR=\"Debug\"" /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_f9a3d.dir\Debug\\" /Fd"cmTC_f9a3d.dir\Debug\vc142.pdb" /external:W1 /Gd /TC /errorReport:queue "C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c"
+C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(306,33): error C2065: FIONBIO: необъявленный идентификатор [C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_f9a3d.vcxproj]
+Сборка проекта "C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_f9a3d.vcxproj" завершена (целевые объекты по умолчанию) с ошибкой.
 
-╨Ю╤И╨╕╨▒╨║╨░ ╤Б╨▒╨╛╤А╨║╨╕.
+Ошибка сборки.
 
-"C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_1379e.vcxproj" (╤Ж╨╡╨╗╨╡╨▓╨╛╨╣ ╨╛╨▒╤К╨╡╨║╤В ╨┐╨╛ ╤Г╨╝╨╛╨╗╤З╨░╨╜╨╕╤О) (1) ->
-(╨ж╨╡╨╗╨╡╨▓╨╛╨╣ ╨╛╨▒╤К╨╡╨║╤В ClCompile) -> 
-  C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(306,26): error C2065: FIONBIO: ╨╜╨╡╨╛╨▒╤К╤П╨▓╨╗╨╡╨╜╨╜╤Л╨╣ ╨╕╨┤╨╡╨╜╤В╨╕╤Д╨╕╨║╨░╤В╨╛╤А [C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_1379e.vcxproj]
+"C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_f9a3d.vcxproj" (целевой объект по умолчанию) (1) ->
+(Целевой объект ClCompile) -> 
+  C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(306,33): error C2065: FIONBIO: необъявленный идентификатор [C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_f9a3d.vcxproj]
 
-    ╨Я╤А╨╡╨┤╤Г╨┐╤А╨╡╨╢╨┤╨╡╨╜╨╕╨╣: 0
-    ╨Ю╤И╨╕╨▒╨╛╨║: 1
+    Предупреждений: 0
+    Ошибок: 1
 
-╨Я╤А╨╛╤И╨╗╨╛ ╨▓╤А╨╡╨╝╨╡╨╜╨╕ 00:00:00.41
+Прошло времени 00:00:00.75
 
 
 Performing Curl Test HAVE_SETSOCKOPT_SO_NONBLOCK failed with the following output:
 Change Dir: 'C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/CMakeFiles/CMakeTmp'
 
-Run Build Command(s): "C:/Program Files/Microsoft Visual Studio/2022/Community/MSBuild/Current/Bin/amd64/MSBuild.exe" cmTC_b46bf.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=17.0 /v:n
-╨Т╨╡╤А╤Б╨╕╤П MSBuild 17.11.9+a69bbaaf5 ╨┤╨╗╤П .NET Framework
-╨б╨▒╨╛╤А╨║╨░ ╨╜╨░╤З╨░╤В╨░ 21.06.2025 20:38:54.
+Run Build Command(s): "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/MSBuild/Current/Bin/MSBuild.exe" cmTC_a284e.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=16.0 /v:n
+Microsoft (R) Build Engine версии 16.11.6+a918ceb31 для .NET Framework
+(C) Корпорация Майкрософт (Microsoft Corporation). Все права защищены.
 
-╨Я╤А╨╛╨╡╨║╤В "C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_b46bf.vcxproj" ╨▓ ╤Г╨╖╨╗╨╡ 1 (╤Ж╨╡╨╗╨╡╨▓╤Л╨╡ ╨╛╨▒╤К╨╡╨║╤В╤Л ╨┐╨╛ ╤Г╨╝╨╛╨╗╤З╨░╨╜╨╕╤О).
+Сборка начата 24.06.2025 18:23:11.
+Проект "C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_a284e.vcxproj" в узле 1 (целевые объекты по умолчанию).
 PrepareForBuild:
-  ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ ╨║╨░╤В╨░╨╗╨╛╨│╨░ "cmTC_b46bf.dir\Debug\".
-  ╨б╤В╤А╤Г╨║╤В╤Г╤А╨╕╤А╨╛╨▓╨░╨╜╨╜╤Л╨╣ ╨▓╤Л╨▓╨╛╨┤ ╨▓╨║╨╗╤О╤З╨╡╨╜. ╨д╨╛╤А╨╝╨░╤В╨╕╤А╨╛╨▓╨░╨╜╨╕╨╡ ╨┤╨╕╨░╨│╨╜╨╛╤Б╤В╨╕╨║╨╕ ╨║╨╛╨╝╨┐╨╕╨╗╤П╤В╨╛╤А╨░ ╨▒╤Г╨┤╨╡╤В ╨╛╤В╤А╨░╨╢╨░╤В╤М ╨╕╨╡╤А╨░╤А╤Е╨╕╤О ╨╛╤И╨╕╨▒╨╛╨║. ╨Я╨╛╨┤╤А╨╛╨▒╨╜╨╡╨╡ ╤Б╨╝. https://aka.ms/cpp/structured-output.
-  ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ ╨║╨░╤В╨░╨╗╨╛╨│╨░ "C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\Debug\".
-  ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ ╨║╨░╤В╨░╨╗╨╛╨│╨░ "cmTC_b46bf.dir\Debug\cmTC_b46bf.tlog\".
+  Создание каталога "cmTC_a284e.dir\Debug\".
+  Создание каталога "C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\Debug\".
+  Создание каталога "cmTC_a284e.dir\Debug\cmTC_a284e.tlog\".
 InitializeBuildStatus:
-  ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ "cmTC_b46bf.dir\Debug\cmTC_b46bf.tlog\unsuccessfulbuild", ╤В╨░╨║ ╨║╨░╨║ ╨▒╤Л╨╗╨╛ ╨╖╨░╨┤╨░╨╜╨╛ "AlwaysCreate".
-  ╨Ю╨▒╤А╨░╤Й╨╡╨╜╨╕╨╡ ╨║ "cmTC_b46bf.dir\Debug\cmTC_b46bf.tlog\unsuccessfulbuild".
+  Создание "cmTC_a284e.dir\Debug\cmTC_a284e.tlog\unsuccessfulbuild", так как было задано "AlwaysCreate".
 ClCompile:
-  C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\bin\HostX64\x64\CL.exe /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D HAVE_SETSOCKOPT_SO_NONBLOCK /D HAVE_WINDOWS_H /D HAVE_WS2TCPIP_H /D HAVE_WINSOCK2_H /D HAVE_INTTYPES_H /D HAVE_SYS_STAT_H /D HAVE_SYS_TYPES_H /D HAVE_SYS_UTIME_H /D HAVE_FCNTL_H /D HAVE_IO_H /D HAVE_LOCALE_H /D HAVE_STDBOOL_H /D HAVE_STDINT_H /D "CMAKE_INTDIR=\"Debug\"" /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_b46bf.dir\Debug\\" /Fd"cmTC_b46bf.dir\Debug\vc143.pdb" /external:W1 /Gd /TC /errorReport:queue "C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c"
-  ╨Ю╨┐╤В╨╕╨╝╨╕╨╖╨╕╤А╤Г╤О╤Й╨╕╨╣ ╨║╨╛╨╝╨┐╨╕╨╗╤П╤В╨╛╤А Microsoft (R) C/C++ ╨▓╨╡╤А╤Б╨╕╨╕ 19.41.34123 ╨┤╨╗╤П x64
-  (C) ╨Ъ╨╛╤А╨┐╨╛╤А╨░╤Ж╨╕╤П ╨Ь╨░╨╣╨║╤А╨╛╤Б╨╛╤Д╤В (Microsoft Corporation).  ╨Т╤Б╨╡ ╨┐╤А╨░╨▓╨░ ╨╖╨░╤Й╨╕╤Й╨╡╨╜╤Л.
-  cl /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D HAVE_SETSOCKOPT_SO_NONBLOCK /D HAVE_WINDOWS_H /D HAVE_WS2TCPIP_H /D HAVE_WINSOCK2_H /D HAVE_INTTYPES_H /D HAVE_SYS_STAT_H /D HAVE_SYS_TYPES_H /D HAVE_SYS_UTIME_H /D HAVE_FCNTL_H /D HAVE_IO_H /D HAVE_LOCALE_H /D HAVE_STDBOOL_H /D HAVE_STDINT_H /D "CMAKE_INTDIR=\"Debug\"" /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_b46bf.dir\Debug\\" /Fd"cmTC_b46bf.dir\Debug\vc143.pdb" /external:W1 /Gd /TC /errorReport:queue "C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c"
+  C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\bin\HostX64\x64\CL.exe /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D HAVE_SETSOCKOPT_SO_NONBLOCK /D HAVE_WINDOWS_H /D HAVE_WS2TCPIP_H /D HAVE_WINSOCK2_H /D HAVE_INTTYPES_H /D HAVE_SYS_STAT_H /D HAVE_SYS_TYPES_H /D HAVE_SYS_UTIME_H /D HAVE_FCNTL_H /D HAVE_IO_H /D HAVE_LOCALE_H /D HAVE_STDBOOL_H /D HAVE_STDINT_H /D "CMAKE_INTDIR=\"Debug\"" /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_a284e.dir\Debug\\" /Fd"cmTC_a284e.dir\Debug\vc142.pdb" /external:W1 /Gd /TC /errorReport:queue "C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c"
+  Оптимизирующий компилятор Microsoft (R) C/C++ версии 19.29.30159 для x64
+  (C) Корпорация Майкрософт (Microsoft Corporation).  Все права защищены.
+  cl /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D HAVE_SETSOCKOPT_SO_NONBLOCK /D HAVE_WINDOWS_H /D HAVE_WS2TCPIP_H /D HAVE_WINSOCK2_H /D HAVE_INTTYPES_H /D HAVE_SYS_STAT_H /D HAVE_SYS_TYPES_H /D HAVE_SYS_UTIME_H /D HAVE_FCNTL_H /D HAVE_IO_H /D HAVE_LOCALE_H /D HAVE_STDBOOL_H /D HAVE_STDINT_H /D "CMAKE_INTDIR=\"Debug\"" /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_a284e.dir\Debug\\" /Fd"cmTC_a284e.dir\Debug\vc142.pdb" /external:W1 /Gd /TC /errorReport:queue "C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c"
   CurlTests.c
-C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(367,43): error C2065: SO_NONBLOCK: ╨╜╨╡╨╛╨▒╤К╤П╨▓╨╗╨╡╨╜╨╜╤Л╨╣ ╨╕╨┤╨╡╨╜╤В╨╕╤Д╨╕╨║╨░╤В╨╛╤А [C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_b46bf.vcxproj]
-╨б╨▒╨╛╤А╨║╨░ ╨┐╤А╨╛╨╡╨║╤В╨░ "C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_b46bf.vcxproj" ╨╖╨░╨▓╨╡╤А╤И╨╡╨╜╨░ (╤Ж╨╡╨╗╨╡╨▓╤Л╨╡ ╨╛╨▒╤К╨╡╨║╤В╤Л ╨┐╨╛ ╤Г╨╝╨╛╨╗╤З╨░╨╜╨╕╤О) ╤Б ╨╛╤И╨╕╨▒╨║╨╛╨╣.
+C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(367,54): error C2065: SO_NONBLOCK: необъявленный идентификатор [C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_a284e.vcxproj]
+Сборка проекта "C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_a284e.vcxproj" завершена (целевые объекты по умолчанию) с ошибкой.
 
-╨Ю╤И╨╕╨▒╨║╨░ ╤Б╨▒╨╛╤А╨║╨╕.
+Ошибка сборки.
 
-"C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_b46bf.vcxproj" (╤Ж╨╡╨╗╨╡╨▓╨╛╨╣ ╨╛╨▒╤К╨╡╨║╤В ╨┐╨╛ ╤Г╨╝╨╛╨╗╤З╨░╨╜╨╕╤О) (1) ->
-(╨ж╨╡╨╗╨╡╨▓╨╛╨╣ ╨╛╨▒╤К╨╡╨║╤В ClCompile) -> 
-  C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(367,43): error C2065: SO_NONBLOCK: ╨╜╨╡╨╛╨▒╤К╤П╨▓╨╗╨╡╨╜╨╜╤Л╨╣ ╨╕╨┤╨╡╨╜╤В╨╕╤Д╨╕╨║╨░╤В╨╛╤А [C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_b46bf.vcxproj]
+"C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_a284e.vcxproj" (целевой объект по умолчанию) (1) ->
+(Целевой объект ClCompile) -> 
+  C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(367,54): error C2065: SO_NONBLOCK: необъявленный идентификатор [C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_a284e.vcxproj]
 
-    ╨Я╤А╨╡╨┤╤Г╨┐╤А╨╡╨╢╨┤╨╡╨╜╨╕╨╣: 0
-    ╨Ю╤И╨╕╨▒╨╛╨║: 1
+    Предупреждений: 0
+    Ошибок: 1
 
-╨Я╤А╨╛╤И╨╗╨╛ ╨▓╤А╨╡╨╝╨╡╨╜╨╕ 00:00:00.83
+Прошло времени 00:00:01.07
 
 
 Performing Curl Test HAVE_FILE_OFFSET_BITS failed with the following output:
 Change Dir: 'C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/CMakeFiles/CMakeTmp'
 
-Run Build Command(s): "C:/Program Files/Microsoft Visual Studio/2022/Community/MSBuild/Current/Bin/amd64/MSBuild.exe" cmTC_1779d.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=17.0 /v:n
-╨Т╨╡╤А╤Б╨╕╤П MSBuild 17.11.9+a69bbaaf5 ╨┤╨╗╤П .NET Framework
-╨б╨▒╨╛╤А╨║╨░ ╨╜╨░╤З╨░╤В╨░ 21.06.2025 20:38:56.
+Run Build Command(s): "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/MSBuild/Current/Bin/MSBuild.exe" cmTC_b96f2.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=16.0 /v:n
+Microsoft (R) Build Engine версии 16.11.6+a918ceb31 для .NET Framework
+(C) Корпорация Майкрософт (Microsoft Corporation). Все права защищены.
 
-╨Я╤А╨╛╨╡╨║╤В "C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_1779d.vcxproj" ╨▓ ╤Г╨╖╨╗╨╡ 1 (╤Ж╨╡╨╗╨╡╨▓╤Л╨╡ ╨╛╨▒╤К╨╡╨║╤В╤Л ╨┐╨╛ ╤Г╨╝╨╛╨╗╤З╨░╨╜╨╕╤О).
+Сборка начата 24.06.2025 18:23:14.
+Проект "C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_b96f2.vcxproj" в узле 1 (целевые объекты по умолчанию).
 PrepareForBuild:
-  ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ ╨║╨░╤В╨░╨╗╨╛╨│╨░ "cmTC_1779d.dir\Debug\".
-  ╨б╤В╤А╤Г╨║╤В╤Г╤А╨╕╤А╨╛╨▓╨░╨╜╨╜╤Л╨╣ ╨▓╤Л╨▓╨╛╨┤ ╨▓╨║╨╗╤О╤З╨╡╨╜. ╨д╨╛╤А╨╝╨░╤В╨╕╤А╨╛╨▓╨░╨╜╨╕╨╡ ╨┤╨╕╨░╨│╨╜╨╛╤Б╤В╨╕╨║╨╕ ╨║╨╛╨╝╨┐╨╕╨╗╤П╤В╨╛╤А╨░ ╨▒╤Г╨┤╨╡╤В ╨╛╤В╤А╨░╨╢╨░╤В╤М ╨╕╨╡╤А╨░╤А╤Е╨╕╤О ╨╛╤И╨╕╨▒╨╛╨║. ╨Я╨╛╨┤╤А╨╛╨▒╨╜╨╡╨╡ ╤Б╨╝. https://aka.ms/cpp/structured-output.
-  ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ ╨║╨░╤В╨░╨╗╨╛╨│╨░ "C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\Debug\".
-  ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ ╨║╨░╤В╨░╨╗╨╛╨│╨░ "cmTC_1779d.dir\Debug\cmTC_1779d.tlog\".
+  Создание каталога "cmTC_b96f2.dir\Debug\".
+  Создание каталога "C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\Debug\".
+  Создание каталога "cmTC_b96f2.dir\Debug\cmTC_b96f2.tlog\".
 InitializeBuildStatus:
-  ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ "cmTC_1779d.dir\Debug\cmTC_1779d.tlog\unsuccessfulbuild", ╤В╨░╨║ ╨║╨░╨║ ╨▒╤Л╨╗╨╛ ╨╖╨░╨┤╨░╨╜╨╛ "AlwaysCreate".
-  ╨Ю╨▒╤А╨░╤Й╨╡╨╜╨╕╨╡ ╨║ "cmTC_1779d.dir\Debug\cmTC_1779d.tlog\unsuccessfulbuild".
+  Создание "cmTC_b96f2.dir\Debug\cmTC_b96f2.tlog\unsuccessfulbuild", так как было задано "AlwaysCreate".
 ClCompile:
-  C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\bin\HostX64\x64\CL.exe /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D HAVE_FILE_OFFSET_BITS /D HAVE_WINDOWS_H /D HAVE_WS2TCPIP_H /D HAVE_WINSOCK2_H /D HAVE_INTTYPES_H /D HAVE_SYS_STAT_H /D HAVE_SYS_TYPES_H /D HAVE_SYS_UTIME_H /D HAVE_FCNTL_H /D HAVE_IO_H /D HAVE_LOCALE_H /D HAVE_STDBOOL_H /D HAVE_STDINT_H /D "CMAKE_INTDIR=\"Debug\"" /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_1779d.dir\Debug\\" /Fd"cmTC_1779d.dir\Debug\vc143.pdb" /external:W1 /Gd /TC /errorReport:queue "C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c"
-  (C) ╨Ъ╨╛╤А╨┐╨╛╤А╨░╤Ж╨╕╤П ╨Ь╨░╨╣╨║╤А╨╛╤Б╨╛╤Д╤В (Microsoft Corporation).  ╨Т╤Б╨╡ ╨┐╤А╨░╨▓╨░ ╨╖╨░╤Й╨╕╤Й╨╡╨╜╤Л.
-  cl /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D HAVE_FILE_OFFSET_BITS /D HAVE_WINDOWS_H /D HAVE_WS2TCPIP_H /D HAVE_WINSOCK2_H /D HAVE_INTTYPES_H /D HAVE_SYS_STAT_H /D HAVE_SYS_TYPES_H /D HAVE_SYS_UTIME_H /D HAVE_FCNTL_H /D HAVE_IO_H /D HAVE_LOCALE_H /D HAVE_STDBOOL_H /D HAVE_STDINT_H /D "CMAKE_INTDIR=\"Debug\"" /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_1779d.dir\Debug\\" /Fd"cmTC_1779d.dir\Debug\vc143.pdb" /external:W1 /Gd /TC /errorReport:queue "C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c"
+  C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\bin\HostX64\x64\CL.exe /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D HAVE_FILE_OFFSET_BITS /D HAVE_WINDOWS_H /D HAVE_WS2TCPIP_H /D HAVE_WINSOCK2_H /D HAVE_INTTYPES_H /D HAVE_SYS_STAT_H /D HAVE_SYS_TYPES_H /D HAVE_SYS_UTIME_H /D HAVE_FCNTL_H /D HAVE_IO_H /D HAVE_LOCALE_H /D HAVE_STDBOOL_H /D HAVE_STDINT_H /D "CMAKE_INTDIR=\"Debug\"" /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_b96f2.dir\Debug\\" /Fd"cmTC_b96f2.dir\Debug\vc142.pdb" /external:W1 /Gd /TC /errorReport:queue "C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c"
+  Оптимизирующий компилятор Microsoft (R) C/C++ версии 19.29.30159 для x64
   CurlTests.c
-C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(181,23): warning C4293: <<: ╨╛╤В╤А╨╕╤Ж╨░╤В╨╡╨╗╤М╨╜╨╛╨╡ ╨╕╨╗╨╕ ╤Б╨╗╨╕╤И╨║╨╛╨╝ ╨▒╨╛╨╗╤М╤И╨╛╨╡ ╤Б╨╝╨╡╤Й╨╡╨╜╨╕╨╡; ╨┐╨╛╨▓╨╡╨┤╨╡╨╜╨╕╨╡ ╨╜╨╡ ╨╛╨┐╤А╨╡╨┤╨╡╨╗╨╡╨╜╨╛ [C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_1779d.vcxproj]
-C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(182,27): warning C4293: <<: ╨╛╤В╤А╨╕╤Ж╨░╤В╨╡╨╗╤М╨╜╨╛╨╡ ╨╕╨╗╨╕ ╤Б╨╗╨╕╤И╨║╨╛╨╝ ╨▒╨╛╨╗╤М╤И╨╛╨╡ ╤Б╨╝╨╡╤Й╨╡╨╜╨╕╨╡; ╨┐╨╛╨▓╨╡╨┤╨╡╨╜╨╕╨╡ ╨╜╨╡ ╨╛╨┐╤А╨╡╨┤╨╡╨╗╨╡╨╜╨╛ [C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_1779d.vcxproj]
-C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(181,7): error C2118: ╨╛╤В╤А╨╕╤Ж╨░╤В╨╡╨╗╤М╨╜╤Л╨╣ ╨╕╨╜╨┤╨╡╨║╤Б [C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_1779d.vcxproj]
-╨б╨▒╨╛╤А╨║╨░ ╨┐╤А╨╛╨╡╨║╤В╨░ "C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_1779d.vcxproj" ╨╖╨░╨▓╨╡╤А╤И╨╡╨╜╨░ (╤Ж╨╡╨╗╨╡╨▓╤Л╨╡ ╨╛╨▒╤К╨╡╨║╤В╤Л ╨┐╨╛ ╤Г╨╝╨╛╨╗╤З╨░╨╜╨╕╤О) ╤Б ╨╛╤И╨╕╨▒╨║╨╛╨╣.
+  (C) Корпорация Майкрософт (Microsoft Corporation).  Все права защищены.
+  cl /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D HAVE_FILE_OFFSET_BITS /D HAVE_WINDOWS_H /D HAVE_WS2TCPIP_H /D HAVE_WINSOCK2_H /D HAVE_INTTYPES_H /D HAVE_SYS_STAT_H /D HAVE_SYS_TYPES_H /D HAVE_SYS_UTIME_H /D HAVE_FCNTL_H /D HAVE_IO_H /D HAVE_LOCALE_H /D HAVE_STDBOOL_H /D HAVE_STDINT_H /D "CMAKE_INTDIR=\"Debug\"" /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_b96f2.dir\Debug\\" /Fd"cmTC_b96f2.dir\Debug\vc142.pdb" /external:W1 /Gd /TC /errorReport:queue "C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c"
+C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(181,23): warning C4293: <<: отрицательное или слишком большое смещение; поведение не определено [C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_b96f2.vcxproj]
+C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(182,27): warning C4293: <<: отрицательное или слишком большое смещение; поведение не определено [C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_b96f2.vcxproj]
+C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(183,31): error C2118: отрицательный индекс [C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_b96f2.vcxproj]
+Сборка проекта "C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_b96f2.vcxproj" завершена (целевые объекты по умолчанию) с ошибкой.
 
-╨Ю╤И╨╕╨▒╨║╨░ ╤Б╨▒╨╛╤А╨║╨╕.
+Ошибка сборки.
 
-"C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_1779d.vcxproj" (╤Ж╨╡╨╗╨╡╨▓╨╛╨╣ ╨╛╨▒╤К╨╡╨║╤В ╨┐╨╛ ╤Г╨╝╨╛╨╗╤З╨░╨╜╨╕╤О) (1) ->
-(╨ж╨╡╨╗╨╡╨▓╨╛╨╣ ╨╛╨▒╤К╨╡╨║╤В ClCompile) -> 
-  C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(181,23): warning C4293: <<: ╨╛╤В╤А╨╕╤Ж╨░╤В╨╡╨╗╤М╨╜╨╛╨╡ ╨╕╨╗╨╕ ╤Б╨╗╨╕╤И╨║╨╛╨╝ ╨▒╨╛╨╗╤М╤И╨╛╨╡ ╤Б╨╝╨╡╤Й╨╡╨╜╨╕╨╡; ╨┐╨╛╨▓╨╡╨┤╨╡╨╜╨╕╨╡ ╨╜╨╡ ╨╛╨┐╤А╨╡╨┤╨╡╨╗╨╡╨╜╨╛ [C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_1779d.vcxproj]
-  C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(182,27): warning C4293: <<: ╨╛╤В╤А╨╕╤Ж╨░╤В╨╡╨╗╤М╨╜╨╛╨╡ ╨╕╨╗╨╕ ╤Б╨╗╨╕╤И╨║╨╛╨╝ ╨▒╨╛╨╗╤М╤И╨╛╨╡ ╤Б╨╝╨╡╤Й╨╡╨╜╨╕╨╡; ╨┐╨╛╨▓╨╡╨┤╨╡╨╜╨╕╨╡ ╨╜╨╡ ╨╛╨┐╤А╨╡╨┤╨╡╨╗╨╡╨╜╨╛ [C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_1779d.vcxproj]
+"C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_b96f2.vcxproj" (целевой объект по умолчанию) (1) ->
+(Целевой объект ClCompile) -> 
+  C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(181,23): warning C4293: <<: отрицательное или слишком большое смещение; поведение не определено [C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_b96f2.vcxproj]
+  C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(182,27): warning C4293: <<: отрицательное или слишком большое смещение; поведение не определено [C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_b96f2.vcxproj]
 
 
-"C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_1779d.vcxproj" (╤Ж╨╡╨╗╨╡╨▓╨╛╨╣ ╨╛╨▒╤К╨╡╨║╤В ╨┐╨╛ ╤Г╨╝╨╛╨╗╤З╨░╨╜╨╕╤О) (1) ->
-(╨ж╨╡╨╗╨╡╨▓╨╛╨╣ ╨╛╨▒╤К╨╡╨║╤В ClCompile) -> 
-  C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(181,7): error C2118: ╨╛╤В╤А╨╕╤Ж╨░╤В╨╡╨╗╤М╨╜╤Л╨╣ ╨╕╨╜╨┤╨╡╨║╤Б [C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_1779d.vcxproj]
+"C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_b96f2.vcxproj" (целевой объект по умолчанию) (1) ->
+(Целевой объект ClCompile) -> 
+  C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(183,31): error C2118: отрицательный индекс [C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_b96f2.vcxproj]
 
-    ╨Я╤А╨╡╨┤╤Г╨┐╤А╨╡╨╢╨┤╨╡╨╜╨╕╨╣: 2
-    ╨Ю╤И╨╕╨▒╨╛╨║: 1
+    Предупреждений: 2
+    Ошибок: 1
 
-╨Я╤А╨╛╤И╨╗╨╛ ╨▓╤А╨╡╨╝╨╡╨╜╨╕ 00:00:00.41
+Прошло времени 00:00:00.69
 
 
 Performing Curl Test HAVE_VARIADIC_MACROS_GCC failed with the following output:
 Change Dir: 'C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/CMakeFiles/CMakeTmp'
 
-Run Build Command(s): "C:/Program Files/Microsoft Visual Studio/2022/Community/MSBuild/Current/Bin/amd64/MSBuild.exe" cmTC_60299.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=17.0 /v:n
-╨Т╨╡╤А╤Б╨╕╤П MSBuild 17.11.9+a69bbaaf5 ╨┤╨╗╤П .NET Framework
-╨б╨▒╨╛╤А╨║╨░ ╨╜╨░╤З╨░╤В╨░ 21.06.2025 20:38:58.
+Run Build Command(s): "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/MSBuild/Current/Bin/MSBuild.exe" cmTC_20e91.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=16.0 /v:n
+Microsoft (R) Build Engine версии 16.11.6+a918ceb31 для .NET Framework
+(C) Корпорация Майкрософт (Microsoft Corporation). Все права защищены.
 
-╨Я╤А╨╛╨╡╨║╤В "C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_60299.vcxproj" ╨▓ ╤Г╨╖╨╗╨╡ 1 (╤Ж╨╡╨╗╨╡╨▓╤Л╨╡ ╨╛╨▒╤К╨╡╨║╤В╤Л ╨┐╨╛ ╤Г╨╝╨╛╨╗╤З╨░╨╜╨╕╤О).
+Сборка начата 24.06.2025 18:23:17.
+Проект "C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_20e91.vcxproj" в узле 1 (целевые объекты по умолчанию).
 PrepareForBuild:
-  ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ ╨║╨░╤В╨░╨╗╨╛╨│╨░ "cmTC_60299.dir\Debug\".
-  ╨б╤В╤А╤Г╨║╤В╤Г╤А╨╕╤А╨╛╨▓╨░╨╜╨╜╤Л╨╣ ╨▓╤Л╨▓╨╛╨┤ ╨▓╨║╨╗╤О╤З╨╡╨╜. ╨д╨╛╤А╨╝╨░╤В╨╕╤А╨╛╨▓╨░╨╜╨╕╨╡ ╨┤╨╕╨░╨│╨╜╨╛╤Б╤В╨╕╨║╨╕ ╨║╨╛╨╝╨┐╨╕╨╗╤П╤В╨╛╤А╨░ ╨▒╤Г╨┤╨╡╤В ╨╛╤В╤А╨░╨╢╨░╤В╤М ╨╕╨╡╤А╨░╤А╤Е╨╕╤О ╨╛╤И╨╕╨▒╨╛╨║. ╨Я╨╛╨┤╤А╨╛╨▒╨╜╨╡╨╡ ╤Б╨╝. https://aka.ms/cpp/structured-output.
-  ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ ╨║╨░╤В╨░╨╗╨╛╨│╨░ "C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\Debug\".
-  ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ ╨║╨░╤В╨░╨╗╨╛╨│╨░ "cmTC_60299.dir\Debug\cmTC_60299.tlog\".
+  Создание каталога "cmTC_20e91.dir\Debug\".
+  Создание каталога "C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\Debug\".
+  Создание каталога "cmTC_20e91.dir\Debug\cmTC_20e91.tlog\".
 InitializeBuildStatus:
-  ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ "cmTC_60299.dir\Debug\cmTC_60299.tlog\unsuccessfulbuild", ╤В╨░╨║ ╨║╨░╨║ ╨▒╤Л╨╗╨╛ ╨╖╨░╨┤╨░╨╜╨╛ "AlwaysCreate".
-  ╨Ю╨▒╤А╨░╤Й╨╡╨╜╨╕╨╡ ╨║ "cmTC_60299.dir\Debug\cmTC_60299.tlog\unsuccessfulbuild".
+  Создание "cmTC_20e91.dir\Debug\cmTC_20e91.tlog\unsuccessfulbuild", так как было задано "AlwaysCreate".
 ClCompile:
-  C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\bin\HostX64\x64\CL.exe /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D HAVE_VARIADIC_MACROS_GCC /D HAVE_WINDOWS_H /D HAVE_WS2TCPIP_H /D HAVE_WINSOCK2_H /D HAVE_INTTYPES_H /D HAVE_SYS_STAT_H /D HAVE_SYS_TYPES_H /D HAVE_SYS_UTIME_H /D HAVE_FCNTL_H /D HAVE_IO_H /D HAVE_LOCALE_H /D HAVE_STDBOOL_H /D HAVE_STDINT_H /D "CMAKE_INTDIR=\"Debug\"" /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_60299.dir\Debug\\" /Fd"cmTC_60299.dir\Debug\vc143.pdb" /external:W1 /Gd /TC /errorReport:queue "C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c"
-  (C) ╨Ъ╨╛╤А╨┐╨╛╤А╨░╤Ж╨╕╤П ╨Ь╨░╨╣╨║╤А╨╛╤Б╨╛╤Д╤В (Microsoft Corporation).  ╨Т╤Б╨╡ ╨┐╤А╨░╨▓╨░ ╨╖╨░╤Й╨╕╤Й╨╡╨╜╤Л.
-  cl /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D HAVE_VARIADIC_MACROS_GCC /D HAVE_WINDOWS_H /D HAVE_WS2TCPIP_H /D HAVE_WINSOCK2_H /D HAVE_INTTYPES_H /D HAVE_SYS_STAT_H /D HAVE_SYS_TYPES_H /D HAVE_SYS_UTIME_H /D HAVE_FCNTL_H /D HAVE_IO_H /D HAVE_LOCALE_H /D HAVE_STDBOOL_H /D HAVE_STDINT_H /D "CMAKE_INTDIR=\"Debug\"" /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_60299.dir\Debug\\" /Fd"cmTC_60299.dir\Debug\vc143.pdb" /external:W1 /Gd /TC /errorReport:queue "C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c"
+  C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\bin\HostX64\x64\CL.exe /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D HAVE_VARIADIC_MACROS_GCC /D HAVE_WINDOWS_H /D HAVE_WS2TCPIP_H /D HAVE_WINSOCK2_H /D HAVE_INTTYPES_H /D HAVE_SYS_STAT_H /D HAVE_SYS_TYPES_H /D HAVE_SYS_UTIME_H /D HAVE_FCNTL_H /D HAVE_IO_H /D HAVE_LOCALE_H /D HAVE_STDBOOL_H /D HAVE_STDINT_H /D "CMAKE_INTDIR=\"Debug\"" /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_20e91.dir\Debug\\" /Fd"cmTC_20e91.dir\Debug\vc142.pdb" /external:W1 /Gd /TC /errorReport:queue "C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c"
+  Оптимизирующий компилятор Microsoft (R) C/C++ версии 19.29.30159 для x64
   CurlTests.c
-C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(458,32): error C2010: ".": ╨╜╨╡ ╤В╤А╨╡╨▒╤Г╨╡╤В╤Б╤П ╨▓ ╤Б╨┐╨╕╤Б╨║╨╡ ╨┐╨░╤А╨░╨╝╨╡╤В╤А╨╛╨▓ ╨╝╨░╨║╤А╨╛╤Б╨░ [C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_60299.vcxproj]
-C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(459,32): error C2010: ".": ╨╜╨╡ ╤В╤А╨╡╨▒╤Г╨╡╤В╤Б╤П ╨▓ ╤Б╨┐╨╕╤Б╨║╨╡ ╨┐╨░╤А╨░╨╝╨╡╤В╤А╨╛╨▓ ╨╝╨░╨║╤А╨╛╤Б╨░ [C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_60299.vcxproj]
-╨б╨▒╨╛╤А╨║╨░ ╨┐╤А╨╛╨╡╨║╤В╨░ "C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_60299.vcxproj" ╨╖╨░╨▓╨╡╤А╤И╨╡╨╜╨░ (╤Ж╨╡╨╗╨╡╨▓╤Л╨╡ ╨╛╨▒╤К╨╡╨║╤В╤Л ╨┐╨╛ ╤Г╨╝╨╛╨╗╤З╨░╨╜╨╕╤О) ╤Б ╨╛╤И╨╕╨▒╨║╨╛╨╣.
+  (C) Корпорация Майкрософт (Microsoft Corporation).  Все права защищены.
+  cl /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D HAVE_VARIADIC_MACROS_GCC /D HAVE_WINDOWS_H /D HAVE_WS2TCPIP_H /D HAVE_WINSOCK2_H /D HAVE_INTTYPES_H /D HAVE_SYS_STAT_H /D HAVE_SYS_TYPES_H /D HAVE_SYS_UTIME_H /D HAVE_FCNTL_H /D HAVE_IO_H /D HAVE_LOCALE_H /D HAVE_STDBOOL_H /D HAVE_STDINT_H /D "CMAKE_INTDIR=\"Debug\"" /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_20e91.dir\Debug\\" /Fd"cmTC_20e91.dir\Debug\vc142.pdb" /external:W1 /Gd /TC /errorReport:queue "C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c"
+C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(458,1): error C2010: ".": не требуется в списке параметров макроса [C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_20e91.vcxproj]
+C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(459,1): error C2010: ".": не требуется в списке параметров макроса [C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_20e91.vcxproj]
+Сборка проекта "C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_20e91.vcxproj" завершена (целевые объекты по умолчанию) с ошибкой.
 
-╨Ю╤И╨╕╨▒╨║╨░ ╤Б╨▒╨╛╤А╨║╨╕.
+Ошибка сборки.
 
-"C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_60299.vcxproj" (╤Ж╨╡╨╗╨╡╨▓╨╛╨╣ ╨╛╨▒╤К╨╡╨║╤В ╨┐╨╛ ╤Г╨╝╨╛╨╗╤З╨░╨╜╨╕╤О) (1) ->
-(╨ж╨╡╨╗╨╡╨▓╨╛╨╣ ╨╛╨▒╤К╨╡╨║╤В ClCompile) -> 
-  C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(458,32): error C2010: ".": ╨╜╨╡ ╤В╤А╨╡╨▒╤Г╨╡╤В╤Б╤П ╨▓ ╤Б╨┐╨╕╤Б╨║╨╡ ╨┐╨░╤А╨░╨╝╨╡╤В╤А╨╛╨▓ ╨╝╨░╨║╤А╨╛╤Б╨░ [C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_60299.vcxproj]
-  C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(459,32): error C2010: ".": ╨╜╨╡ ╤В╤А╨╡╨▒╤Г╨╡╤В╤Б╤П ╨▓ ╤Б╨┐╨╕╤Б╨║╨╡ ╨┐╨░╤А╨░╨╝╨╡╤В╤А╨╛╨▓ ╨╝╨░╨║╤А╨╛╤Б╨░ [C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_60299.vcxproj]
+"C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_20e91.vcxproj" (целевой объект по умолчанию) (1) ->
+(Целевой объект ClCompile) -> 
+  C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(458,1): error C2010: ".": не требуется в списке параметров макроса [C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_20e91.vcxproj]
+  C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(459,1): error C2010: ".": не требуется в списке параметров макроса [C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_20e91.vcxproj]
 
-    ╨Я╤А╨╡╨┤╤Г╨┐╤А╨╡╨╢╨┤╨╡╨╜╨╕╨╣: 0
-    ╨Ю╤И╨╕╨▒╨╛╨║: 2
+    Предупреждений: 0
+    Ошибок: 2
 
-╨Я╤А╨╛╤И╨╗╨╛ ╨▓╤А╨╡╨╝╨╡╨╜╨╕ 00:00:00.69
+Прошло времени 00:00:00.66
 
 
 Performing Curl Test HAVE_ATOMIC failed with the following output:
 Change Dir: 'C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/CMakeFiles/CMakeTmp'
 
-Run Build Command(s): "C:/Program Files/Microsoft Visual Studio/2022/Community/MSBuild/Current/Bin/amd64/MSBuild.exe" cmTC_365b1.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=17.0 /v:n
-╨Т╨╡╤А╤Б╨╕╤П MSBuild 17.11.9+a69bbaaf5 ╨┤╨╗╤П .NET Framework
-╨б╨▒╨╛╤А╨║╨░ ╨╜╨░╤З╨░╤В╨░ 21.06.2025 20:38:59.
+Run Build Command(s): "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/MSBuild/Current/Bin/MSBuild.exe" cmTC_217fc.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=16.0 /v:n
+Microsoft (R) Build Engine версии 16.11.6+a918ceb31 для .NET Framework
+(C) Корпорация Майкрософт (Microsoft Corporation). Все права защищены.
 
-╨Я╤А╨╛╨╡╨║╤В "C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_365b1.vcxproj" ╨▓ ╤Г╨╖╨╗╨╡ 1 (╤Ж╨╡╨╗╨╡╨▓╤Л╨╡ ╨╛╨▒╤К╨╡╨║╤В╤Л ╨┐╨╛ ╤Г╨╝╨╛╨╗╤З╨░╨╜╨╕╤О).
+Сборка начата 24.06.2025 18:23:19.
+Проект "C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_217fc.vcxproj" в узле 1 (целевые объекты по умолчанию).
 PrepareForBuild:
-  ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ ╨║╨░╤В╨░╨╗╨╛╨│╨░ "cmTC_365b1.dir\Debug\".
-  ╨б╤В╤А╤Г╨║╤В╤Г╤А╨╕╤А╨╛╨▓╨░╨╜╨╜╤Л╨╣ ╨▓╤Л╨▓╨╛╨┤ ╨▓╨║╨╗╤О╤З╨╡╨╜. ╨д╨╛╤А╨╝╨░╤В╨╕╤А╨╛╨▓╨░╨╜╨╕╨╡ ╨┤╨╕╨░╨│╨╜╨╛╤Б╤В╨╕╨║╨╕ ╨║╨╛╨╝╨┐╨╕╨╗╤П╤В╨╛╤А╨░ ╨▒╤Г╨┤╨╡╤В ╨╛╤В╤А╨░╨╢╨░╤В╤М ╨╕╨╡╤А╨░╤А╤Е╨╕╤О ╨╛╤И╨╕╨▒╨╛╨║. ╨Я╨╛╨┤╤А╨╛╨▒╨╜╨╡╨╡ ╤Б╨╝. https://aka.ms/cpp/structured-output.
-  ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ ╨║╨░╤В╨░╨╗╨╛╨│╨░ "C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\Debug\".
-  ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ ╨║╨░╤В╨░╨╗╨╛╨│╨░ "cmTC_365b1.dir\Debug\cmTC_365b1.tlog\".
+  Создание каталога "cmTC_217fc.dir\Debug\".
+  Создание каталога "C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\Debug\".
+  Создание каталога "cmTC_217fc.dir\Debug\cmTC_217fc.tlog\".
 InitializeBuildStatus:
-  ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ "cmTC_365b1.dir\Debug\cmTC_365b1.tlog\unsuccessfulbuild", ╤В╨░╨║ ╨║╨░╨║ ╨▒╤Л╨╗╨╛ ╨╖╨░╨┤╨░╨╜╨╛ "AlwaysCreate".
-  ╨Ю╨▒╤А╨░╤Й╨╡╨╜╨╕╨╡ ╨║ "cmTC_365b1.dir\Debug\cmTC_365b1.tlog\unsuccessfulbuild".
+  Создание "cmTC_217fc.dir\Debug\cmTC_217fc.tlog\unsuccessfulbuild", так как было задано "AlwaysCreate".
 ClCompile:
-  C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\bin\HostX64\x64\CL.exe /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D HAVE_ATOMIC /D HAVE_WINDOWS_H /D HAVE_WS2TCPIP_H /D HAVE_WINSOCK2_H /D HAVE_INTTYPES_H /D HAVE_SYS_STAT_H /D HAVE_SYS_TYPES_H /D HAVE_SYS_UTIME_H /D HAVE_FCNTL_H /D HAVE_IO_H /D HAVE_LOCALE_H /D HAVE_STDBOOL_H /D HAVE_STDINT_H /D "CMAKE_INTDIR=\"Debug\"" /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_365b1.dir\Debug\\" /Fd"cmTC_365b1.dir\Debug\vc143.pdb" /external:W1 /Gd /TC /errorReport:queue "C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c"
-  ╨Ю╨┐╤В╨╕╨╝╨╕╨╖╨╕╤А╤Г╤О╤Й╨╕╨╣ ╨║╨╛╨╝╨┐╨╕╨╗╤П╤В╨╛╤А Microsoft (R) C/C++ ╨▓╨╡╤А╤Б╨╕╨╕ 19.41.34123 ╨┤╨╗╤П x64
-  (C) ╨Ъ╨╛╤А╨┐╨╛╤А╨░╤Ж╨╕╤П ╨Ь╨░╨╣╨║╤А╨╛╤Б╨╛╤Д╤В (Microsoft Corporation).  ╨Т╤Б╨╡ ╨┐╤А╨░╨▓╨░ ╨╖╨░╤Й╨╕╤Й╨╡╨╜╤Л.
-  cl /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D HAVE_ATOMIC /D HAVE_WINDOWS_H /D HAVE_WS2TCPIP_H /D HAVE_WINSOCK2_H /D HAVE_INTTYPES_H /D HAVE_SYS_STAT_H /D HAVE_SYS_TYPES_H /D HAVE_SYS_UTIME_H /D HAVE_FCNTL_H /D HAVE_IO_H /D HAVE_LOCALE_H /D HAVE_STDBOOL_H /D HAVE_STDINT_H /D "CMAKE_INTDIR=\"Debug\"" /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_365b1.dir\Debug\\" /Fd"cmTC_365b1.dir\Debug\vc143.pdb" /external:W1 /Gd /TC /errorReport:queue "C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c"
+  C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\bin\HostX64\x64\CL.exe /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D HAVE_ATOMIC /D HAVE_WINDOWS_H /D HAVE_WS2TCPIP_H /D HAVE_WINSOCK2_H /D HAVE_INTTYPES_H /D HAVE_SYS_STAT_H /D HAVE_SYS_TYPES_H /D HAVE_SYS_UTIME_H /D HAVE_FCNTL_H /D HAVE_IO_H /D HAVE_LOCALE_H /D HAVE_STDBOOL_H /D HAVE_STDINT_H /D "CMAKE_INTDIR=\"Debug\"" /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_217fc.dir\Debug\\" /Fd"cmTC_217fc.dir\Debug\vc142.pdb" /external:W1 /Gd /TC /errorReport:queue "C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c"
+  Оптимизирующий компилятор Microsoft (R) C/C++ версии 19.29.30159 для x64
   CurlTests.c
-C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(495,3): error C2065: _Atomic: ╨╜╨╡╨╛╨▒╤К╤П╨▓╨╗╨╡╨╜╨╜╤Л╨╣ ╨╕╨┤╨╡╨╜╤В╨╕╤Д╨╕╨║╨░╤В╨╛╤А [C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_365b1.vcxproj]
-C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(495,11): error C2143: ╤Б╨╕╨╜╤В╨░╨║╤Б╨╕╤З╨╡╤Б╨║╨░╤П ╨╛╤И╨╕╨▒╨║╨░: ╨╛╤В╤Б╤Г╤В╤Б╤В╨▓╨╕╨╡ ";" ╨┐╨╡╤А╨╡╨┤ "╤В╨╕╨┐" [C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_365b1.vcxproj]
-╨б╨▒╨╛╤А╨║╨░ ╨┐╤А╨╛╨╡╨║╤В╨░ "C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_365b1.vcxproj" ╨╖╨░╨▓╨╡╤А╤И╨╡╨╜╨░ (╤Ж╨╡╨╗╨╡╨▓╤Л╨╡ ╨╛╨▒╤К╨╡╨║╤В╤Л ╨┐╨╛ ╤Г╨╝╨╛╨╗╤З╨░╨╜╨╕╤О) ╤Б ╨╛╤И╨╕╨▒╨║╨╛╨╣.
+  (C) Корпорация Майкрософт (Microsoft Corporation).  Все права защищены.
+  cl /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D HAVE_ATOMIC /D HAVE_WINDOWS_H /D HAVE_WS2TCPIP_H /D HAVE_WINSOCK2_H /D HAVE_INTTYPES_H /D HAVE_SYS_STAT_H /D HAVE_SYS_TYPES_H /D HAVE_SYS_UTIME_H /D HAVE_FCNTL_H /D HAVE_IO_H /D HAVE_LOCALE_H /D HAVE_STDBOOL_H /D HAVE_STDINT_H /D "CMAKE_INTDIR=\"Debug\"" /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_217fc.dir\Debug\\" /Fd"cmTC_217fc.dir\Debug\vc142.pdb" /external:W1 /Gd /TC /errorReport:queue "C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c"
+C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(495,15): error C2065: _Atomic: необъявленный идентификатор [C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_217fc.vcxproj]
+C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(495,15): error C2143: синтаксическая ошибка: отсутствие ";" перед "тип" [C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_217fc.vcxproj]
+Сборка проекта "C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_217fc.vcxproj" завершена (целевые объекты по умолчанию) с ошибкой.
 
-╨Ю╤И╨╕╨▒╨║╨░ ╤Б╨▒╨╛╤А╨║╨╕.
+Ошибка сборки.
 
-"C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_365b1.vcxproj" (╤Ж╨╡╨╗╨╡╨▓╨╛╨╣ ╨╛╨▒╤К╨╡╨║╤В ╨┐╨╛ ╤Г╨╝╨╛╨╗╤З╨░╨╜╨╕╤О) (1) ->
-(╨ж╨╡╨╗╨╡╨▓╨╛╨╣ ╨╛╨▒╤К╨╡╨║╤В ClCompile) -> 
-  C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(495,3): error C2065: _Atomic: ╨╜╨╡╨╛╨▒╤К╤П╨▓╨╗╨╡╨╜╨╜╤Л╨╣ ╨╕╨┤╨╡╨╜╤В╨╕╤Д╨╕╨║╨░╤В╨╛╤А [C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_365b1.vcxproj]
-  C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(495,11): error C2143: ╤Б╨╕╨╜╤В╨░╨║╤Б╨╕╤З╨╡╤Б╨║╨░╤П ╨╛╤И╨╕╨▒╨║╨░: ╨╛╤В╤Б╤Г╤В╤Б╤В╨▓╨╕╨╡ ";" ╨┐╨╡╤А╨╡╨┤ "╤В╨╕╨┐" [C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_365b1.vcxproj]
+"C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_217fc.vcxproj" (целевой объект по умолчанию) (1) ->
+(Целевой объект ClCompile) -> 
+  C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(495,15): error C2065: _Atomic: необъявленный идентификатор [C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_217fc.vcxproj]
+  C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(495,15): error C2143: синтаксическая ошибка: отсутствие ";" перед "тип" [C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_217fc.vcxproj]
 
-    ╨Я╤А╨╡╨┤╤Г╨┐╤А╨╡╨╢╨┤╨╡╨╜╨╕╨╣: 0
-    ╨Ю╤И╨╕╨▒╨╛╨║: 2
+    Предупреждений: 0
+    Ошибок: 2
 
-╨Я╤А╨╛╤И╨╗╨╛ ╨▓╤А╨╡╨╝╨╡╨╜╨╕ 00:00:00.41
+Прошло времени 00:00:00.68
 
 
 Performing Curl Test HAVE_POSIX_STRERROR_R failed with the following output:
 Change Dir: 'C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/CMakeFiles/CMakeTmp'
 
-Run Build Command(s): "C:/Program Files/Microsoft Visual Studio/2022/Community/MSBuild/Current/Bin/amd64/MSBuild.exe" cmTC_aa4ef.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=17.0 /v:n
-╨Т╨╡╤А╤Б╨╕╤П MSBuild 17.11.9+a69bbaaf5 ╨┤╨╗╤П .NET Framework
-╨б╨▒╨╛╤А╨║╨░ ╨╜╨░╤З╨░╤В╨░ 21.06.2025 20:39:05.
+Run Build Command(s): "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/MSBuild/Current/Bin/MSBuild.exe" cmTC_008f0.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=16.0 /v:n
+Microsoft (R) Build Engine версии 16.11.6+a918ceb31 для .NET Framework
+(C) Корпорация Майкрософт (Microsoft Corporation). Все права защищены.
 
-╨Я╤А╨╛╨╡╨║╤В "C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_aa4ef.vcxproj" ╨▓ ╤Г╨╖╨╗╨╡ 1 (╤Ж╨╡╨╗╨╡╨▓╤Л╨╡ ╨╛╨▒╤К╨╡╨║╤В╤Л ╨┐╨╛ ╤Г╨╝╨╛╨╗╤З╨░╨╜╨╕╤О).
+Сборка начата 24.06.2025 18:23:28.
+Проект "C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_008f0.vcxproj" в узле 1 (целевые объекты по умолчанию).
 PrepareForBuild:
-  ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ ╨║╨░╤В╨░╨╗╨╛╨│╨░ "cmTC_aa4ef.dir\Debug\".
-  ╨б╤В╤А╤Г╨║╤В╤Г╤А╨╕╤А╨╛╨▓╨░╨╜╨╜╤Л╨╣ ╨▓╤Л╨▓╨╛╨┤ ╨▓╨║╨╗╤О╤З╨╡╨╜. ╨д╨╛╤А╨╝╨░╤В╨╕╤А╨╛╨▓╨░╨╜╨╕╨╡ ╨┤╨╕╨░╨│╨╜╨╛╤Б╤В╨╕╨║╨╕ ╨║╨╛╨╝╨┐╨╕╨╗╤П╤В╨╛╤А╨░ ╨▒╤Г╨┤╨╡╤В ╨╛╤В╤А╨░╨╢╨░╤В╤М ╨╕╨╡╤А╨░╤А╤Е╨╕╤О ╨╛╤И╨╕╨▒╨╛╨║. ╨Я╨╛╨┤╤А╨╛╨▒╨╜╨╡╨╡ ╤Б╨╝. https://aka.ms/cpp/structured-output.
-  ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ ╨║╨░╤В╨░╨╗╨╛╨│╨░ "C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\Debug\".
-  ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ ╨║╨░╤В╨░╨╗╨╛╨│╨░ "cmTC_aa4ef.dir\Debug\cmTC_aa4ef.tlog\".
+  Создание каталога "cmTC_008f0.dir\Debug\".
+  Создание каталога "C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\Debug\".
+  Создание каталога "cmTC_008f0.dir\Debug\cmTC_008f0.tlog\".
 InitializeBuildStatus:
-  ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ "cmTC_aa4ef.dir\Debug\cmTC_aa4ef.tlog\unsuccessfulbuild", ╤В╨░╨║ ╨║╨░╨║ ╨▒╤Л╨╗╨╛ ╨╖╨░╨┤╨░╨╜╨╛ "AlwaysCreate".
-  ╨Ю╨▒╤А╨░╤Й╨╡╨╜╨╕╨╡ ╨║ "cmTC_aa4ef.dir\Debug\cmTC_aa4ef.tlog\unsuccessfulbuild".
+  Создание "cmTC_008f0.dir\Debug\cmTC_008f0.tlog\unsuccessfulbuild", так как было задано "AlwaysCreate".
 ClCompile:
-  C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\bin\HostX64\x64\CL.exe /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D HAVE_POSIX_STRERROR_R /D HAVE_WINDOWS_H /D HAVE_WS2TCPIP_H /D HAVE_WINSOCK2_H /D HAVE_INTTYPES_H /D HAVE_SYS_STAT_H /D HAVE_SYS_TYPES_H /D HAVE_SYS_UTIME_H /D HAVE_FCNTL_H /D HAVE_IO_H /D HAVE_LOCALE_H /D HAVE_STDBOOL_H /D HAVE_STDINT_H /D "CMAKE_INTDIR=\"Debug\"" /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_aa4ef.dir\Debug\\" /Fd"cmTC_aa4ef.dir\Debug\vc143.pdb" /external:W1 /Gd /TC /errorReport:queue "C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c"
-  ╨Ю╨┐╤В╨╕╨╝╨╕╨╖╨╕╤А╤Г╤О╤Й╨╕╨╣ ╨║╨╛╨╝╨┐╨╕╨╗╤П╤В╨╛╤А Microsoft (R) C/C++ ╨▓╨╡╤А╤Б╨╕╨╕ 19.41.34123 ╨┤╨╗╤П x64
-  (C) ╨Ъ╨╛╤А╨┐╨╛╤А╨░╤Ж╨╕╤П ╨Ь╨░╨╣╨║╤А╨╛╤Б╨╛╤Д╤В (Microsoft Corporation).  ╨Т╤Б╨╡ ╨┐╤А╨░╨▓╨░ ╨╖╨░╤Й╨╕╤Й╨╡╨╜╤Л.
-  cl /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D HAVE_POSIX_STRERROR_R /D HAVE_WINDOWS_H /D HAVE_WS2TCPIP_H /D HAVE_WINSOCK2_H /D HAVE_INTTYPES_H /D HAVE_SYS_STAT_H /D HAVE_SYS_TYPES_H /D HAVE_SYS_UTIME_H /D HAVE_FCNTL_H /D HAVE_IO_H /D HAVE_LOCALE_H /D HAVE_STDBOOL_H /D HAVE_STDINT_H /D "CMAKE_INTDIR=\"Debug\"" /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_aa4ef.dir\Debug\\" /Fd"cmTC_aa4ef.dir\Debug\vc143.pdb" /external:W1 /Gd /TC /errorReport:queue "C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c"
+  C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\bin\HostX64\x64\CL.exe /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D HAVE_POSIX_STRERROR_R /D HAVE_WINDOWS_H /D HAVE_WS2TCPIP_H /D HAVE_WINSOCK2_H /D HAVE_INTTYPES_H /D HAVE_SYS_STAT_H /D HAVE_SYS_TYPES_H /D HAVE_SYS_UTIME_H /D HAVE_FCNTL_H /D HAVE_IO_H /D HAVE_LOCALE_H /D HAVE_STDBOOL_H /D HAVE_STDINT_H /D "CMAKE_INTDIR=\"Debug\"" /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_008f0.dir\Debug\\" /Fd"cmTC_008f0.dir\Debug\vc142.pdb" /external:W1 /Gd /TC /errorReport:queue "C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c"
+  Оптимизирующий компилятор Microsoft (R) C/C++ версии 19.29.30159 для x64
   CurlTests.c
+  (C) Корпорация Майкрософт (Microsoft Corporation).  Все права защищены.
+  cl /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D HAVE_POSIX_STRERROR_R /D HAVE_WINDOWS_H /D HAVE_WS2TCPIP_H /D HAVE_WINSOCK2_H /D HAVE_INTTYPES_H /D HAVE_SYS_STAT_H /D HAVE_SYS_TYPES_H /D HAVE_SYS_UTIME_H /D HAVE_FCNTL_H /D HAVE_IO_H /D HAVE_LOCALE_H /D HAVE_STDBOOL_H /D HAVE_STDINT_H /D "CMAKE_INTDIR=\"Debug\"" /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_008f0.dir\Debug\\" /Fd"cmTC_008f0.dir\Debug\vc142.pdb" /external:W1 /Gd /TC /errorReport:queue "C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c"
 Link:
-  C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\bin\HostX64\x64\link.exe /ERRORREPORT:QUEUE /OUT:"C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\Debug\cmTC_aa4ef.exe" /INCREMENTAL /ILK:"cmTC_aa4ef.dir\Debug\cmTC_aa4ef.ilk" /NOLOGO ws2_32.lib kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:/Users/rosih/OneDrive/Desktop/╨а╨░╨▒╨╛╤В╨░/Cursor/monitoring_agent/build/CMakeFiles/CMakeTmp/Debug/cmTC_aa4ef.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:/Users/rosih/OneDrive/Desktop/╨а╨░╨▒╨╛╤В╨░/Cursor/monitoring_agent/build/CMakeFiles/CMakeTmp/Debug/cmTC_aa4ef.lib" /MACHINE:X64  /machine:x64 cmTC_aa4ef.dir\Debug\CurlTests.obj
-CurlTests.obj : error LNK2019: ╤Б╤Б╤Л╨╗╨║╨░ ╨╜╨░ ╨╜╨╡╤А╨░╨╖╤А╨╡╤И╨╡╨╜╨╜╤Л╨╣ ╨▓╨╜╨╡╤И╨╜╨╕╨╣ ╤Б╨╕╨╝╨▓╨╛╨╗ strerror_r ╨▓ ╤Д╤Г╨╜╨║╤Ж╨╕╨╕ main. [C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_aa4ef.vcxproj]
-C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\Debug\cmTC_aa4ef.exe : fatal error LNK1120: ╨╜╨╡╤А╨░╨╖╤А╨╡╤И╨╡╨╜╨╜╤Л╤Е ╨▓╨╜╨╡╤И╨╜╨╕╤Е ╤Н╨╗╨╡╨╝╨╡╨╜╤В╨╛╨▓: 1 [C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_aa4ef.vcxproj]
-╨б╨▒╨╛╤А╨║╨░ ╨┐╤А╨╛╨╡╨║╤В╨░ "C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_aa4ef.vcxproj" ╨╖╨░╨▓╨╡╤А╤И╨╡╨╜╨░ (╤Ж╨╡╨╗╨╡╨▓╤Л╨╡ ╨╛╨▒╤К╨╡╨║╤В╤Л ╨┐╨╛ ╤Г╨╝╨╛╨╗╤З╨░╨╜╨╕╤О) ╤Б ╨╛╤И╨╕╨▒╨║╨╛╨╣.
+  C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\bin\HostX64\x64\link.exe /ERRORREPORT:QUEUE /OUT:"C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\Debug\cmTC_008f0.exe" /INCREMENTAL /ILK:"cmTC_008f0.dir\Debug\cmTC_008f0.ilk" /NOLOGO ws2_32.lib kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/CMakeFiles/CMakeTmp/Debug/cmTC_008f0.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/CMakeFiles/CMakeTmp/Debug/cmTC_008f0.lib" /MACHINE:X64  /machine:x64 cmTC_008f0.dir\Debug\CurlTests.obj
+CurlTests.obj : error LNK2019: ссылка на неразрешенный внешний символ strerror_r в функции main. [C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_008f0.vcxproj]
+C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\Debug\cmTC_008f0.exe : fatal error LNK1120: неразрешенных внешних элементов: 1 [C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_008f0.vcxproj]
+Сборка проекта "C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_008f0.vcxproj" завершена (целевые объекты по умолчанию) с ошибкой.
 
-╨Ю╤И╨╕╨▒╨║╨░ ╤Б╨▒╨╛╤А╨║╨╕.
+Ошибка сборки.
 
-"C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_aa4ef.vcxproj" (╤Ж╨╡╨╗╨╡╨▓╨╛╨╣ ╨╛╨▒╤К╨╡╨║╤В ╨┐╨╛ ╤Г╨╝╨╛╨╗╤З╨░╨╜╨╕╤О) (1) ->
-(╨ж╨╡╨╗╨╡╨▓╨╛╨╣ ╨╛╨▒╤К╨╡╨║╤В Link) -> 
-  CurlTests.obj : error LNK2019: ╤Б╤Б╤Л╨╗╨║╨░ ╨╜╨░ ╨╜╨╡╤А╨░╨╖╤А╨╡╤И╨╡╨╜╨╜╤Л╨╣ ╨▓╨╜╨╡╤И╨╜╨╕╨╣ ╤Б╨╕╨╝╨▓╨╛╨╗ strerror_r ╨▓ ╤Д╤Г╨╜╨║╤Ж╨╕╨╕ main. [C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_aa4ef.vcxproj]
-  C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\Debug\cmTC_aa4ef.exe : fatal error LNK1120: ╨╜╨╡╤А╨░╨╖╤А╨╡╤И╨╡╨╜╨╜╤Л╤Е ╨▓╨╜╨╡╤И╨╜╨╕╤Е ╤Н╨╗╨╡╨╝╨╡╨╜╤В╨╛╨▓: 1 [C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_aa4ef.vcxproj]
+"C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_008f0.vcxproj" (целевой объект по умолчанию) (1) ->
+(Целевой объект Link) -> 
+  CurlTests.obj : error LNK2019: ссылка на неразрешенный внешний символ strerror_r в функции main. [C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_008f0.vcxproj]
+  C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\Debug\cmTC_008f0.exe : fatal error LNK1120: неразрешенных внешних элементов: 1 [C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_008f0.vcxproj]
 
-    ╨Я╤А╨╡╨┤╤Г╨┐╤А╨╡╨╢╨┤╨╡╨╜╨╕╨╣: 0
-    ╨Ю╤И╨╕╨▒╨╛╨║: 2
+    Предупреждений: 0
+    Ошибок: 2
 
-╨Я╤А╨╛╤И╨╗╨╛ ╨▓╤А╨╡╨╝╨╡╨╜╨╕ 00:00:00.89
+Прошло времени 00:00:01.21
 
 
 Performing Curl Test HAVE_CLOCK_GETTIME_MONOTONIC failed with the following output:
 Change Dir: 'C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/CMakeFiles/CMakeTmp'
 
-Run Build Command(s): "C:/Program Files/Microsoft Visual Studio/2022/Community/MSBuild/Current/Bin/amd64/MSBuild.exe" cmTC_ec062.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=17.0 /v:n
-╨Т╨╡╤А╤Б╨╕╤П MSBuild 17.11.9+a69bbaaf5 ╨┤╨╗╤П .NET Framework
-╨б╨▒╨╛╤А╨║╨░ ╨╜╨░╤З╨░╤В╨░ 21.06.2025 20:39:06.
+Run Build Command(s): "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/MSBuild/Current/Bin/MSBuild.exe" cmTC_30391.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=16.0 /v:n
+Microsoft (R) Build Engine версии 16.11.6+a918ceb31 для .NET Framework
+(C) Корпорация Майкрософт (Microsoft Corporation). Все права защищены.
 
-╨Я╤А╨╛╨╡╨║╤В "C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_ec062.vcxproj" ╨▓ ╤Г╨╖╨╗╨╡ 1 (╤Ж╨╡╨╗╨╡╨▓╤Л╨╡ ╨╛╨▒╤К╨╡╨║╤В╤Л ╨┐╨╛ ╤Г╨╝╨╛╨╗╤З╨░╨╜╨╕╤О).
+Сборка начата 24.06.2025 18:23:30.
+Проект "C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_30391.vcxproj" в узле 1 (целевые объекты по умолчанию).
 PrepareForBuild:
-  ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ ╨║╨░╤В╨░╨╗╨╛╨│╨░ "cmTC_ec062.dir\Debug\".
-  ╨б╤В╤А╤Г╨║╤В╤Г╤А╨╕╤А╨╛╨▓╨░╨╜╨╜╤Л╨╣ ╨▓╤Л╨▓╨╛╨┤ ╨▓╨║╨╗╤О╤З╨╡╨╜. ╨д╨╛╤А╨╝╨░╤В╨╕╤А╨╛╨▓╨░╨╜╨╕╨╡ ╨┤╨╕╨░╨│╨╜╨╛╤Б╤В╨╕╨║╨╕ ╨║╨╛╨╝╨┐╨╕╨╗╤П╤В╨╛╤А╨░ ╨▒╤Г╨┤╨╡╤В ╨╛╤В╤А╨░╨╢╨░╤В╤М ╨╕╨╡╤А╨░╤А╤Е╨╕╤О ╨╛╤И╨╕╨▒╨╛╨║. ╨Я╨╛╨┤╤А╨╛╨▒╨╜╨╡╨╡ ╤Б╨╝. https://aka.ms/cpp/structured-output.
-  ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ ╨║╨░╤В╨░╨╗╨╛╨│╨░ "C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\Debug\".
-  ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ ╨║╨░╤В╨░╨╗╨╛╨│╨░ "cmTC_ec062.dir\Debug\cmTC_ec062.tlog\".
+  Создание каталога "cmTC_30391.dir\Debug\".
+  Создание каталога "C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\Debug\".
+  Создание каталога "cmTC_30391.dir\Debug\cmTC_30391.tlog\".
 InitializeBuildStatus:
-  ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ "cmTC_ec062.dir\Debug\cmTC_ec062.tlog\unsuccessfulbuild", ╤В╨░╨║ ╨║╨░╨║ ╨▒╤Л╨╗╨╛ ╨╖╨░╨┤╨░╨╜╨╛ "AlwaysCreate".
-  ╨Ю╨▒╤А╨░╤Й╨╡╨╜╨╕╨╡ ╨║ "cmTC_ec062.dir\Debug\cmTC_ec062.tlog\unsuccessfulbuild".
+  Создание "cmTC_30391.dir\Debug\cmTC_30391.tlog\unsuccessfulbuild", так как было задано "AlwaysCreate".
 ClCompile:
-  C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\bin\HostX64\x64\CL.exe /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D HAVE_CLOCK_GETTIME_MONOTONIC /D HAVE_WINDOWS_H /D HAVE_WS2TCPIP_H /D HAVE_WINSOCK2_H /D HAVE_INTTYPES_H /D HAVE_SYS_STAT_H /D HAVE_SYS_TYPES_H /D HAVE_SYS_UTIME_H /D HAVE_FCNTL_H /D HAVE_IO_H /D HAVE_LOCALE_H /D HAVE_STDBOOL_H /D HAVE_STDINT_H /D "CMAKE_INTDIR=\"Debug\"" /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_ec062.dir\Debug\\" /Fd"cmTC_ec062.dir\Debug\vc143.pdb" /external:W1 /Gd /TC /errorReport:queue "C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c"
-  ╨Ю╨┐╤В╨╕╨╝╨╕╨╖╨╕╤А╤Г╤О╤Й╨╕╨╣ ╨║╨╛╨╝╨┐╨╕╨╗╤П╤В╨╛╤А Microsoft (R) C/C++ ╨▓╨╡╤А╤Б╨╕╨╕ 19.41.34123 ╨┤╨╗╤П x64
-  (C) ╨Ъ╨╛╤А╨┐╨╛╤А╨░╤Ж╨╕╤П ╨Ь╨░╨╣╨║╤А╨╛╤Б╨╛╤Д╤В (Microsoft Corporation).  ╨Т╤Б╨╡ ╨┐╤А╨░╨▓╨░ ╨╖╨░╤Й╨╕╤Й╨╡╨╜╤Л.
-  cl /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D HAVE_CLOCK_GETTIME_MONOTONIC /D HAVE_WINDOWS_H /D HAVE_WS2TCPIP_H /D HAVE_WINSOCK2_H /D HAVE_INTTYPES_H /D HAVE_SYS_STAT_H /D HAVE_SYS_TYPES_H /D HAVE_SYS_UTIME_H /D HAVE_FCNTL_H /D HAVE_IO_H /D HAVE_LOCALE_H /D HAVE_STDBOOL_H /D HAVE_STDINT_H /D "CMAKE_INTDIR=\"Debug\"" /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_ec062.dir\Debug\\" /Fd"cmTC_ec062.dir\Debug\vc143.pdb" /external:W1 /Gd /TC /errorReport:queue "C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c"
+  C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\bin\HostX64\x64\CL.exe /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D HAVE_CLOCK_GETTIME_MONOTONIC /D HAVE_WINDOWS_H /D HAVE_WS2TCPIP_H /D HAVE_WINSOCK2_H /D HAVE_INTTYPES_H /D HAVE_SYS_STAT_H /D HAVE_SYS_TYPES_H /D HAVE_SYS_UTIME_H /D HAVE_FCNTL_H /D HAVE_IO_H /D HAVE_LOCALE_H /D HAVE_STDBOOL_H /D HAVE_STDINT_H /D "CMAKE_INTDIR=\"Debug\"" /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_30391.dir\Debug\\" /Fd"cmTC_30391.dir\Debug\vc142.pdb" /external:W1 /Gd /TC /errorReport:queue "C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c"
+  Оптимизирующий компилятор Microsoft (R) C/C++ версии 19.29.30159 для x64
   CurlTests.c
-C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(423,17): error C2065: CLOCK_MONOTONIC: ╨╜╨╡╨╛╨▒╤К╤П╨▓╨╗╨╡╨╜╨╜╤Л╨╣ ╨╕╨┤╨╡╨╜╤В╨╕╤Д╨╕╨║╨░╤В╨╛╤А [C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_ec062.vcxproj]
-╨б╨▒╨╛╤А╨║╨░ ╨┐╤А╨╛╨╡╨║╤В╨░ "C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_ec062.vcxproj" ╨╖╨░╨▓╨╡╤А╤И╨╡╨╜╨░ (╤Ж╨╡╨╗╨╡╨▓╤Л╨╡ ╨╛╨▒╤К╨╡╨║╤В╤Л ╨┐╨╛ ╤Г╨╝╨╛╨╗╤З╨░╨╜╨╕╤О) ╤Б ╨╛╤И╨╕╨▒╨║╨╛╨╣.
+  (C) Корпорация Майкрософт (Microsoft Corporation).  Все права защищены.
+  cl /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D HAVE_CLOCK_GETTIME_MONOTONIC /D HAVE_WINDOWS_H /D HAVE_WS2TCPIP_H /D HAVE_WINSOCK2_H /D HAVE_INTTYPES_H /D HAVE_SYS_STAT_H /D HAVE_SYS_TYPES_H /D HAVE_SYS_UTIME_H /D HAVE_FCNTL_H /D HAVE_IO_H /D HAVE_LOCALE_H /D HAVE_STDBOOL_H /D HAVE_STDINT_H /D "CMAKE_INTDIR=\"Debug\"" /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_30391.dir\Debug\\" /Fd"cmTC_30391.dir\Debug\vc142.pdb" /external:W1 /Gd /TC /errorReport:queue "C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c"
+C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(423,32): error C2065: CLOCK_MONOTONIC: необъявленный идентификатор [C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_30391.vcxproj]
+Сборка проекта "C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_30391.vcxproj" завершена (целевые объекты по умолчанию) с ошибкой.
 
-╨Ю╤И╨╕╨▒╨║╨░ ╤Б╨▒╨╛╤А╨║╨╕.
+Ошибка сборки.
 
-"C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_ec062.vcxproj" (╤Ж╨╡╨╗╨╡╨▓╨╛╨╣ ╨╛╨▒╤К╨╡╨║╤В ╨┐╨╛ ╤Г╨╝╨╛╨╗╤З╨░╨╜╨╕╤О) (1) ->
-(╨ж╨╡╨╗╨╡╨▓╨╛╨╣ ╨╛╨▒╤К╨╡╨║╤В ClCompile) -> 
-  C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(423,17): error C2065: CLOCK_MONOTONIC: ╨╜╨╡╨╛╨▒╤К╤П╨▓╨╗╨╡╨╜╨╜╤Л╨╣ ╨╕╨┤╨╡╨╜╤В╨╕╤Д╨╕╨║╨░╤В╨╛╤А [C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_ec062.vcxproj]
+"C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_30391.vcxproj" (целевой объект по умолчанию) (1) ->
+(Целевой объект ClCompile) -> 
+  C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(423,32): error C2065: CLOCK_MONOTONIC: необъявленный идентификатор [C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_30391.vcxproj]
 
-    ╨Я╤А╨╡╨┤╤Г╨┐╤А╨╡╨╢╨┤╨╡╨╜╨╕╨╣: 0
-    ╨Ю╤И╨╕╨▒╨╛╨║: 1
+    Предупреждений: 0
+    Ошибок: 1
 
-╨Я╤А╨╛╤И╨╗╨╛ ╨▓╤А╨╡╨╝╨╡╨╜╨╕ 00:00:00.41
+Прошло времени 00:00:00.79
 
 
 Performing Curl Test HAVE_BUILTIN_AVAILABLE failed with the following output:
 Change Dir: 'C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/CMakeFiles/CMakeTmp'
 
-Run Build Command(s): "C:/Program Files/Microsoft Visual Studio/2022/Community/MSBuild/Current/Bin/amd64/MSBuild.exe" cmTC_882f6.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=17.0 /v:n
-╨Т╨╡╤А╤Б╨╕╤П MSBuild 17.11.9+a69bbaaf5 ╨┤╨╗╤П .NET Framework
-╨б╨▒╨╛╤А╨║╨░ ╨╜╨░╤З╨░╤В╨░ 21.06.2025 20:39:07.
+Run Build Command(s): "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/MSBuild/Current/Bin/MSBuild.exe" cmTC_fc22b.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=16.0 /v:n
+Microsoft (R) Build Engine версии 16.11.6+a918ceb31 для .NET Framework
+(C) Корпорация Майкрософт (Microsoft Corporation). Все права защищены.
 
-╨Я╤А╨╛╨╡╨║╤В "C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_882f6.vcxproj" ╨▓ ╤Г╨╖╨╗╨╡ 1 (╤Ж╨╡╨╗╨╡╨▓╤Л╨╡ ╨╛╨▒╤К╨╡╨║╤В╤Л ╨┐╨╛ ╤Г╨╝╨╛╨╗╤З╨░╨╜╨╕╤О).
+Сборка начата 24.06.2025 18:23:31.
+Проект "C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_fc22b.vcxproj" в узле 1 (целевые объекты по умолчанию).
 PrepareForBuild:
-  ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ ╨║╨░╤В╨░╨╗╨╛╨│╨░ "cmTC_882f6.dir\Debug\".
-  ╨б╤В╤А╤Г╨║╤В╤Г╤А╨╕╤А╨╛╨▓╨░╨╜╨╜╤Л╨╣ ╨▓╤Л╨▓╨╛╨┤ ╨▓╨║╨╗╤О╤З╨╡╨╜. ╨д╨╛╤А╨╝╨░╤В╨╕╤А╨╛╨▓╨░╨╜╨╕╨╡ ╨┤╨╕╨░╨│╨╜╨╛╤Б╤В╨╕╨║╨╕ ╨║╨╛╨╝╨┐╨╕╨╗╤П╤В╨╛╤А╨░ ╨▒╤Г╨┤╨╡╤В ╨╛╤В╤А╨░╨╢╨░╤В╤М ╨╕╨╡╤А╨░╤А╤Е╨╕╤О ╨╛╤И╨╕╨▒╨╛╨║. ╨Я╨╛╨┤╤А╨╛╨▒╨╜╨╡╨╡ ╤Б╨╝. https://aka.ms/cpp/structured-output.
-  ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ ╨║╨░╤В╨░╨╗╨╛╨│╨░ "C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\Debug\".
-  ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ ╨║╨░╤В╨░╨╗╨╛╨│╨░ "cmTC_882f6.dir\Debug\cmTC_882f6.tlog\".
+  Создание каталога "cmTC_fc22b.dir\Debug\".
+  Создание каталога "C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\Debug\".
+  Создание каталога "cmTC_fc22b.dir\Debug\cmTC_fc22b.tlog\".
 InitializeBuildStatus:
-  ╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ "cmTC_882f6.dir\Debug\cmTC_882f6.tlog\unsuccessfulbuild", ╤В╨░╨║ ╨║╨░╨║ ╨▒╤Л╨╗╨╛ ╨╖╨░╨┤╨░╨╜╨╛ "AlwaysCreate".
-  ╨Ю╨▒╤А╨░╤Й╨╡╨╜╨╕╨╡ ╨║ "cmTC_882f6.dir\Debug\cmTC_882f6.tlog\unsuccessfulbuild".
+  Создание "cmTC_fc22b.dir\Debug\cmTC_fc22b.tlog\unsuccessfulbuild", так как было задано "AlwaysCreate".
 ClCompile:
-  C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\bin\HostX64\x64\CL.exe /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D HAVE_BUILTIN_AVAILABLE /D HAVE_WINDOWS_H /D HAVE_WS2TCPIP_H /D HAVE_WINSOCK2_H /D HAVE_INTTYPES_H /D HAVE_SYS_STAT_H /D HAVE_SYS_TYPES_H /D HAVE_SYS_UTIME_H /D HAVE_FCNTL_H /D HAVE_IO_H /D HAVE_LOCALE_H /D HAVE_STDBOOL_H /D HAVE_STDINT_H /D "CMAKE_INTDIR=\"Debug\"" /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_882f6.dir\Debug\\" /Fd"cmTC_882f6.dir\Debug\vc143.pdb" /external:W1 /Gd /TC /errorReport:queue "C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c"
-  (C) ╨Ъ╨╛╤А╨┐╨╛╤А╨░╤Ж╨╕╤П ╨Ь╨░╨╣╨║╤А╨╛╤Б╨╛╤Д╤В (Microsoft Corporation).  ╨Т╤Б╨╡ ╨┐╤А╨░╨▓╨░ ╨╖╨░╤Й╨╕╤Й╨╡╨╜╤Л.
-  cl /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D HAVE_BUILTIN_AVAILABLE /D HAVE_WINDOWS_H /D HAVE_WS2TCPIP_H /D HAVE_WINSOCK2_H /D HAVE_INTTYPES_H /D HAVE_SYS_STAT_H /D HAVE_SYS_TYPES_H /D HAVE_SYS_UTIME_H /D HAVE_FCNTL_H /D HAVE_IO_H /D HAVE_LOCALE_H /D HAVE_STDBOOL_H /D HAVE_STDINT_H /D "CMAKE_INTDIR=\"Debug\"" /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_882f6.dir\Debug\\" /Fd"cmTC_882f6.dir\Debug\vc143.pdb" /external:W1 /Gd /TC /errorReport:queue "C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c"
+  C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\bin\HostX64\x64\CL.exe /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D HAVE_BUILTIN_AVAILABLE /D HAVE_WINDOWS_H /D HAVE_WS2TCPIP_H /D HAVE_WINSOCK2_H /D HAVE_INTTYPES_H /D HAVE_SYS_STAT_H /D HAVE_SYS_TYPES_H /D HAVE_SYS_UTIME_H /D HAVE_FCNTL_H /D HAVE_IO_H /D HAVE_LOCALE_H /D HAVE_STDBOOL_H /D HAVE_STDINT_H /D "CMAKE_INTDIR=\"Debug\"" /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_fc22b.dir\Debug\\" /Fd"cmTC_fc22b.dir\Debug\vc142.pdb" /external:W1 /Gd /TC /errorReport:queue "C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c"
+  Оптимизирующий компилятор Microsoft (R) C/C++ версии 19.29.30159 для x64
   CurlTests.c
-C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(430,26): error C2065: macOS: ╨╜╨╡╨╛╨▒╤К╤П╨▓╨╗╨╡╨╜╨╜╤Л╨╣ ╨╕╨┤╨╡╨╜╤В╨╕╤Д╨╕╨║╨░╤В╨╛╤А [C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_882f6.vcxproj]
-C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(430,32): error C2143: ╤Б╨╕╨╜╤В╨░╨║╤Б╨╕╤З╨╡╤Б╨║╨░╤П ╨╛╤И╨╕╨▒╨║╨░: ╨╛╤В╤Б╤Г╤В╤Б╤В╨▓╨╕╨╡ ")" ╨┐╨╡╤А╨╡╨┤ "╨║╨╛╨╜╤Б╤В╨░╨╜╤В╨░" [C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_882f6.vcxproj]
-C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(430,40): error C2059: ╤Б╨╕╨╜╤В╨░╨║╤Б╨╕╤З╨╡╤Б╨║╨░╤П ╨╛╤И╨╕╨▒╨║╨░: ) [C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_882f6.vcxproj]
-C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(430,41): error C2059: ╤Б╨╕╨╜╤В╨░╨║╤Б╨╕╤З╨╡╤Б╨║╨░╤П ╨╛╤И╨╕╨▒╨║╨░: ) [C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_882f6.vcxproj]
-╨б╨▒╨╛╤А╨║╨░ ╨┐╤А╨╛╨╡╨║╤В╨░ "C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_882f6.vcxproj" ╨╖╨░╨▓╨╡╤А╤И╨╡╨╜╨░ (╤Ж╨╡╨╗╨╡╨▓╤Л╨╡ ╨╛╨▒╤К╨╡╨║╤В╤Л ╨┐╨╛ ╤Г╨╝╨╛╨╗╤З╨░╨╜╨╕╤О) ╤Б ╨╛╤И╨╕╨▒╨║╨╛╨╣.
+  (C) Корпорация Майкрософт (Microsoft Corporation).  Все права защищены.
+  cl /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D HAVE_BUILTIN_AVAILABLE /D HAVE_WINDOWS_H /D HAVE_WS2TCPIP_H /D HAVE_WINSOCK2_H /D HAVE_INTTYPES_H /D HAVE_SYS_STAT_H /D HAVE_SYS_TYPES_H /D HAVE_SYS_UTIME_H /D HAVE_FCNTL_H /D HAVE_IO_H /D HAVE_LOCALE_H /D HAVE_STDBOOL_H /D HAVE_STDINT_H /D "CMAKE_INTDIR=\"Debug\"" /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_fc22b.dir\Debug\\" /Fd"cmTC_fc22b.dir\Debug\vc142.pdb" /external:W1 /Gd /TC /errorReport:queue "C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c"
+C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(430,32): error C2065: macOS: необъявленный идентификатор [C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_fc22b.vcxproj]
+C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(430,32): error C2143: синтаксическая ошибка: отсутствие ")" перед "константа" [C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_fc22b.vcxproj]
+C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(430,40): error C2059: синтаксическая ошибка: ) [C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_fc22b.vcxproj]
+C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(430,41): error C2059: синтаксическая ошибка: ) [C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_fc22b.vcxproj]
+Сборка проекта "C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_fc22b.vcxproj" завершена (целевые объекты по умолчанию) с ошибкой.
 
-╨Ю╤И╨╕╨▒╨║╨░ ╤Б╨▒╨╛╤А╨║╨╕.
+Ошибка сборки.
 
-"C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_882f6.vcxproj" (╤Ж╨╡╨╗╨╡╨▓╨╛╨╣ ╨╛╨▒╤К╨╡╨║╤В ╨┐╨╛ ╤Г╨╝╨╛╨╗╤З╨░╨╜╨╕╤О) (1) ->
-(╨ж╨╡╨╗╨╡╨▓╨╛╨╣ ╨╛╨▒╤К╨╡╨║╤В ClCompile) -> 
-  C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(430,26): error C2065: macOS: ╨╜╨╡╨╛╨▒╤К╤П╨▓╨╗╨╡╨╜╨╜╤Л╨╣ ╨╕╨┤╨╡╨╜╤В╨╕╤Д╨╕╨║╨░╤В╨╛╤А [C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_882f6.vcxproj]
-  C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(430,32): error C2143: ╤Б╨╕╨╜╤В╨░╨║╤Б╨╕╤З╨╡╤Б╨║╨░╤П ╨╛╤И╨╕╨▒╨║╨░: ╨╛╤В╤Б╤Г╤В╤Б╤В╨▓╨╕╨╡ ")" ╨┐╨╡╤А╨╡╨┤ "╨║╨╛╨╜╤Б╤В╨░╨╜╤В╨░" [C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_882f6.vcxproj]
-  C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(430,40): error C2059: ╤Б╨╕╨╜╤В╨░╨║╤Б╨╕╤З╨╡╤Б╨║╨░╤П ╨╛╤И╨╕╨▒╨║╨░: ) [C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_882f6.vcxproj]
-  C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(430,41): error C2059: ╤Б╨╕╨╜╤В╨░╨║╤Б╨╕╤З╨╡╤Б╨║╨░╤П ╨╛╤И╨╕╨▒╨║╨░: ) [C:\Users\rosih\OneDrive\Desktop\╨а╨░╨▒╨╛╤В╨░\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_882f6.vcxproj]
+"C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_fc22b.vcxproj" (целевой объект по умолчанию) (1) ->
+(Целевой объект ClCompile) -> 
+  C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(430,32): error C2065: macOS: необъявленный идентификатор [C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_fc22b.vcxproj]
+  C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(430,32): error C2143: синтаксическая ошибка: отсутствие ")" перед "константа" [C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_fc22b.vcxproj]
+  C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(430,40): error C2059: синтаксическая ошибка: ) [C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_fc22b.vcxproj]
+  C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\_deps\curl-src\CMake\CurlTests.c(430,41): error C2059: синтаксическая ошибка: ) [C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\build\CMakeFiles\CMakeTmp\cmTC_fc22b.vcxproj]
 
-    ╨Я╤А╨╡╨┤╤Г╨┐╤А╨╡╨╢╨┤╨╡╨╜╨╕╨╣: 0
-    ╨Ю╤И╨╕╨▒╨╛╨║: 4
+    Предупреждений: 0
+    Ошибок: 4
 
-╨Я╤А╨╛╤И╨╗╨╛ ╨▓╤А╨╡╨╝╨╡╨╜╨╕ 00:00:00.40
+Прошло времени 00:00:00.72
 
 

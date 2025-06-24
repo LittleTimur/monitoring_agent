@@ -8,6 +8,7 @@
  */
 
 #include "../include/metrics_collector.hpp"
+#include "../include/nlohmann/json.hpp"
 #include <fstream>
 #include <sstream>
 #include <filesystem>
@@ -26,21 +27,20 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <dirent.h>
-#include <nlohmann/json.hpp>
 #include <cstdio>
 #include <array>
 #include <map>
 #include <thread>
+#include <limits>
+#include <chrono>
 
 #ifdef __linux__
 #include <sys/sysinfo.h>
 #include <sys/statvfs.h>
 #include <sys/socket.h>
-#include <linux/if.h>
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
 #include <unistd.h>
-#include <net/if.h>
 #include <sys/ioctl.h>
 #include <fcntl.h>
 #include <dirent.h>
@@ -60,6 +60,11 @@ namespace monitoring {
  */
 #ifdef __linux__
 class LinuxMetricsCollector : public MetricsCollector {
+private:
+    std::chrono::steady_clock::time_point last_network_collection_time;
+    std::map<std::string, std::pair<uint64_t, uint64_t>> last_cpu_times;
+    std::map<std::string, std::pair<uint64_t, uint64_t>> last_network_stats;
+
 public:
     /**
      * @brief Конструктор класса
@@ -69,13 +74,14 @@ public:
      * для сбора метрик.
      */
     LinuxMetricsCollector() {
-        // Проверяем доступность необходимых файлов
-        if (!std::filesystem::exists("/proc/stat")) {
-            throw std::runtime_error("Cannot access /proc/stat");
+        if (!std::filesystem::exists("/proc/stat") || !std::filesystem::exists("/proc/meminfo")) {
+            throw std::runtime_error("Cannot access /proc/stat or /proc/meminfo");
         }
-        if (!std::filesystem::exists("/proc/meminfo")) {
-            throw std::runtime_error("Cannot access /proc/meminfo");
-        }
+        // Prime the stats for stateful calculation
+        last_network_collection_time = std::chrono::steady_clock::now();
+        collect_cpu_metrics(); 
+        NetworkMetrics dummy_net_metrics;
+        collect_network_metrics(dummy_net_metrics);
     }
 
     /**
@@ -110,9 +116,6 @@ public:
         return metrics;
     }
 
-    CpuMetrics CollectCpuMetrics() override {
-        return collect_cpu_metrics();
-    }
 
 private:
     /**
@@ -124,95 +127,92 @@ private:
      * - Температуре CPU (из /sys/class/thermal)
      */
     CpuMetrics collect_cpu_metrics() {
-        CpuMetrics metrics;
-        // Чтение CPU статистики из /proc/stat
-        std::ifstream stat_file("/proc/stat");
+        CpuMetrics metrics{};
+        std::ifstream file("/proc/stat");
         std::string line;
-        if (std::getline(stat_file, line)) {
-            std::istringstream iss(line);
-            std::string cpu;
-            unsigned long user, nice, system, idle, iowait, irq, softirq, steal, guest, guest_nice;
-            iss >> cpu >> user >> nice >> system >> idle >> iowait >> irq >> softirq >> steal >> guest >> guest_nice;
-            
-            // Расчет общего времени и процента использования
-            unsigned long total = user + nice + system + idle + iowait + irq + softirq + steal;
-            metrics.usage_percent = 100.0 * (total - idle) / total;
-        }
-
-        // Чтение загрузки по каждому ядру (только сырые значения, проценты невозможны без stateful)
-        std::vector<double> core_usage;
-        std::ifstream stat_file_cores("/proc/stat");
-        // Пропускаем первую строку (общая)
-        std::getline(stat_file_cores, line);
-        while (std::getline(stat_file_cores, line)) {
-            if (line.rfind("cpu", 0) == 0 && line[3] >= '0' && line[3] <= '9') {
-                // cpuN строка
-                std::istringstream iss(line);
-                std::string cpu;
-                unsigned long user, nice, system, idle, iowait, irq, softirq, steal, guest, guest_nice;
-                iss >> cpu >> user >> nice >> system >> idle >> iowait >> irq >> softirq >> steal >> guest >> guest_nice;
-                // Без stateful-режима невозможно корректно вычислить usage_percent
-                core_usage.push_back(std::numeric_limits<double>::quiet_NaN());
-            } else {
-                break;
+        
+        std::map<std::string, std::pair<uint64_t, uint64_t>> current_cpu_times;
+        
+        while (std::getline(file, line)) {
+            if (line.rfind("cpu", 0) == 0) {
+                std::istringstream ss(line);
+                std::string cpu_label;
+                ss >> cpu_label;
+                
+                uint64_t user, nice, system, idle, iowait, irq, softirq, steal;
+                ss >> user >> nice >> system >> idle >> iowait >> irq >> softirq >> steal;
+                
+                uint64_t idle_time = idle + iowait;
+                uint64_t total_time = user + nice + system + idle + iowait + irq + softirq + steal;
+                
+                current_cpu_times[cpu_label] = {total_time, idle_time};
             }
         }
-        metrics.core_usage = core_usage;
+        
+        if (!last_cpu_times.empty()) {
+            if (current_cpu_times.count("cpu") && last_cpu_times.count("cpu")) {
+                auto& current = current_cpu_times["cpu"];
+                auto& last = last_cpu_times["cpu"];
+                
+                uint64_t total_diff = current.first - last.first;
+                uint64_t idle_diff = current.second - last.second;
+                
+                if (total_diff > 0) {
+                    metrics.usage_percent = static_cast<double>(total_diff - idle_diff) * 100.0 / total_diff;
+                }
+            }
 
-        // Чтение температуры CPU из thermal zones (общая)
+            for (auto const& [key, val] : current_cpu_times) {
+                if (key.rfind("cpu", 0) == 0 && key != "cpu") {
+                     if (last_cpu_times.count(key)) {
+                        auto& current = val;
+                        auto& last = last_cpu_times[key];
+                        
+                        uint64_t total_diff = current.first - last.first;
+                        uint64_t idle_diff = current.second - last.second;
+                        
+                        if (total_diff > 0) {
+                            metrics.core_usage.push_back(static_cast<double>(total_diff - idle_diff) * 100.0 / total_diff);
+                        } else {
+                            metrics.core_usage.push_back(0.0);
+                        }
+                    }
+                }
+            }
+        }
+        
+        last_cpu_times = current_cpu_times;
+
         try {
-            std::filesystem::path thermal_path("/sys/class/thermal");
-            for (const auto& entry : std::filesystem::directory_iterator(thermal_path)) {
-                if (entry.path().filename().string().starts_with("thermal_zone")) {
+            double max_temp = 0.0;
+            for (const auto& entry : std::filesystem::directory_iterator("/sys/class/thermal/")) {
+                if (entry.is_directory() && entry.path().filename().string().substr(0, 11) == "thermal_zone") {
                     std::ifstream temp_file(entry.path() / "temp");
                     if (temp_file.is_open()) {
-                        int temp;
+                        double temp;
                         temp_file >> temp;
-                        metrics.temperature = temp / 1000.0; // Конвертация из миллиградусов в градусы
-                        break;
+                        temp /= 1000.0; // From millidegrees
+                        if (temp > max_temp) max_temp = temp;
                     }
                 }
             }
-        } catch (const std::exception&) {
-            // Если не удалось получить температуру, оставляем значение по умолчанию
-        }
+            metrics.temperature = max_temp;
+        } catch (...) {}
 
-        // Чтение температур по ядрам через hwmon
-        std::vector<double> core_temperatures;
         try {
             for (const auto& hwmon_entry : std::filesystem::directory_iterator("/sys/class/hwmon")) {
-                std::filesystem::path hwmon_path = hwmon_entry.path();
-                for (const auto& file_entry : std::filesystem::directory_iterator(hwmon_path)) {
+                for (const auto& file_entry : std::filesystem::directory_iterator(hwmon_entry.path())) {
                     std::string fname = file_entry.path().filename().string();
                     if (fname.find("temp") == 0 && fname.find("_input") != std::string::npos) {
-                        // Проверяем label, если есть
-                        std::string label_file = fname.substr(0, fname.find("_input")) + "_label";
-                        std::filesystem::path label_path = hwmon_path / label_file;
-                        bool is_core = false;
-                        if (std::filesystem::exists(label_path)) {
-                            std::ifstream label_ifs(label_path);
-                            std::string label;
-                            std::getline(label_ifs, label);
-                            if (label.find("Core") != std::string::npos || label.find("core") != std::string::npos) {
-                                is_core = true;
-                            }
-                        } else {
-                            // Если нет label, добавляем все
-                            is_core = true;
-                        }
-                        if (is_core) {
-                            std::ifstream temp_ifs(file_entry.path());
-                            int temp_val = 0;
-                            temp_ifs >> temp_val;
-                            core_temperatures.push_back(temp_val / 1000.0);
+                        std::ifstream temp_ifs(file_entry.path());
+                        double temp_val = 0;
+                        if(temp_ifs >> temp_val) {
+                            metrics.core_temperatures.push_back(temp_val / 1000.0);
                         }
                     }
                 }
             }
-        } catch (const std::exception&) {
-            // Если не удалось получить температуры по ядрам, оставляем пустым
-        }
-        metrics.core_temperatures = core_temperatures;
+        } catch (...) {}
 
         return metrics;
     }
@@ -230,29 +230,26 @@ private:
      * Данные берутся из /proc/meminfo
      */
     MemoryMetrics collect_memory_metrics() {
-        MemoryMetrics metrics;
-        std::ifstream meminfo("/proc/meminfo");
+        MemoryMetrics metrics{};
+        std::ifstream file("/proc/meminfo");
         std::string line;
-        unsigned long total = 0, free = 0, buffers = 0, cached = 0;
+        std::map<std::string, uint64_t> mem_info;
 
-        // Парсинг /proc/meminfo для получения информации о памяти
-        while (std::getline(meminfo, line)) {
-            std::istringstream iss(line);
+        while (std::getline(file, line)) {
+            std::istringstream ss(line);
             std::string key;
-            unsigned long value;
-            iss >> key >> value;
-
-            if (key == "MemTotal:") total = value;
-            else if (key == "MemFree:") free = value;
-            else if (key == "Buffers:") buffers = value;
-            else if (key == "Cached:") cached = value;
+            uint64_t value;
+            ss >> key >> value;
+            if (!key.empty()) mem_info[key.substr(0, key.size() - 1)] = value * 1024; // From kB to Bytes
         }
 
-        // Расчет метрик памяти
-        metrics.total_bytes = total * 1024; // Конвертация из килобайт в байты
-        metrics.free_bytes = (free + buffers + cached) * 1024;
+        metrics.total_bytes = mem_info["MemTotal"];
+        metrics.free_bytes = mem_info["MemAvailable"]; // More accurate than MemFree + Buffers + Cached
         metrics.used_bytes = metrics.total_bytes - metrics.free_bytes;
-        metrics.usage_percent = (metrics.used_bytes * 100.0) / metrics.total_bytes;
+        if (metrics.total_bytes > 0) {
+            metrics.usage_percent = static_cast<double>(metrics.used_bytes) * 100.0 / metrics.total_bytes;
+        }
+
         return metrics;
     }
 
@@ -269,25 +266,27 @@ private:
      * Данные берутся из /etc/mtab и statvfs
      */
     void collect_disk_metrics(DiskMetrics& metrics) {
-        std::ifstream mtab("/etc/mtab");
+        metrics.partitions.clear();
+        std::ifstream mounts("/proc/mounts");
         std::string line;
+        while (std::getline(mounts, line)) {
+            std::istringstream ss(line);
+            std::string device, mount_point, filesystem;
+            ss >> device >> mount_point >> filesystem;
+            
+            if (device.rfind("/dev/", 0) != 0) continue;
 
-        // Чтение информации о смонтированных файловых системах
-        while (std::getline(mtab, line)) {
-            std::istringstream iss(line);
-            std::string device, mount_point, fs_type;
-            iss >> device >> mount_point >> fs_type;
-
-            // Получение статистики файловой системы
-            struct statvfs stat;
-            if (statvfs(mount_point.c_str(), &stat) == 0) {
-                DiskMetrics::Partition partition;
+            struct statvfs buf;
+            if (statvfs(mount_point.c_str(), &buf) == 0) {
+                DiskPartition partition;
                 partition.mount_point = mount_point;
-                partition.filesystem = fs_type;
-                partition.total_bytes = stat.f_blocks * stat.f_frsize;
-                partition.free_bytes = stat.f_bfree * stat.f_frsize;
+                partition.filesystem = filesystem;
+                partition.total_bytes = buf.f_blocks * buf.f_frsize;
+                partition.free_bytes = buf.f_bavail * buf.f_frsize;
                 partition.used_bytes = partition.total_bytes - partition.free_bytes;
-                partition.usage_percent = (partition.used_bytes * 100.0) / partition.total_bytes;
+                if (partition.total_bytes > 0) {
+                    partition.usage_percent = static_cast<double>(partition.used_bytes) * 100.0 / partition.total_bytes;
+                }
                 metrics.partitions.push_back(partition);
             }
         }
@@ -305,64 +304,52 @@ private:
      * Данные берутся из /proc/net/dev
      */
     void collect_network_metrics(NetworkMetrics& metrics) {
-        // Первый замер
-        std::map<std::string, std::pair<uint64_t, uint64_t>> stats0;
-        {
-            std::ifstream net_dev("/proc/net/dev");
-            std::string line;
-            std::getline(net_dev, line); // skip header
-            std::getline(net_dev, line); // skip header
-            while (std::getline(net_dev, line)) {
-                std::istringstream iss(line);
-                std::string interface_name;
-                iss >> interface_name;
-                interface_name = interface_name.substr(0, interface_name.length() - 1); // remove ':'
-                unsigned long bytes_received, packets_received, errs_received, drop_received,
-                              bytes_sent, packets_sent, errs_sent, drop_sent;
-                iss >> bytes_received >> packets_received >> errs_received >> drop_received
-                    >> bytes_sent >> packets_sent >> errs_sent >> drop_sent;
-                stats0[interface_name] = {bytes_sent, bytes_received};
-            }
-        }
-        // Задержка 1 секунда
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-        // Второй замер
-        std::map<std::string, std::pair<uint64_t, uint64_t>> stats1;
-        {
-            std::ifstream net_dev("/proc/net/dev");
-            std::string line;
-            std::getline(net_dev, line); // skip header
-            std::getline(net_dev, line); // skip header
-            while (std::getline(net_dev, line)) {
-                std::istringstream iss(line);
-                std::string interface_name;
-                iss >> interface_name;
-                interface_name = interface_name.substr(0, interface_name.length() - 1); // remove ':'
-                unsigned long bytes_received, packets_received, errs_received, drop_received,
-                              bytes_sent, packets_sent, errs_sent, drop_sent;
-                iss >> bytes_received >> packets_received >> errs_received >> drop_received
-                    >> bytes_sent >> packets_sent >> errs_sent >> drop_sent;
-                stats1[interface_name] = {bytes_sent, bytes_received};
-            }
-        }
-        // Формируем метрики
-        for (const auto& [iface, val0] : stats0) {
+        metrics.interfaces.clear();
+        std::map<std::string, std::pair<uint64_t, uint64_t>> current_stats;
+
+        std::ifstream file("/proc/net/dev");
+        if (!file.is_open()) return;
+
+        std::string line;
+        std::getline(file, line); // Skip header
+        std::getline(file, line); // Skip header
+
+        auto now = std::chrono::steady_clock::now();
+        double time_delta = std::chrono::duration_cast<std::chrono::duration<double>>(now - last_network_collection_time).count();
+        
+        while (std::getline(file, line)) {
+            std::istringstream ss(line);
+            std::string if_name;
+            ss >> if_name;
+            if (if_name.empty() || if_name == "lo:") continue;
+            if (if_name.back() == ':') if_name.pop_back();
+
+            uint64_t recv_bytes, recv_packets, sent_bytes, sent_packets;
+            ss >> recv_bytes >> recv_packets;
+            for(int i=0; i<6; ++i) ss.ignore(std::numeric_limits<std::streamsize>::max(), ' '); // Skip to sent bytes
+            ss >> sent_bytes >> sent_packets;
+            
+            current_stats[if_name] = {sent_bytes, recv_bytes};
+
             NetworkInterface netif;
-            netif.name = iface;
-            netif.bytes_sent = val0.first;
-            netif.bytes_received = val0.second;
-            netif.packets_sent = 0; // Можно доработать при необходимости
-            netif.packets_received = 0;
-            // Если есть второй замер — считаем bandwidth
-            if (stats1.count(iface)) {
-                netif.bandwidth_sent = stats1[iface].first > val0.first ? stats1[iface].first - val0.first : 0;
-                netif.bandwidth_received = stats1[iface].second > val0.second ? stats1[iface].second - val0.second : 0;
-            } else {
-                netif.bandwidth_sent = 0;
-                netif.bandwidth_received = 0;
+            netif.name = if_name;
+            netif.bytes_sent = sent_bytes;
+            netif.bytes_received = recv_bytes;
+            netif.packets_sent = sent_packets;
+            netif.packets_received = recv_packets;
+            netif.bandwidth_sent = 0;
+            netif.bandwidth_received = 0;
+
+            if (last_network_stats.count(if_name) && time_delta > 0) {
+                auto& last = last_network_stats[if_name];
+                netif.bandwidth_sent = (sent_bytes > last.first) ? (sent_bytes - last.first) / time_delta : 0;
+                netif.bandwidth_received = (recv_bytes > last.second) ? (recv_bytes - last.second) / time_delta : 0;
             }
             metrics.interfaces.push_back(netif);
         }
+
+        last_network_stats = current_stats;
+        last_network_collection_time = now;
     }
 
     /**
@@ -378,104 +365,52 @@ private:
      * Данные берутся из вывода команды nvidia-smi
      */
     GpuMetrics collect_gpu_metrics() {
-        GpuMetrics metrics;
-        // 1. NVIDIA: nvidia-smi
-        {
-            std::array<char, 128> buffer;
+        GpuMetrics metrics{};
+        metrics.usage_percent = -1.0; 
+        
+        auto execute = [](const char* cmd) {
+            std::array<char, 256> buffer;
             std::string result;
-            std::unique_ptr<FILE, decltype(&pclose)> pipe(popen("nvidia-smi --query-gpu=temperature.gpu,utilization.gpu,memory.used,memory.total --format=csv,noheader,nounits 2>&1", "r"), pclose);
-            if (pipe && fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
-                result = buffer.data();
-                if (result.find("not recognized") == std::string::npos &&
-                    result.find("command not found") == std::string::npos &&
-                    result.find("No devices were found") == std::string::npos &&
-                    result.find("NVIDIA-SMI has failed") == std::string::npos) {
-                    std::istringstream iss(result);
-                    double temp = 0, usage = 0, mem_used = 0, mem_total = 0;
-                    char comma;
-                    iss >> temp >> comma >> usage >> comma >> mem_used >> comma >> mem_total;
-                    metrics.temperature = temp;
-                    metrics.usage_percent = usage;
-                    metrics.memory_used = static_cast<uint64_t>(mem_used) * 1024 * 1024; // MB -> bytes
-                    metrics.memory_total = static_cast<uint64_t>(mem_total) * 1024 * 1024; // MB -> bytes
+            std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd, "r"), pclose);
+            if (pipe) {
+                while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+                    result += buffer.data();
+                }
+            }
+            return result;
+        };
+        
+        // 1. NVIDIA
+        std::string nvidia_result = execute("nvidia-smi --query-gpu=temperature.gpu,utilization.gpu,memory.used,memory.total --format=csv,noheader,nounits 2>/dev/null");
+        if (!nvidia_result.empty()) {
+            std::istringstream iss(nvidia_result);
+            double temp = 0, usage = 0, mem_used = 0, mem_total = 0;
+            char comma;
+            iss >> temp >> comma >> usage >> comma >> mem_used >> comma >> mem_total;
+            metrics.temperature = temp;
+            metrics.usage_percent = usage;
+            metrics.memory_used = static_cast<uint64_t>(mem_used) * 1024 * 1024;
+            metrics.memory_total = static_cast<uint64_t>(mem_total) * 1024 * 1024;
+            return metrics;
+        }
+
+        // 2. AMD
+        std::string amd_result = execute("rocm-smi --showtemp --showuse --showmemuse --json 2>/dev/null");
+        if (!amd_result.empty()) {
+            try {
+                auto json = nlohmann::json::parse(amd_result);
+                if (!json.empty()) {
+                    // rocm-smi returns a json object with cardX keys
+                    const auto& gpu = json.begin().value();
+                    if(gpu.contains("Temperature (Sensor 0)")) metrics.temperature = std::stod(gpu["Temperature (Sensor 0)"].get<std::string>());
+                    if(gpu.contains("GPU use (%)")) metrics.usage_percent = std::stod(gpu["GPU use (%)"].get<std::string>());
+                    if(gpu.contains("VRAM used (B)")) metrics.memory_used = gpu["VRAM used (B)"].get<uint64_t>();
+                    if(gpu.contains("VRAM total (B)")) metrics.memory_total = gpu["VRAM total (B)"].get<uint64_t>();
                     return metrics;
                 }
-            }
+            } catch (...) {}
         }
-        // 2. AMD: rocm-smi
-        {
-            std::array<char, 4096> buffer; // увеличим буфер для JSON
-            std::string result;
-            std::unique_ptr<FILE, decltype(&pclose)> pipe(popen("rocm-smi --showtemp --showuse --showmemuse --json 2>&1", "r"), pclose);
-            if (pipe && fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
-                result = buffer.data();
-                if (result.find("not recognized") == std::string::npos &&
-                    result.find("command not found") == std::string::npos &&
-                    result.find("No AMD GPU found") == std::string::npos) {
-                    try {
-                        auto json = nlohmann::json::parse(result);
-                        // Обычно rocm-smi возвращает массив GPU
-                        if (json.is_array() && !json.empty()) {
-                            const auto& gpu = json[0];
-                            if (gpu.contains("Temperature (Sensor 0)"))
-                                metrics.temperature = gpu["Temperature (Sensor 0)"].get<double>();
-                            if (gpu.contains("GPU use (%)"))
-                                metrics.usage_percent = gpu["GPU use (%)"].get<double>();
-                            if (gpu.contains("VRAM used (B)"))
-                                metrics.memory_used = gpu["VRAM used (B)"].get<uint64_t>();
-                            if (gpu.contains("VRAM total (B)"))
-                                metrics.memory_total = gpu["VRAM total (B)"].get<uint64_t>();
-                            return metrics;
-                        }
-                    } catch (...) {
-                        // Ошибка парсинга — игнорируем
-                    }
-                }
-            }
-        }
-        // 3. Intel: intel_gpu_top
-        {
-            std::array<char, 4096> buffer;
-            std::string result;
-            std::unique_ptr<FILE, decltype(&pclose)> pipe(popen("intel_gpu_top -J -s 2000 2>&1 | head -n 1", "r"), pclose);
-            if (pipe && fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
-                result = buffer.data();
-                if (result.find("not recognized") == std::string::npos &&
-                    result.find("command not found") == std::string::npos &&
-                    result.find("No Intel GPU found") == std::string::npos) {
-                    try {
-                        auto json = nlohmann::json::parse(result);
-                        // Обычно intel_gpu_top возвращает объект с ключом "engines"
-                        if (json.contains("engines")) {
-                            double total_usage = 0.0;
-                            int count = 0;
-                            for (const auto& [name, val] : json["engines"].items()) {
-                                if (val.contains("busy") && val["busy"].is_number()) {
-                                    total_usage += val["busy"].get<double>();
-                                    ++count;
-                                }
-                            }
-                            if (count > 0)
-                                metrics.usage_percent = total_usage / count;
-                        }
-                        // Температура и память — если есть
-                        if (json.contains("temperature"))
-                            metrics.temperature = json["temperature"].get<double>();
-                        if (json.contains("memory")) {
-                            if (json["memory"].contains("used"))
-                                metrics.memory_used = json["memory"]["used"].get<uint64_t>();
-                            if (json["memory"].contains("total"))
-                                metrics.memory_total = json["memory"]["total"].get<uint64_t>();
-                        }
-                        return metrics;
-                    } catch (...) {
-                        // Ошибка парсинга — игнорируем
-                    }
-                }
-            }
-        }
-        // Если ничего не сработало
-        metrics.usage_percent = -1.0;
+        
         return metrics;
     }
 
@@ -491,92 +426,58 @@ private:
      * Данные берутся из вывода команды smartctl
      */
     void collect_hdd_metrics(HddMetrics& metrics) {
-        // Список устройств: /dev/sd* и /dev/nvme*
+        metrics.drives.clear();
         std::vector<std::string> devices;
-        // SATA/SAS
-        for (const auto& entry : std::filesystem::directory_iterator("/dev")) {
-            std::string name = entry.path().filename().string();
-            if (name.find("sd") == 0 && name.length() == 3) {
-                devices.push_back("/dev/" + name);
+        try {
+            for (const auto& entry : std::filesystem::directory_iterator("/dev")) {
+                std::string name = entry.path().filename().string();
+                if ((name.rfind("sd", 0) == 0 && name.length() == 3) || (name.rfind("nvme", 0) == 0 && isdigit(name.back()))) {
+                    devices.push_back(entry.path().string());
+                }
             }
-        }
-        // NVMe
-        for (const auto& entry : std::filesystem::directory_iterator("/dev")) {
-            std::string name = entry.path().filename().string();
-            if (name.find("nvme") == 0 && name.find("n") == std::string::npos && name.find("p") == std::string::npos) {
-                devices.push_back("/dev/" + name);
-            }
-        }
+        } catch (...) { return; }
+
         for (const auto& dev : devices) {
             HddDrive drive;
             drive.name = dev;
-            drive.temperature = 0.0;
-            drive.power_on_hours = 0;
-            drive.health_status = "Unknown";
-            // smartctl -A (attributes)
-            std::string cmd = "smartctl -A " + dev + " 2>/dev/null";
-            FILE* pipe = popen(cmd.c_str(), "r");
+
+            std::string cmd = "smartctl -A -H " + dev + " 2>/dev/null";
+            std::string output;
+            std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd.c_str(), "r"), pclose);
             if (pipe) {
-                char buffer[512];
-                std::string output;
-                while (fgets(buffer, sizeof(buffer), pipe)) {
-                    output += buffer;
+                std::array<char, 256> buffer;
+                while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+                    output += buffer.data();
                 }
-                pclose(pipe);
-                std::istringstream iss(output);
-                std::string line;
-                while (std::getline(iss, line)) {
-                    // Температура (обычно ID 194 или 190 для SATA, для NVMe ищем "Temperature:")
-                    if (line.find("Temperature_Celsius") != std::string::npos || line.find("Temperature") != std::string::npos) {
-                        std::istringstream lss(line);
-                        std::string tmp;
-                        int temp = 0;
-                        while (lss >> tmp) {
-                            try { temp = std::stoi(tmp); } catch (...) { continue; }
-                        }
-                        if (temp > 0 && temp < 100) drive.temperature = temp;
-                    }
-                    // Power_On_Hours
-                    if (line.find("Power_On_Hours") != std::string::npos) {
-                        std::istringstream lss(line);
-                        std::string tmp;
-                        int hours = 0;
-                        while (lss >> tmp) {
-                            try { hours = std::stoi(tmp); } catch (...) { continue; }
-                        }
-                        if (hours > 0) drive.power_on_hours = hours;
-                    }
-                    // NVMe: Temperature: 35 Celsius
-                    if (line.find("Temperature:") != std::string::npos && line.find("Celsius") != std::string::npos) {
-                        size_t pos = line.find(":");
-                        if (pos != std::string::npos) {
-                            std::string temp_str = line.substr(pos + 1);
-                            try {
-                                int temp = std::stoi(temp_str);
-                                if (temp > 0 && temp < 100) drive.temperature = temp;
-                            } catch (...) {}
-                        }
-                    }
+            } else {
+                continue;
+            }
+
+            std::istringstream iss(output);
+            std::string line;
+            while (std::getline(iss, line)) {
+                if (line.find("Temperature_Celsius") != std::string::npos || line.find("Temperature Sensor") != std::string::npos) {
+                    std::istringstream lss(line);
+                    std::string tmp;
+                    while (lss >> tmp);
+                    try { drive.temperature = std::stod(tmp); } catch (...) {}
+                }
+                if (line.find("Power_On_Hours") != std::string::npos) {
+                    std::istringstream lss(line);
+                    std::string tmp;
+                    while (lss >> tmp);
+                    try { drive.power_on_hours = std::stoull(tmp); } catch (...) {}
                 }
             }
-            // smartctl -H (health)
-            cmd = "smartctl -H " + dev + " 2>/dev/null";
-            pipe = popen(cmd.c_str(), "r");
-            if (pipe) {
-                char buffer[256];
-                std::string output;
-                while (fgets(buffer, sizeof(buffer), pipe)) {
-                    output += buffer;
-                }
-                pclose(pipe);
-                std::istringstream iss(output);
-                std::string line;
-                while (std::getline(iss, line)) {
-                    if (line.find("PASSED") != std::string::npos) drive.health_status = "PASSED";
-                    else if (line.find("FAILED") != std::string::npos) drive.health_status = "FAILED";
-                    else if (line.find("Warning") != std::string::npos) drive.health_status = "Warning";
-                }
+            
+            if (output.find("PASSED") != std::string::npos || output.find("OK") != std::string::npos) {
+                drive.health_status = "OK";
+            } else if (output.find("FAILED") != std::string::npos) {
+                drive.health_status = "FAILED";
+            } else {
+                drive.health_status = "Unknown";
             }
+            
             metrics.drives.push_back(drive);
         }
     }

@@ -7,8 +7,12 @@
  */
 
 // Включение заголовочных файлов
-#include "../include/metrics_collector.hpp"  // Наш заголовочный файл с определениями структур и классов
-#include "../include/windows_metrics_collector.hpp"  // Добавляем включение заголовочного файла
+#ifdef _WIN32
+#include "../include/windows_metrics_collector.hpp"
+#else
+#include "../include/linux_metrics_collector.hpp"
+#endif
+#include "../include/metrics_collector.hpp"
 #include <iostream>    // Для ввода/вывода (std::cout, std::cerr)
 #include <memory>     // Для умных указателей (std::unique_ptr)
 #include <thread>     // Для работы с потоками и sleep_for
@@ -123,8 +127,12 @@ int main() {
 
     try {
         // Создаем коллектор метрик
-        std::unique_ptr<monitoring::MetricsCollector> collector = std::make_unique<monitoring::WindowsMetricsCollector>();
-        
+        std::unique_ptr<monitoring::MetricsCollector> collector;
+#ifdef _WIN32
+        collector = std::make_unique<monitoring::WindowsMetricsCollector>();
+#else
+        collector = monitoring::create_metrics_collector();
+#endif
         std::cout << "Starting metrics collection. Press Ctrl+C to stop." << std::endl;
         
         // Открываем файл для записи метрик

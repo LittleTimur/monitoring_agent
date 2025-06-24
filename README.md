@@ -1,125 +1,130 @@
 # Monitoring Agent
 
-Простой агент мониторинга системы, аналогичный Zabbix Agent, но с более простой реализацией. Агент собирает различные системные метрики и может отправлять их на сервер мониторинга.
+Кроссплатформенный агент мониторинга системы (CPU, память, диски, сеть, GPU, HDD).
+Работает на Windows и Linux. Аналог Zabbix Agent, но проще в установке и использовании.
+
+---
 
 ## Собираемые метрики
 
-- CPU:
-  - Использование CPU (в процентах)
-  - Температура CPU
-  - Использование по ядрам
-  - Температура по ядрам
+- **CPU:** загрузка, температура, по ядрам
+- **Память:** общий/свободный/использованный объем, процент использования
+- **Диски:** разделы, файловые системы, свободное/занятое место
+- **Сеть:** интерфейсы, байты/пакеты, скорость
+- **GPU:** температура, загрузка, память (NVIDIA/AMD/Intel)
+- **HDD:** температура, время работы, статус здоровья
 
-- Память:
-  - Общий объем памяти
-  - Использованная память
-  - Свободная память
-  - Процент использования
-
-- Диски:
-  - Информация о разделах
-  - Свободное место
-  - Использованное место
-  - Тип файловой системы
-  - Процент использования
-
-- Сеть:
-  - Статистика по сетевым интерфейсам
-  - Отправленные/полученные байты
-  - Отправленные/полученные пакеты
-  - Пропускная способность
-
-- GPU:
-  - Температура
-  - Использование
-  - Использование памяти
-  - Общий объем памяти
-
-- HDD:
-  - Температура
-  - Время работы
-  - Статус здоровья
+---
 
 ## Требования
 
-### Windows
-- Visual Studio 2019 или новее
-- CMake 3.15 или новее
-- Windows SDK
+### Общие
+
+- **CMake** ≥ 3.15
+- **C++17** компилятор (GCC, Clang, MSVC)
+- **git** (для автоматической загрузки зависимостей)
 
 ### Linux
-- GCC 7.0 или новее
-- CMake 3.15 или новее
-- Разработческие пакеты:
-  - libcurl4-openssl-dev
-  - nlohmann-json3-dev
+
+- **Компилятор:** GCC ≥ 7.0 или Clang ≥ 6.0
+- **curl** (dev-пакет для сборки CPR)
+- **pkg-config** (для поиска библиотек)
+- **make** (или ninja)
+- **smartmontools** (для HDD-метрик)
+- **nvidia-smi** (для NVIDIA GPU, опционально)
+- **rocm-smi** (для AMD GPU, опционально)
+
+#### Установка зависимостей (Ubuntu/Debian):
+
+```bash
+sudo apt update
+sudo apt install -y build-essential cmake git pkg-config libcurl4-openssl-dev smartmontools
+# Для GPU-метрик:
+# sudo apt install nvidia-smi # если NVIDIA
+# sudo apt install rocm-smi   # если AMD
+```
+
+### Windows
+
+- **Visual Studio 2019** или новее (Desktop development with C++)
+- **CMake** ≥ 3.15 (https://cmake.org/download/)
+- **git** (https://git-scm.com/download/win)
+- **curl** (устанавливается автоматически через CPR, но иногда требуется вручную: https://curl.se/windows/)
+
+> **Важно:**
+> CPR и curl скачиваются автоматически через CMake (FetchContent).
+> Если возникнут ошибки с curl, убедитесь, что установлен Visual Studio Build Tools и переменные среды настроены.
+
+---
 
 ## Сборка
 
-### Windows
+### Linux
+
+```bash
+git clone https://github.com/yourname/monitoring_agent.git
+cd monitoring_agent
+mkdir build && cd build
+cmake ..
+make -j$(nproc)
+```
+
+### Windows (PowerShell)
 
 ```powershell
+git clone https://github.com/yourname/monitoring_agent.git
+cd monitoring_agent
 mkdir build
 cd build
 cmake -G "Visual Studio 16 2019" -A x64 ..
 cmake --build . --config Release
 ```
 
-### Linux
+> **Где искать бинарник:**
+> - Linux: `build/bin/Release/monitoring_agent`
+> - Windows: `build/bin/Release/monitoring_agent.exe`
+
+---
+
+## Запуск
 
 ```bash
-mkdir build
-cd build
-cmake ..
-make
+# Linux
+./build/bin/Release/monitoring_agent
+
+# Windows (PowerShell)
+.\build\bin\Release\monitoring_agent.exe
 ```
 
-## Использование
+---
 
-После сборки исполняемый файл будет находиться в директории `build/bin/`.
+## Возможные проблемы
 
-Запуск агента:
-```bash
-./monitoring_agent
-```
+- **CPR/curl не собирается на Windows:**
+  - Убедитесь, что установлен Visual Studio 2019+ и выбран профиль x64.
+  - Иногда помогает ручная установка curl и добавление его в PATH.
+  - Если CMake не находит curl, попробуйте удалить папку `build` и пересобрать проект.
 
-Агент будет собирать метрики каждые 5 секунд и выводить их в консоль. Для остановки агента нажмите Ctrl+C.
+- **Нет smartctl/nvidia-smi/rocm-smi:**
+  - Для HDD-метрик нужен smartmontools (`sudo apt install smartmontools`).
+  - Для GPU-метрик нужны соответствующие утилиты.
 
-## Использование с Docker
+---
 
-### Linux
-Сборка образа:
-```bash
-docker build -t monitoring-agent .
-```
+## Дополнительная информация
 
-Запуск контейнера:
-```bash
-docker run --privileged --network host monitoring-agent
-```
+- **Зависимости:**
+  - [CPR (C++ Requests)](https://github.com/libcpr/cpr) — HTTP-клиент, подтягивается автоматически через CMake.
+  - [nlohmann/json](https://github.com/nlohmann/json) — уже включён в проект.
 
-### Windows
-Сборка образа:
-```powershell
-docker build -t monitoring-agent-windows -f Dockerfile.windows .
-```
+- **Docker:**
+  Dockerfile для Linux можно добавить при необходимости. Для Windows поддержка Docker ограничена.
 
-Запуск контейнера:
-```powershell
-docker run --isolation=process monitoring-agent-windows
-```
-
-Примечание: Для корректной работы агента в Docker контейнере требуются повышенные привилегии, так как программа собирает системные метрики.
-
-## Дальнейшее развитие
-
-1. Добавление конфигурационного файла
-2. Реализация отправки метрик на сервер
-3. Добавление поддержки плагинов
-4. Реализация шифрования данных
-5. Добавление поддержки SNMP
-6. Реализация веб-интерфейса
+---
 
 ## Лицензия
 
 MIT License
+
+---
+

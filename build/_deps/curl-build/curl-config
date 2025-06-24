@@ -23,7 +23,7 @@
 #
 ###########################################################################
 
-prefix="C:/Program Files (x86)/monitoring_agent"
+prefix="C:/Program Files/monitoring_agent"
 exec_prefix=${prefix}
 includedir=${prefix}/include
 cppflag_curl_staticlib=
@@ -78,7 +78,7 @@ while test $# -gt 0; do
         ;;
 
     --cc)
-        echo "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.41.34120/bin/Hostx64/x64/cl.exe"
+        echo "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.29.30133/bin/Hostx64/x64/cl.exe"
         ;;
 
     --prefix)
@@ -157,8 +157,8 @@ while test $# -gt 0; do
         ;;
 
     --libs)
-        if test "XC:/Program Files (x86)/monitoring_agent/lib" != "X/usr/lib" -a "XC:/Program Files (x86)/monitoring_agent/lib" != "X/usr/lib64"; then
-           CURLLIBDIR="-LC:/Program Files (x86)/monitoring_agent/lib "
+        if test "XC:/Program Files/monitoring_agent/lib" != "X/usr/lib" -a "XC:/Program Files/monitoring_agent/lib" != "X/usr/lib64"; then
+           CURLLIBDIR="-LC:/Program Files/monitoring_agent/lib "
         else
            CURLLIBDIR=""
         fi
@@ -174,7 +174,7 @@ while test $# -gt 0; do
 
     --static-libs)
         if test "Xno" != "Xno" ; then
-          echo "C:/Program Files (x86)/monitoring_agent/lib/libcurl.lib" /machine:x64  -lws2_32 -ladvapi32 -lcrypt32 -lbcrypt
+          echo "C:/Program Files/monitoring_agent/lib/libcurl.lib" /machine:x64  -lws2_32 -ladvapi32 -lcrypt32 -lbcrypt
         else
           echo "curl was built with static libraries disabled" >&2
           exit 1

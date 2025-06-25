@@ -81,8 +81,8 @@ cmake --build . --config Release
 ```
 
 > **Где искать бинарник:**
-> - Linux: `build/bin/Release/monitoring_agent`
-> - Windows: `build/bin/Release/monitoring_agent.exe`
+> - Linux: `./bin/Release/monitoring_agent`
+> - Windows: `./bin/Release/monitoring_agent.exe`
 
 ---
 

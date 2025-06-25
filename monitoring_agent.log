@@ -1,4 +1,0 @@
-Starting WindowsMetricsCollector initialization...
-PDH query opened successfully
-Trying to add counter: \Processor(_Total)\% Processor Time
-Failed to add CPU counter. Error code: -1073738824

@@ -32,6 +32,7 @@
 #include <pdhmsg.h>
 #include <regex>
 #include <fstream>
+#include <locale.h>
 
 #pragma comment(lib, "pdh.lib")
 #pragma comment(lib, "iphlpapi.lib")
@@ -50,6 +51,10 @@ namespace monitoring {
  */
 
 WindowsMetricsCollector::WindowsMetricsCollector() : is_initialized(true) {
+    // Установим и выведем текущую локаль
+    std::cout << "Current locale: " << setlocale(LC_ALL, NULL) << std::endl;
+    setlocale(LC_ALL, "Russian");
+    std::cout << "Locale after setlocale: " << setlocale(LC_ALL, NULL) << std::endl;
     // Получаем количество процессоров
     SYSTEM_INFO sysInfo;
     GetSystemInfo(&sysInfo);
@@ -73,14 +78,41 @@ WindowsMetricsCollector::WindowsMetricsCollector() : is_initialized(true) {
     // PDH: инициализация счетчиков по ядрам
     if (PdhOpenQuery(NULL, 0, &cpu_query) == ERROR_SUCCESS) {
         for (DWORD i = 0; i < num_processors; ++i) {
-            std::wstring counter_path = L"\\Processor(" + std::to_wstring(i) + L")\\% Processor Time";
+            // 1. Пробуем английский вариант
+            std::wstring counter_path_en = L"\\Processor(" + std::to_wstring(i) + L")\\% Processor Time";
+            std::wcerr << L"Trying to add EN counter: [" << counter_path_en << L"]" << std::endl;
             PDH_HCOUNTER counter;
-            if (PdhAddCounterW(cpu_query, counter_path.c_str(), 0, &counter) == ERROR_SUCCESS) {
+            if (PdhAddCounterW(cpu_query, counter_path_en.c_str(), 0, &counter) == ERROR_SUCCESS) {
+                std::wcerr << L"Successfully added EN counter for core " << i << L"!" << std::endl;
                 core_counters.push_back(counter);
-            } else {
-                core_counters.push_back(nullptr);
+                continue;
             }
+            // 2. Пробуем русский вариант через MultiByteToWideChar
+            char counter_path_ru_narrow[128];
+            snprintf(counter_path_ru_narrow, sizeof(counter_path_ru_narrow), "\\Процессор(%lu)\\%% загруженности процессора", i);
+            wchar_t counter_path_ru[256];
+            int wlen = MultiByteToWideChar(CP_UTF8, 0, counter_path_ru_narrow, -1, counter_path_ru, 256);
+            if (wlen > 0) {
+                std::wcerr << L"Trying to add RU counter: [" << counter_path_ru << L"]" << std::endl;
+                if (PdhAddCounterW(cpu_query, counter_path_ru, 0, &counter) == ERROR_SUCCESS) {
+                    std::wcerr << L"Successfully added RU counter for core " << i << L"!" << std::endl;
+                    core_counters.push_back(counter);
+                    continue;
+                } else {
+                    std::cerr << "Failed to add RU CPU counter for core " << i << ". Error code: " << GetLastError() << std::endl;
+                }
+            } else {
+                std::cerr << "MultiByteToWideChar failed for core " << i << "!" << std::endl;
+            }
+            // Если оба не сработали
+            std::cerr << "Failed to add CPU counter for core " << i << " (EN and RU)." << std::endl;
+            core_counters.push_back(nullptr);
         }
+        // Первый сбор данных
+        PdhCollectQueryData(cpu_query);
+        // Короткая задержка
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        // Второй сбор данных
         PdhCollectQueryData(cpu_query);
     }
 }
@@ -221,9 +253,11 @@ CpuMetrics WindowsMetricsCollector::collect_cpu_metrics() {
         for (size_t i = 0; i < core_counters.size(); ++i) {
             if (core_counters[i]) {
                 PDH_FMT_COUNTERVALUE counterVal;
-                if (PdhGetFormattedCounterValue(core_counters[i], PDH_FMT_DOUBLE, NULL, &counterVal) == ERROR_SUCCESS) {
+                PDH_STATUS status = PdhGetFormattedCounterValue(core_counters[i], PDH_FMT_DOUBLE, NULL, &counterVal);
+                if (status == ERROR_SUCCESS) {
                     metrics.core_usage[i] = counterVal.doubleValue;
                 } else {
+                    std::cerr << "PDH error for core " << i << ": " << status << std::endl;
                     metrics.core_usage[i] = NAN;
                 }
             } else {
@@ -490,8 +524,9 @@ HddMetrics WindowsMetricsCollector::collect_hdd_metrics() {
             std::istringstream iss(output);
             std::string line;
             while (std::getline(iss, line)) {
+                // ATA/SATA: Temperature_Celsius или Temperature
                 if (line.find("Temperature_Celsius") != std::string::npos ||
-                    line.find("Temperature") != std::string::npos) {
+                    (line.find("Temperature") != std::string::npos && line.find("Celsius") == std::string::npos)) {
                     std::istringstream lss(line);
                     std::string tmp;
                     int temp = 0;
@@ -500,6 +535,24 @@ HddMetrics WindowsMetricsCollector::collect_hdd_metrics() {
                     }
                     if (temp > 0 && temp < 100) drive.temperature = temp;
                 }
+                // NVMe: Temperature: ... Celsius
+                if (line.find("Temperature:") != std::string::npos && line.find("Celsius") != std::string::npos) {
+                    std::smatch match;
+                    std::regex re(R"(Temperature:\s+(\d+) Celsius)");
+                    if (std::regex_search(line, match, re)) {
+                        drive.temperature = std::stoi(match[1]);
+                    }
+                }
+                // NVMe: Temperature Sensor N: ... Celsius
+                if (line.find("Temperature Sensor") != std::string::npos && line.find("Celsius") != std::string::npos) {
+                    std::smatch match;
+                    std::regex re(R"(Temperature Sensor \d+:\s+(\d+) Celsius)");
+                    if (std::regex_search(line, match, re)) {
+                        // Можно добавить в массив температур по сенсорам, если нужно
+                        drive.temperature = std::stoi(match[1]);
+                    }
+                }
+                // ATA/SATA: Power_On_Hours
                 if (line.find("Power_On_Hours") != std::string::npos) {
                     std::istringstream lss(line);
                     std::string tmp;
@@ -508,6 +561,14 @@ HddMetrics WindowsMetricsCollector::collect_hdd_metrics() {
                         try { hours = std::stoi(tmp); } catch (...) {}
                     }
                     if (hours > 0) drive.power_on_hours = hours;
+                }
+                // NVMe: Power On Hours
+                if (line.find("Power On Hours:") != std::string::npos) {
+                    std::smatch match;
+                    std::regex re(R"(Power On Hours:\s+(\d+))");
+                    if (std::regex_search(line, match, re)) {
+                        drive.power_on_hours = std::stoi(match[1]);
+                    }
                 }
             }
         }

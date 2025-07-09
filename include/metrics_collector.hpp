@@ -69,6 +69,20 @@ struct DiskMetrics {
 };
 
 /**
+ * @struct NetworkConnection
+ * @brief Структура для хранения информации о сетевых соединениях
+ * 
+ * Содержит информацию о локальном и удаленном IP-адресе, порте и протоколе
+ */
+struct NetworkConnection {
+    std::string local_ip;      ///< Локальный IP-адрес
+    uint16_t local_port;       ///< Локальный порт
+    std::string remote_ip;     ///< Удалённый IP-адрес
+    uint16_t remote_port;      ///< Удалённый порт
+    std::string protocol;      ///< Протокол (TCP/UDP)
+};
+
+/**
  * @struct NetworkMetrics
  * @brief Структура для хранения метрик сетевых интерфейсов
  * 
@@ -87,6 +101,7 @@ struct NetworkInterface {
 
 struct NetworkMetrics {
     std::vector<NetworkInterface> interfaces; ///< Список сетевых интерфейсов
+    std::vector<NetworkConnection> connections; ///< Список активных сетевых соединений
 };
 
 /**
@@ -121,6 +136,30 @@ struct HddMetrics {
 };
 
 /**
+ * @struct InventoryInfo
+ * @brief Структура для хранения инвентаризационных данных системы
+ */
+struct InventoryInfo {
+    std::string device_type;      // desktop, laptop, server, VMware и т.п.
+    std::string manufacturer;
+    std::string model;
+    std::string serial_number;
+    std::string uuid;
+    std::string os_name;
+    std::string os_version;
+    std::string cpu_model;
+    std::string cpu_frequency;
+    std::string memory_type;
+    std::string disk_model;
+    std::string disk_type;
+    uint64_t disk_total_bytes = 0;
+    std::string gpu_model;
+    std::vector<std::string> mac_addresses;
+    std::vector<std::string> ip_addresses;
+    std::vector<std::string> installed_software;
+};
+
+/**
  * @struct SystemMetrics
  * @brief Объединяющая структура для всех системных метрик
  * 
@@ -135,6 +174,8 @@ struct SystemMetrics {
     NetworkMetrics network;           ///< Метрики сети
     GpuMetrics gpu;                   ///< Метрики GPU
     HddMetrics hdd;                   ///< Метрики HDD
+    std::string machine_type;         ///< Тип устройства: "virtual" или "physical"
+    InventoryInfo inventory;          ///< Инвентаризационная информация
 };
 
 /**

@@ -113,9 +113,149 @@ public:
         // HDD metrics
         collect_hdd_metrics(metrics.hdd);
 
+        metrics.machine_type = detect_machine_type_linux();
+
+        // === Сбор инвентаря ===
+        metrics.inventory = collect_inventory_info_linux();
+
         return metrics;
     }
 
+    InventoryInfo collect_inventory_info_linux() {
+        InventoryInfo inv;
+        // 1. Тип устройства (попробуем определить по chassis_type)
+        std::ifstream chassis_file("/sys/class/dmi/id/chassis_type");
+        if (chassis_file.is_open()) {
+            std::string chassis;
+            std::getline(chassis_file, chassis);
+            if (chassis == "3") inv.device_type = "Desktop";
+            else if (chassis == "8" || chassis == "9" || chassis == "10" || chassis == "14") inv.device_type = "Laptop";
+            else if (chassis == "23") inv.device_type = "Server";
+            else inv.device_type = chassis;
+        }
+        // 2. Производитель, модель, серийник, UUID
+        auto read_file = [](const char* path) -> std::string {
+            std::ifstream f(path);
+            if (!f.is_open()) return "";
+            std::string s; std::getline(f, s); return s;
+        };
+        inv.manufacturer = read_file("/sys/class/dmi/id/sys_vendor");
+        inv.model = read_file("/sys/class/dmi/id/product_name");
+        inv.serial_number = read_file("/sys/class/dmi/id/product_serial");
+        inv.uuid = read_file("/sys/class/dmi/id/product_uuid");
+        // 3. ОС
+        std::ifstream osf("/etc/os-release");
+        std::string line;
+        while (std::getline(osf, line)) {
+            if (line.rfind("NAME=", 0) == 0 && inv.os_name.empty()) inv.os_name = line.substr(5);
+            if (line.rfind("VERSION=", 0) == 0 && inv.os_version.empty()) inv.os_version = line.substr(8);
+        }
+        // 4. CPU
+        std::ifstream cpuinfo("/proc/cpuinfo");
+        while (std::getline(cpuinfo, line)) {
+            if (line.find("model name") != std::string::npos && inv.cpu_model.empty()) {
+                auto pos = line.find(":");
+                if (pos != std::string::npos) inv.cpu_model = line.substr(pos+2);
+            }
+            if (line.find("cpu MHz") != std::string::npos && inv.cpu_frequency.empty()) {
+                auto pos = line.find(":");
+                if (pos != std::string::npos) inv.cpu_frequency = line.substr(pos+2) + " MHz";
+            }
+        }
+        // 5. Память (тип)
+        inv.memory_type = read_file("/sys/class/dmi/id/memory_type");
+        // 6. Диск (модель, тип, объём)
+        std::ifstream disk_model_f("/sys/class/block/sda/device/model");
+        if (disk_model_f.is_open()) std::getline(disk_model_f, inv.disk_model);
+        std::ifstream disk_type_f("/sys/class/block/sda/queue/rotational");
+        if (disk_type_f.is_open()) {
+            std::string rot; std::getline(disk_type_f, rot);
+            inv.disk_type = (rot == "0") ? "SSD" : "HDD";
+        }
+        // Общий объём диска
+        struct statvfs buf;
+        if (statvfs("/", &buf) == 0) {
+            inv.disk_total_bytes = buf.f_blocks * buf.f_frsize;
+        }
+        // 7. GPU (модель)
+        // Попробуем lspci | grep VGA
+        FILE* pipe = popen("lspci | grep VGA", "r");
+        if (pipe) {
+            char buffer[256];
+            if (fgets(buffer, sizeof(buffer), pipe)) {
+                std::string s(buffer);
+                auto pos = s.find(": ");
+                if (pos != std::string::npos) inv.gpu_model = s.substr(pos+2);
+                else inv.gpu_model = s;
+            }
+            pclose(pipe);
+        }
+        // 8. MAC и IP-адреса
+        // ip link show для MAC
+        pipe = popen("ip link show", "r");
+        if (pipe) {
+            char buffer[512];
+            while (fgets(buffer, sizeof(buffer), pipe)) {
+                std::string s(buffer);
+                auto pos = s.find("link/");
+                if (pos != std::string::npos) {
+                    auto mac = s.substr(pos+5);
+                    mac = mac.substr(0, mac.find(" "));
+                    if (mac != "loopback" && mac != "00:00:00:00:00:00") inv.mac_addresses.push_back(mac);
+                }
+            }
+            pclose(pipe);
+        }
+        // ip -4 -o addr show для IP
+        pipe = popen("ip -4 -o addr show", "r");
+        if (pipe) {
+            char buffer[512];
+            while (fgets(buffer, sizeof(buffer), pipe)) {
+                std::string s(buffer);
+                auto pos = s.find("inet ");
+                if (pos != std::string::npos) {
+                    auto ip = s.substr(pos+5);
+                    ip = ip.substr(0, ip.find("/"));
+                    ip = ip.substr(0, ip.find(" "));
+                    inv.ip_addresses.push_back(ip);
+                }
+            }
+            pclose(pipe);
+        }
+        // 9. Список установленного ПО (dpkg -l или rpm -qa)
+        // Сначала dpkg -l
+        pipe = popen("dpkg -l | awk '{print $2}'", "r");
+        if (pipe) {
+            char buffer[256];
+            int count = 0;
+            while (fgets(buffer, sizeof(buffer), pipe) && count < 1000) { // ограничим до 1000
+                std::string s(buffer);
+                if (!s.empty() && s != "\n") {
+                    s.erase(s.find_last_not_of(" \n\r\t") + 1);
+                    inv.installed_software.push_back(s);
+                    ++count;
+                }
+            }
+            pclose(pipe);
+        } else {
+            // Если нет dpkg, пробуем rpm
+            pipe = popen("rpm -qa", "r");
+            if (pipe) {
+                char buffer[256];
+                int count = 0;
+                while (fgets(buffer, sizeof(buffer), pipe) && count < 1000) {
+                    std::string s(buffer);
+                    if (!s.empty() && s != "\n") {
+                        s.erase(s.find_last_not_of(" \n\r\t") + 1);
+                        inv.installed_software.push_back(s);
+                        ++count;
+                    }
+                }
+                pclose(pipe);
+            }
+        }
+        return inv;
+    }
 
 private:
     /**
@@ -350,6 +490,52 @@ private:
 
         last_network_stats = current_stats;
         last_network_collection_time = now;
+
+        // === Сбор TCP и UDP соединений ===
+        auto parse_proc_net = [&](const char* path, const std::string& proto) {
+            std::ifstream f(path);
+            if (!f.is_open()) return;
+            std::string line;
+            std::getline(f, line); // skip header
+            while (std::getline(f, line)) {
+                std::istringstream ss(line);
+                std::string slocal, sremote, stmp;
+                int state, txq, rxq, tr, tm_when, retrnsmt, uid, timeout, inode;
+                unsigned long local_ip, remote_ip;
+                unsigned int local_port, remote_port;
+                ss >> stmp >> slocal >> sremote >> std::hex >> state;
+                // slocal: IP:PORT (hex)
+                size_t colon = slocal.find(":");
+                if (colon == std::string::npos) continue;
+                local_ip = std::stoul(slocal.substr(0, colon), nullptr, 16);
+                local_port = std::stoul(slocal.substr(colon + 1), nullptr, 16);
+                colon = sremote.find(":");
+                if (colon == std::string::npos) continue;
+                remote_ip = std::stoul(sremote.substr(0, colon), nullptr, 16);
+                remote_port = std::stoul(sremote.substr(colon + 1), nullptr, 16);
+                // IP в строку
+                char lip[INET_ADDRSTRLEN], rip[INET_ADDRSTRLEN];
+                snprintf(lip, sizeof(lip), "%u.%u.%u.%u",
+                    (unsigned)(local_ip & 0xFF),
+                    (unsigned)((local_ip >> 8) & 0xFF),
+                    (unsigned)((local_ip >> 16) & 0xFF),
+                    (unsigned)((local_ip >> 24) & 0xFF));
+                snprintf(rip, sizeof(rip), "%u.%u.%u.%u",
+                    (unsigned)(remote_ip & 0xFF),
+                    (unsigned)((remote_ip >> 8) & 0xFF),
+                    (unsigned)((remote_ip >> 16) & 0xFF),
+                    (unsigned)((remote_ip >> 24) & 0xFF));
+                NetworkConnection conn;
+                conn.local_ip = lip;
+                conn.local_port = local_port;
+                conn.remote_ip = rip;
+                conn.remote_port = remote_port;
+                conn.protocol = proto;
+                metrics.connections.push_back(conn);
+            }
+        };
+        parse_proc_net("/proc/net/tcp", "TCP");
+        parse_proc_net("/proc/net/udp", "UDP");
     }
 
     /**
@@ -480,6 +666,41 @@ private:
             
             metrics.drives.push_back(drive);
         }
+    }
+
+    // Вспомогательная функция для определения виртуалка/физика
+    std::string detect_machine_type_linux() {
+        // 1. Попробовать systemd-detect-virt
+        FILE* pipe = popen("systemd-detect-virt --quiet", "r");
+        if (pipe) {
+            int status = pclose(pipe);
+            if (WIFEXITED(status) && WEXITSTATUS(status) == 0) {
+                return "virtual";
+            }
+        }
+        // 2. Проверить /sys/class/dmi/id/product_name
+        std::ifstream dmi_file("/sys/class/dmi/id/product_name");
+        if (dmi_file.is_open()) {
+            std::string prod_name;
+            std::getline(dmi_file, prod_name);
+            dmi_file.close();
+            if (prod_name.find("VirtualBox") != std::string::npos ||
+                prod_name.find("VMware") != std::string::npos ||
+                prod_name.find("KVM") != std::string::npos ||
+                prod_name.find("QEMU") != std::string::npos ||
+                prod_name.find("Xen") != std::string::npos) {
+                return "virtual";
+            }
+        }
+        // 3. Проверить /proc/cpuinfo
+        std::ifstream cpuinfo("/proc/cpuinfo");
+        std::string line;
+        while (std::getline(cpuinfo, line)) {
+            if (line.find("hypervisor") != std::string::npos) {
+                return "virtual";
+            }
+        }
+        return "physical";
     }
 };
 

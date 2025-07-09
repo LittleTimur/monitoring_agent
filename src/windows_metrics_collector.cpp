@@ -33,6 +33,7 @@
 #include <regex>
 #include <fstream>
 #include <locale.h>
+#include <codecvt>
 
 #pragma comment(lib, "pdh.lib")
 #pragma comment(lib, "iphlpapi.lib")
@@ -40,6 +41,8 @@
 #pragma comment(lib, "wbemuuid.lib")
 
 namespace monitoring {
+
+std::string detect_machine_type_windows();
 
 /**
  * @class WindowsMetricsCollector
@@ -134,7 +137,227 @@ SystemMetrics WindowsMetricsCollector::collect() {
     metrics.network = collect_network_metrics();
     metrics.gpu = collect_gpu_metrics();
     metrics.hdd = collect_hdd_metrics();
-    
+    metrics.machine_type = detect_machine_type_windows();
+
+    // --- Сбор инвентаризационных данных ---
+    auto& inv = metrics.inventory;
+    HRESULT hres = CoInitializeEx(0, COINIT_MULTITHREADED);
+    if (SUCCEEDED(hres) || hres == RPC_E_CHANGED_MODE) {
+        hres = CoInitializeSecurity(NULL, -1, NULL, NULL,
+            RPC_C_AUTHN_LEVEL_DEFAULT, RPC_C_IMP_LEVEL_IMPERSONATE,
+            NULL, EOAC_NONE, NULL);
+        IWbemLocator *pLoc = NULL;
+        if (SUCCEEDED(CoCreateInstance(CLSID_WbemLocator, 0, CLSCTX_INPROC_SERVER,
+            IID_IWbemLocator, (LPVOID *)&pLoc))) {
+            IWbemServices *pSvc = NULL;
+            if (SUCCEEDED(pLoc->ConnectServer(_bstr_t(L"ROOT\\CIMV2"), NULL, NULL, 0, NULL, 0, 0, &pSvc))) {
+                CoSetProxyBlanket(pSvc, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, NULL,
+                    RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE,
+                    NULL, EOAC_NONE);
+                // Manufacturer, Model, Serial, UUID, DeviceType
+                IEnumWbemClassObject* pEnum = NULL;
+                if (SUCCEEDED(pSvc->ExecQuery(bstr_t("WQL"), bstr_t("SELECT * FROM Win32_ComputerSystem"),
+                    WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY, NULL, &pEnum))) {
+                    IWbemClassObject *pObj = NULL;
+                    ULONG uReturn = 0;
+                    while (pEnum && pEnum->Next(WBEM_INFINITE, 1, &pObj, &uReturn) == S_OK) {
+                        VARIANT vt;
+                        if (SUCCEEDED(pObj->Get(L"Manufacturer", 0, &vt, 0, 0))) {
+                            std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+                            inv.manufacturer = vt.bstrVal ? conv.to_bytes(vt.bstrVal) : "";
+                            VariantClear(&vt);
+                        }
+                        if (SUCCEEDED(pObj->Get(L"Model", 0, &vt, 0, 0))) {
+                            std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+                            inv.model = vt.bstrVal ? conv.to_bytes(vt.bstrVal) : "";
+                            VariantClear(&vt);
+                        }
+                        if (SUCCEEDED(pObj->Get(L"SystemType", 0, &vt, 0, 0))) {
+                            std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+                            inv.device_type = vt.bstrVal ? conv.to_bytes(vt.bstrVal) : "";
+                            VariantClear(&vt);
+                        }
+                        pObj->Release();
+                    }
+                    pEnum->Release();
+                }
+                // Serial Number, UUID
+                if (SUCCEEDED(pSvc->ExecQuery(bstr_t("WQL"), bstr_t("SELECT * FROM Win32_ComputerSystemProduct"),
+                    WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY, NULL, &pEnum))) {
+                    IWbemClassObject *pObj = NULL;
+                    ULONG uReturn = 0;
+                    while (pEnum && pEnum->Next(WBEM_INFINITE, 1, &pObj, &uReturn) == S_OK) {
+                        VARIANT vt;
+                        if (SUCCEEDED(pObj->Get(L"IdentifyingNumber", 0, &vt, 0, 0))) {
+                            std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+                            inv.serial_number = vt.bstrVal ? conv.to_bytes(vt.bstrVal) : "";
+                            VariantClear(&vt);
+                        }
+                        if (SUCCEEDED(pObj->Get(L"UUID", 0, &vt, 0, 0))) {
+                            std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+                            inv.uuid = vt.bstrVal ? conv.to_bytes(vt.bstrVal) : "";
+                            VariantClear(&vt);
+                        }
+                        pObj->Release();
+                    }
+                    pEnum->Release();
+                }
+                // OS Name, Version
+                if (SUCCEEDED(pSvc->ExecQuery(bstr_t("WQL"), bstr_t("SELECT * FROM Win32_OperatingSystem"),
+                    WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY, NULL, &pEnum))) {
+                    IWbemClassObject *pObj = NULL;
+                    ULONG uReturn = 0;
+                    while (pEnum && pEnum->Next(WBEM_INFINITE, 1, &pObj, &uReturn) == S_OK) {
+                        VARIANT vt;
+                        if (SUCCEEDED(pObj->Get(L"Caption", 0, &vt, 0, 0))) {
+                            std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+                            inv.os_name = vt.bstrVal ? conv.to_bytes(vt.bstrVal) : "";
+                            VariantClear(&vt);
+                        }
+                        if (SUCCEEDED(pObj->Get(L"Version", 0, &vt, 0, 0))) {
+                            std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+                            inv.os_version = vt.bstrVal ? conv.to_bytes(vt.bstrVal) : "";
+                            VariantClear(&vt);
+                        }
+                        pObj->Release();
+                    }
+                    pEnum->Release();
+                }
+                // CPU Model, Frequency
+                if (SUCCEEDED(pSvc->ExecQuery(bstr_t("WQL"), bstr_t("SELECT * FROM Win32_Processor"),
+                    WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY, NULL, &pEnum))) {
+                    IWbemClassObject *pObj = NULL;
+                    ULONG uReturn = 0;
+                    while (pEnum && pEnum->Next(WBEM_INFINITE, 1, &pObj, &uReturn) == S_OK) {
+                        VARIANT vt;
+                        if (SUCCEEDED(pObj->Get(L"Name", 0, &vt, 0, 0))) {
+                            std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+                            inv.cpu_model = vt.bstrVal ? conv.to_bytes(vt.bstrVal) : "";
+                            VariantClear(&vt);
+                        }
+                        if (SUCCEEDED(pObj->Get(L"MaxClockSpeed", 0, &vt, 0, 0))) {
+                            inv.cpu_frequency = std::to_string(vt.uintVal) + " MHz";
+                            VariantClear(&vt);
+                        }
+                        pObj->Release();
+                    }
+                    pEnum->Release();
+                }
+                // Memory Type (по первому модулю)
+                if (SUCCEEDED(pSvc->ExecQuery(bstr_t("WQL"), bstr_t("SELECT * FROM Win32_PhysicalMemory"),
+                    WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY, NULL, &pEnum))) {
+                    IWbemClassObject *pObj = NULL;
+                    ULONG uReturn = 0;
+                    while (pEnum && pEnum->Next(WBEM_INFINITE, 1, &pObj, &uReturn) == S_OK) {
+                        VARIANT vt;
+                        if (SUCCEEDED(pObj->Get(L"MemoryType", 0, &vt, 0, 0))) {
+                            inv.memory_type = std::to_string(vt.uintVal);
+                            VariantClear(&vt);
+                        }
+                        pObj->Release();
+                        break; // только первый модуль
+                    }
+                    pEnum->Release();
+                }
+                // Disk Model, Type, Total Bytes (по первому диску)
+                if (SUCCEEDED(pSvc->ExecQuery(bstr_t("WQL"), bstr_t("SELECT * FROM Win32_DiskDrive"),
+                    WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY, NULL, &pEnum))) {
+                    IWbemClassObject *pObj = NULL;
+                    ULONG uReturn = 0;
+                    while (pEnum && pEnum->Next(WBEM_INFINITE, 1, &pObj, &uReturn) == S_OK) {
+                        VARIANT vt;
+                        if (SUCCEEDED(pObj->Get(L"Model", 0, &vt, 0, 0))) {
+                            std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+                            inv.disk_model = vt.bstrVal ? conv.to_bytes(vt.bstrVal) : "";
+                            VariantClear(&vt);
+                        }
+                        if (SUCCEEDED(pObj->Get(L"MediaType", 0, &vt, 0, 0))) {
+                            std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+                            inv.disk_type = vt.bstrVal ? conv.to_bytes(vt.bstrVal) : "";
+                            VariantClear(&vt);
+                        }
+                        if (SUCCEEDED(pObj->Get(L"Size", 0, &vt, 0, 0))) {
+                            inv.disk_total_bytes = vt.ullVal;
+                            VariantClear(&vt);
+                        }
+                        pObj->Release();
+                        break; // только первый диск
+                    }
+                    pEnum->Release();
+                }
+                // GPU Model (по первому GPU)
+                if (SUCCEEDED(pSvc->ExecQuery(bstr_t("WQL"), bstr_t("SELECT * FROM Win32_VideoController"),
+                    WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY, NULL, &pEnum))) {
+                    IWbemClassObject *pObj = NULL;
+                    ULONG uReturn = 0;
+                    while (pEnum && pEnum->Next(WBEM_INFINITE, 1, &pObj, &uReturn) == S_OK) {
+                        VARIANT vt;
+                        if (SUCCEEDED(pObj->Get(L"Name", 0, &vt, 0, 0))) {
+                            std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+                            inv.gpu_model = vt.bstrVal ? conv.to_bytes(vt.bstrVal) : "";
+                            VariantClear(&vt);
+                        }
+                        pObj->Release();
+                        break; // только первый GPU
+                    }
+                    pEnum->Release();
+                }
+                // MAC/IP адреса (по всем интерфейсам)
+                if (SUCCEEDED(pSvc->ExecQuery(bstr_t("WQL"), bstr_t("SELECT * FROM Win32_NetworkAdapterConfiguration WHERE IPEnabled = TRUE"),
+                    WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY, NULL, &pEnum))) {
+                    IWbemClassObject *pObj = NULL;
+                    ULONG uReturn = 0;
+                    while (pEnum && pEnum->Next(WBEM_INFINITE, 1, &pObj, &uReturn) == S_OK) {
+                        VARIANT vt;
+                        if (SUCCEEDED(pObj->Get(L"MACAddress", 0, &vt, 0, 0))) {
+                            std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+                            if (vt.bstrVal) inv.mac_addresses.push_back(conv.to_bytes(vt.bstrVal));
+                            VariantClear(&vt);
+                        }
+                        if (SUCCEEDED(pObj->Get(L"IPAddress", 0, &vt, 0, 0))) {
+                            if (vt.vt & (VT_ARRAY | VT_BSTR) && vt.parray) {
+                                LONG lbound, ubound;
+                                SafeArrayGetLBound(vt.parray, 1, &lbound);
+                                SafeArrayGetUBound(vt.parray, 1, &ubound);
+                                for (LONG i = lbound; i <= ubound; ++i) {
+                                    BSTR bstr;
+                                    SafeArrayGetElement(vt.parray, &i, &bstr);
+                                    std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+                                    inv.ip_addresses.push_back(conv.to_bytes(bstr));
+                                }
+                            }
+                            VariantClear(&vt);
+                        }
+                        pObj->Release();
+                    }
+                    pEnum->Release();
+                }
+                // Список установленных программ (через Win32_Product — медленно, но просто)
+                if (SUCCEEDED(pSvc->ExecQuery(bstr_t("WQL"), bstr_t("SELECT * FROM Win32_Product"),
+                    WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY, NULL, &pEnum))) {
+                    IWbemClassObject *pObj = NULL;
+                    ULONG uReturn = 0;
+                    int count = 0;
+                    while (pEnum && pEnum->Next(WBEM_INFINITE, 1, &pObj, &uReturn) == S_OK) {
+                        VARIANT vt;
+                        if (SUCCEEDED(pObj->Get(L"Name", 0, &vt, 0, 0))) {
+                            std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+                            if (vt.bstrVal) inv.installed_software.push_back(conv.to_bytes(vt.bstrVal));
+                            VariantClear(&vt);
+                        }
+                        pObj->Release();
+                        if (++count > 1000) break; // ограничение для ускорения
+                    }
+                    pEnum->Release();
+                }
+                pSvc->Release();
+            }
+            pLoc->Release();
+        }
+        CoUninitialize();
+    }
+    // --- Конец сбора инвентаризационных данных ---
+
     return metrics;
 }
 
@@ -286,9 +509,6 @@ CpuMetrics WindowsMetricsCollector::collect_cpu_metrics() {
     // Температура по ядрам CPU на Windows невозможна без сторонних утилит (LibreHardwareMonitor, HWiNFO и др.)
     // metrics.core_temperatures всегда 0.0
     //
-    // В collect_cpu_metrics:
-    // Температура по ядрам CPU на Windows невозможна без сторонних утилит (LibreHardwareMonitor, HWiNFO и др.)
-    // metrics.core_temperatures всегда 0.0
     //
     // В collect_gpu_metrics:
     // Для AMD/Intel GPU без сторонних утилит сбор метрик невозможен, возвращаем usage_percent = -1.0
@@ -449,6 +669,51 @@ NetworkMetrics WindowsMetricsCollector::collect_network_metrics() {
         }
         metrics.interfaces.push_back(netif);
     }
+
+    // === Сбор TCP соединений ===
+    PMIB_TCPTABLE_OWNER_PID pTcpTable = nullptr;
+    DWORD dwSize = 0;
+    if (GetExtendedTcpTable(nullptr, &dwSize, FALSE, AF_INET, TCP_TABLE_OWNER_PID_ALL, 0) == ERROR_INSUFFICIENT_BUFFER) {
+        pTcpTable = (PMIB_TCPTABLE_OWNER_PID)malloc(dwSize);
+        if (pTcpTable && GetExtendedTcpTable(pTcpTable, &dwSize, FALSE, AF_INET, TCP_TABLE_OWNER_PID_ALL, 0) == NO_ERROR) {
+            for (DWORD i = 0; i < pTcpTable->dwNumEntries; ++i) {
+                const auto& row = pTcpTable->table[i];
+                NetworkConnection conn;
+                char localAddr[INET_ADDRSTRLEN] = {0};
+                char remoteAddr[INET_ADDRSTRLEN] = {0};
+                inet_ntop(AF_INET, &row.dwLocalAddr, localAddr, sizeof(localAddr));
+                inet_ntop(AF_INET, &row.dwRemoteAddr, remoteAddr, sizeof(remoteAddr));
+                conn.local_ip = localAddr;
+                conn.local_port = ntohs((u_short)row.dwLocalPort);
+                conn.remote_ip = remoteAddr;
+                conn.remote_port = ntohs((u_short)row.dwRemotePort);
+                conn.protocol = "TCP";
+                metrics.connections.push_back(conn);
+            }
+        }
+        if (pTcpTable) free(pTcpTable);
+    }
+    // === Сбор UDP соединений ===
+    PMIB_UDPTABLE_OWNER_PID pUdpTable = nullptr;
+    dwSize = 0;
+    if (GetExtendedUdpTable(nullptr, &dwSize, FALSE, AF_INET, UDP_TABLE_OWNER_PID, 0) == ERROR_INSUFFICIENT_BUFFER) {
+        pUdpTable = (PMIB_UDPTABLE_OWNER_PID)malloc(dwSize);
+        if (pUdpTable && GetExtendedUdpTable(pUdpTable, &dwSize, FALSE, AF_INET, UDP_TABLE_OWNER_PID, 0) == NO_ERROR) {
+            for (DWORD i = 0; i < pUdpTable->dwNumEntries; ++i) {
+                const auto& row = pUdpTable->table[i];
+                NetworkConnection conn;
+                char localAddr[INET_ADDRSTRLEN] = {0};
+                inet_ntop(AF_INET, &row.dwLocalAddr, localAddr, sizeof(localAddr));
+                conn.local_ip = localAddr;
+                conn.local_port = ntohs((u_short)row.dwLocalPort);
+                conn.remote_ip = ""; // UDP не всегда имеет remote
+                conn.remote_port = 0;
+                conn.protocol = "UDP";
+                metrics.connections.push_back(conn);
+            }
+        }
+        if (pUdpTable) free(pUdpTable);
+    }
     return metrics;
 }
 
@@ -592,6 +857,86 @@ HddMetrics WindowsMetricsCollector::collect_hdd_metrics() {
     // // Fallback: WMI (оставить закомментированным)
     // ... (старый WMI-код) ...
     return metrics;
+}
+
+// Вспомогательная функция для определения виртуалка/физика
+std::string detect_machine_type_windows() {
+    HRESULT hres;
+    std::string result = "physical";
+    hres = CoInitializeEx(0, COINIT_MULTITHREADED);
+    if (FAILED(hres)) return result;
+    hres = CoInitializeSecurity(NULL, -1, NULL, NULL,
+        RPC_C_AUTHN_LEVEL_DEFAULT, RPC_C_IMP_LEVEL_IMPERSONATE,
+        NULL, EOAC_NONE, NULL);
+    if (FAILED(hres) && hres != RPC_E_TOO_LATE) {
+        CoUninitialize();
+        return result;
+    }
+    IWbemLocator *pLoc = NULL;
+    hres = CoCreateInstance(CLSID_WbemLocator, 0, CLSCTX_INPROC_SERVER,
+        IID_IWbemLocator, (LPVOID *)&pLoc);
+    if (FAILED(hres)) {
+        CoUninitialize();
+        return result;
+    }
+    IWbemServices *pSvc = NULL;
+    hres = pLoc->ConnectServer(_bstr_t(L"ROOT\\CIMV2"), NULL, NULL, 0, NULL, 0, 0, &pSvc);
+    if (FAILED(hres)) {
+        pLoc->Release();
+        CoUninitialize();
+        return result;
+    }
+    hres = CoSetProxyBlanket(pSvc, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, NULL,
+        RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE,
+        NULL, EOAC_NONE);
+    if (FAILED(hres)) {
+        pSvc->Release();
+        pLoc->Release();
+        CoUninitialize();
+        return result;
+    }
+    IEnumWbemClassObject* pEnumerator = NULL;
+    hres = pSvc->ExecQuery(
+        bstr_t("WQL"),
+        bstr_t("SELECT Manufacturer, Model FROM Win32_ComputerSystem"),
+        WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY,
+        NULL, &pEnumerator);
+    if (SUCCEEDED(hres)) {
+        IWbemClassObject *pObj = NULL;
+        ULONG uReturn = 0;
+        while (pEnumerator) {
+            HRESULT hr = pEnumerator->Next(WBEM_INFINITE, 1, &pObj, &uReturn);
+            if (0 == uReturn) break;
+            VARIANT vtManuf, vtModel;
+            hr = pObj->Get(L"Manufacturer", 0, &vtManuf, 0, 0);
+            hr = pObj->Get(L"Model", 0, &vtModel, 0, 0);
+            if (SUCCEEDED(hr)) {
+                std::wstring manuf = vtManuf.bstrVal ? vtManuf.bstrVal : L"";
+                std::wstring model = vtModel.bstrVal ? vtModel.bstrVal : L"";
+                std::wstring data = manuf + L" " + model;
+                // Корректное преобразование в UTF-8
+                std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+                std::string data_str = conv.to_bytes(data);
+                // Признаки виртуализации
+                if (data_str.find("VirtualBox") != std::string::npos ||
+                    data_str.find("VMware") != std::string::npos ||
+                    data_str.find("KVM") != std::string::npos ||
+                    data_str.find("QEMU") != std::string::npos ||
+                    data_str.find("Xen") != std::string::npos ||
+                    data_str.find("Microsoft Corporation Virtual Machine") != std::string::npos) {
+                    result = "virtual";
+                }
+            }
+            VariantClear(&vtManuf);
+            VariantClear(&vtModel);
+            pObj->Release();
+        }
+        pEnumerator->Release();
+    }
+    pSvc->Release();
+    pLoc->Release();
+    CoUninitialize();
+    return result;
 }
 
 } // namespace monitoring  

@@ -54,15 +54,12 @@ std::string detect_machine_type_windows();
  */
 
 WindowsMetricsCollector::WindowsMetricsCollector() : is_initialized(true) {
-    // Установим и выведем текущую локаль
-    std::cout << "Current locale: " << setlocale(LC_ALL, NULL) << std::endl;
+    // Устанавливаем локаль
     setlocale(LC_ALL, "Russian");
-    std::cout << "Locale after setlocale: " << setlocale(LC_ALL, NULL) << std::endl;
     // Получаем количество процессоров
     SYSTEM_INFO sysInfo;
     GetSystemInfo(&sysInfo);
     num_processors = sysInfo.dwNumberOfProcessors;
-    std::cerr << "Number of processors: " << num_processors << std::endl;
     
     // Инициализируем предыдущие значения времени
     last_idle_time = 0;
@@ -83,10 +80,8 @@ WindowsMetricsCollector::WindowsMetricsCollector() : is_initialized(true) {
         for (DWORD i = 0; i < num_processors; ++i) {
             // 1. Пробуем английский вариант
             std::wstring counter_path_en = L"\\Processor(" + std::to_wstring(i) + L")\\% Processor Time";
-            std::wcerr << L"Trying to add EN counter: [" << counter_path_en << L"]" << std::endl;
             PDH_HCOUNTER counter;
             if (PdhAddCounterW(cpu_query, counter_path_en.c_str(), 0, &counter) == ERROR_SUCCESS) {
-                std::wcerr << L"Successfully added EN counter for core " << i << L"!" << std::endl;
                 core_counters.push_back(counter);
                 continue;
             }
@@ -96,19 +91,12 @@ WindowsMetricsCollector::WindowsMetricsCollector() : is_initialized(true) {
             wchar_t counter_path_ru[256];
             int wlen = MultiByteToWideChar(CP_UTF8, 0, counter_path_ru_narrow, -1, counter_path_ru, 256);
             if (wlen > 0) {
-                std::wcerr << L"Trying to add RU counter: [" << counter_path_ru << L"]" << std::endl;
                 if (PdhAddCounterW(cpu_query, counter_path_ru, 0, &counter) == ERROR_SUCCESS) {
-                    std::wcerr << L"Successfully added RU counter for core " << i << L"!" << std::endl;
                     core_counters.push_back(counter);
                     continue;
-                } else {
-                    std::cerr << "Failed to add RU CPU counter for core " << i << ". Error code: " << GetLastError() << std::endl;
                 }
-            } else {
-                std::cerr << "MultiByteToWideChar failed for core " << i << "!" << std::endl;
             }
-            // Если оба не сработали
-            std::cerr << "Failed to add CPU counter for core " << i << " (EN and RU)." << std::endl;
+            // Если оба не сработали, добавляем nullptr
             core_counters.push_back(nullptr);
         }
         // Первый сбор данных
@@ -251,7 +239,40 @@ SystemMetrics WindowsMetricsCollector::collect() {
                     while (pEnum && pEnum->Next(WBEM_INFINITE, 1, &pObj, &uReturn) == S_OK) {
                         VARIANT vt;
                         if (SUCCEEDED(pObj->Get(L"MemoryType", 0, &vt, 0, 0))) {
-                            inv.memory_type = std::to_string(vt.uintVal);
+                            // Преобразуем числовой тип памяти в текстовый
+                            switch (vt.uintVal) {
+                                case 0: inv.memory_type = "Unknown"; break;
+                                case 1: inv.memory_type = "Other"; break;
+                                case 2: inv.memory_type = "DRAM"; break;
+                                case 3: inv.memory_type = "Synchronous DRAM"; break;
+                                case 4: inv.memory_type = "Cache DRAM"; break;
+                                case 5: inv.memory_type = "EDO"; break;
+                                case 6: inv.memory_type = "EDRAM"; break;
+                                case 7: inv.memory_type = "VRAM"; break;
+                                case 8: inv.memory_type = "SRAM"; break;
+                                case 9: inv.memory_type = "RAM"; break;
+                                case 10: inv.memory_type = "ROM"; break;
+                                case 11: inv.memory_type = "Flash"; break;
+                                case 12: inv.memory_type = "EEPROM"; break;
+                                case 13: inv.memory_type = "FEPROM"; break;
+                                case 14: inv.memory_type = "EPROM"; break;
+                                case 15: inv.memory_type = "CDRAM"; break;
+                                case 16: inv.memory_type = "3DRAM"; break;
+                                case 17: inv.memory_type = "SDRAM"; break;
+                                case 18: inv.memory_type = "SGRAM"; break;
+                                case 19: inv.memory_type = "RDRAM"; break;
+                                case 20: inv.memory_type = "DDR"; break;
+                                case 21: inv.memory_type = "DDR2"; break;
+                                case 22: inv.memory_type = "DDR2 FB-DIMM"; break;
+                                case 24: inv.memory_type = "DDR3"; break;
+                                case 26: inv.memory_type = "FBD2"; break;
+                                case 34: inv.memory_type = "DDR4"; break;
+                                case 35: inv.memory_type = "LPDDR"; break;
+                                case 36: inv.memory_type = "LPDDR2"; break;
+                                case 37: inv.memory_type = "LPDDR3"; break;
+                                case 38: inv.memory_type = "LPDDR4"; break;
+                                default: inv.memory_type = "Unknown (" + std::to_string(vt.uintVal) + ")"; break;
+                            }
                             VariantClear(&vt);
                         }
                         pObj->Release();
@@ -439,14 +460,12 @@ CpuMetrics WindowsMetricsCollector::collect_cpu_metrics() {
     metrics.core_usage.resize(num_processors, 0.0);
     
     if (!is_initialized) {
-        std::cerr << "Collector not initialized" << std::endl;
         return metrics;
     }
 
     // Получаем текущие значения времени
     FILETIME idle_time, kernel_time, user_time;
     if (!GetSystemTimes(&idle_time, &kernel_time, &user_time)) {
-        std::cerr << "Failed to get system times. Error: " << GetLastError() << std::endl;
         return metrics;
     }
 
@@ -480,7 +499,6 @@ CpuMetrics WindowsMetricsCollector::collect_cpu_metrics() {
                 if (status == ERROR_SUCCESS) {
                     metrics.core_usage[i] = counterVal.doubleValue;
                 } else {
-                    std::cerr << "PDH error for core " << i << ": " << status << std::endl;
                     metrics.core_usage[i] = NAN;
                 }
             } else {
@@ -583,12 +601,10 @@ NetworkMetrics WindowsMetricsCollector::collect_network_metrics() {
     std::map<DWORD, std::pair<uint64_t, uint64_t>> stats0;
     ULONG bufferSize = 0;
     if (GetAdaptersInfo(nullptr, &bufferSize) != ERROR_BUFFER_OVERFLOW) {
-        std::cerr << "Failed to get network adapters buffer size" << std::endl;
         return metrics;
     }
     PIP_ADAPTER_INFO pAdapterInfo = (PIP_ADAPTER_INFO)malloc(bufferSize);
     if (pAdapterInfo == nullptr) {
-        std::cerr << "Failed to allocate memory for network adapters" << std::endl;
         return metrics;
     }
     if (GetAdaptersInfo(pAdapterInfo, &bufferSize) == NO_ERROR) {
@@ -616,12 +632,10 @@ NetworkMetrics WindowsMetricsCollector::collect_network_metrics() {
     std::map<DWORD, std::pair<uint64_t, uint64_t>> stats1;
     bufferSize = 0;
     if (GetAdaptersInfo(nullptr, &bufferSize) != ERROR_BUFFER_OVERFLOW) {
-        std::cerr << "Failed to get network adapters buffer size (2)" << std::endl;
         return metrics;
     }
     pAdapterInfo = (PIP_ADAPTER_INFO)malloc(bufferSize);
     if (pAdapterInfo == nullptr) {
-        std::cerr << "Failed to allocate memory for network adapters (2)" << std::endl;
         return metrics;
     }
     if (GetAdaptersInfo(pAdapterInfo, &bufferSize) == NO_ERROR) {

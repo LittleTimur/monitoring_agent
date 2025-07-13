@@ -486,7 +486,6 @@ CpuMetrics WindowsMetricsCollector::collect_cpu_metrics() {
         // Вычисляем процент использования CPU
         double idle_percent = (double)idle_time_diff / total_time_diff * 100.0;
         metrics.usage_percent = 100.0 - idle_percent;
-        std::cerr << "CPU usage: " << metrics.usage_percent << "%" << std::endl;
     }
 
     // Сбор загрузки по каждому ядру через PDH

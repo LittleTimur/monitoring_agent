@@ -25,6 +25,11 @@ endif()
 # Создаем исполняемый файл
 add_executable(${PROJECT_NAME} ${SOURCES})
 
+# Для Windows: собирать как GUI-приложение без консольного окна
+if(WIN32)
+    set_target_properties(${PROJECT_NAME} PROPERTIES WIN32_EXECUTABLE TRUE)
+endif()
+
 # Устанавливаем выходную директорию
 set_target_properties(${PROJECT_NAME} PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"

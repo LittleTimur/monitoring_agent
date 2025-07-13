@@ -1,0 +1,37 @@
+; NSIS script for packing all files into one installer exe
+OutFile "monitoring_agent_installer.exe"
+
+; Папка установки по умолчанию
+InstallDir "$PROGRAMFILES\MonitoringAgent"
+
+; Требуются права администратора
+RequestExecutionLevel admin
+
+; Страницы мастера установки
+Page directory
+Page instfiles
+
+Section "Установка Monitoring Agent"
+    ; Папка для распаковки
+    SetOutPath "$INSTDIR"
+    SetOverwrite on
+
+    ; Копируем все необходимые файлы
+    File "monitoring_agent.exe"
+    File "cpr.dll"
+    File "libcurl.dll"
+    File "zlib.dll"
+    File "smartmontools-7.3-1.win32-setup.exe"
+
+    ; Тихая установка smartmontools
+    ExecWait '"$INSTDIR\smartmontools-7.3-1.win32-setup.exe" /S'
+
+    ; Добавляем Monitoring Agent в автозагрузку для всех пользователей
+    WriteRegStr HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Run" "MonitoringAgent" '"$INSTDIR\monitoring_agent.exe"'
+
+    ; Сообщение об успешной установке
+    DetailPrint "Установка завершена!"
+
+    ; Запускаем Monitoring Agent сразу после установки
+    Exec '"$INSTDIR\monitoring_agent.exe"'
+SectionEnd

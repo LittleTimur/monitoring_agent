@@ -8,6 +8,7 @@
 
 // Включение заголовочных файлов
 #ifdef _WIN32
+#include <windows.h>
 #include "../include/windows_metrics_collector.hpp"
 #else
 #include "../include/linux_metrics_collector.hpp"
@@ -30,6 +31,7 @@
 #include <condition_variable>
 #include <thread>
 #include <atomic>
+#include <cstdlib> // для getenv
 using nlohmann::json;
 
 // Глобальная переменная для контроля работы программы
@@ -127,11 +129,29 @@ json metrics_to_json(const monitoring::SystemMetrics& metrics) {
     return j;
 }
 
+std::string get_server_url() {
+    // 1. Сначала пробуем переменную окружения
+    if (const char* env_p = std::getenv("MONITORING_AGENT_URL")) {
+        return std::string(env_p);
+    }
+    // 2. Потом пробуем config.json
+    std::ifstream config("config.json");
+    if (config) {
+        nlohmann::json j;
+        config >> j;
+        if (j.contains("server_url")) {
+            return j["server_url"].get<std::string>();
+        }
+    }
+    // 3. По умолчанию
+    return "http://localhost:8080/metrics";
+}
+
 // Отправка метрик на сервер по HTTP POST
-void send_metrics_http(const nlohmann::json& j) {
+void send_metrics_http(const nlohmann::json& j, const std::string& url) {
     try {
         auto response = cpr::Post(
-            cpr::Url{"http://localhost:8080/metrics"},
+            cpr::Url{url},
             cpr::Header{{"Content-Type", "application/json"}},
             cpr::Body{j.dump()},
             cpr::Timeout{2000}
@@ -152,6 +172,7 @@ std::condition_variable send_buffer_cv;
 std::atomic<bool> sender_running{true};
 
 void sender_thread_func() {
+    std::string url = get_server_url();
     while (sender_running) {
         std::unique_lock<std::mutex> lock(send_buffer_mutex);
         send_buffer_cv.wait(lock, []{ return !send_buffer.empty() || !sender_running; });
@@ -159,7 +180,7 @@ void sender_thread_func() {
             nlohmann::json j = send_buffer.front();
             lock.unlock();
             try {
-                send_metrics_http(j);
+                send_metrics_http(j, url);
                 // Если отправка успешна, удаляем из очереди
                 lock.lock();
                 send_buffer.pop_front();
@@ -184,7 +205,11 @@ void sender_thread_func() {
  * 3. В бесконечном цикле собирает и отображает метрики
  * 4. Обрабатывает ошибки и корректно завершает работу
  */
+#ifdef _WIN32
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
+#else
 int main() {
+#endif
     // Устанавливаем обработчик сигналов
     std::signal(SIGINT, signal_handler);
     std::signal(SIGTERM, signal_handler);

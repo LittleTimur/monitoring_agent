@@ -25,6 +25,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include <fcntl.h>
 #include <dirent.h>
 #include <cstdio>
@@ -61,9 +63,7 @@ namespace monitoring {
 #ifdef __linux__
 class LinuxMetricsCollector : public MetricsCollector {
 private:
-    std::chrono::steady_clock::time_point last_network_collection_time;
-    std::map<std::string, std::pair<uint64_t, uint64_t>> last_cpu_times;
-    std::map<std::string, std::pair<uint64_t, uint64_t>> last_network_stats;
+    // Удаляю last_cpu_times, last_network_stats, last_network_collection_time
 
 public:
     /**
@@ -78,7 +78,7 @@ public:
             throw std::runtime_error("Cannot access /proc/stat or /proc/meminfo");
         }
         // Prime the stats for stateful calculation
-        last_network_collection_time = std::chrono::steady_clock::now();
+        // Удаляю last_cpu_times, last_network_stats, last_network_collection_time
         collect_cpu_metrics(); 
         NetworkMetrics dummy_net_metrics;
         collect_network_metrics(dummy_net_metrics);
@@ -179,7 +179,7 @@ public:
         }
         // 7. GPU (модель)
         // Попробуем lspci | grep VGA
-        FILE* pipe = popen("lspci | grep VGA", "r");
+        FILE* pipe = popen_hidden("lspci | grep VGA", "r");
         if (pipe) {
             char buffer[256];
             if (fgets(buffer, sizeof(buffer), pipe)) {
@@ -192,7 +192,7 @@ public:
         }
         // 8. MAC и IP-адреса
         // ip link show для MAC
-        pipe = popen("ip link show", "r");
+        pipe = popen_hidden("ip link show", "r");
         if (pipe) {
             char buffer[512];
             while (fgets(buffer, sizeof(buffer), pipe)) {
@@ -207,7 +207,7 @@ public:
             pclose(pipe);
         }
         // ip -4 -o addr show для IP
-        pipe = popen("ip -4 -o addr show", "r");
+        pipe = popen_hidden("ip -4 -o addr show", "r");
         if (pipe) {
             char buffer[512];
             while (fgets(buffer, sizeof(buffer), pipe)) {
@@ -224,7 +224,7 @@ public:
         }
         // 9. Список установленного ПО (dpkg -l или rpm -qa)
         // Сначала dpkg -l
-        pipe = popen("dpkg -l | awk '{print $2}'", "r");
+        pipe = popen_hidden("dpkg -l | awk '{print $2}'", "r");
         if (pipe) {
             char buffer[256];
             int count = 0;
@@ -239,7 +239,7 @@ public:
             pclose(pipe);
         } else {
             // Если нет dpkg, пробуем rpm
-            pipe = popen("rpm -qa", "r");
+            pipe = popen_hidden("rpm -qa", "r");
             if (pipe) {
                 char buffer[256];
                 int count = 0;
@@ -267,62 +267,68 @@ private:
      * - Температуре CPU (из /sys/class/thermal)
      */
     CpuMetrics collect_cpu_metrics() {
+        // Первый замер
+        std::map<std::string, std::pair<uint64_t, uint64_t>> first_cpu_times;
+        {
+            std::ifstream file("/proc/stat");
+            std::string line;
+            while (std::getline(file, line)) {
+                if (line.rfind("cpu", 0) == 0) {
+                    std::istringstream ss(line);
+                    std::string cpu_label;
+                    ss >> cpu_label;
+                    uint64_t user, nice, system, idle, iowait, irq, softirq, steal;
+                    ss >> user >> nice >> system >> idle >> iowait >> irq >> softirq >> steal;
+                    uint64_t idle_time = idle + iowait;
+                    uint64_t total_time = user + nice + system + idle + iowait + irq + softirq + steal;
+                    first_cpu_times[cpu_label] = {total_time, idle_time};
+                }
+            }
+        }
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        // Второй замер
+        std::map<std::string, std::pair<uint64_t, uint64_t>> second_cpu_times;
+        {
+            std::ifstream file("/proc/stat");
+            std::string line;
+            while (std::getline(file, line)) {
+                if (line.rfind("cpu", 0) == 0) {
+                    std::istringstream ss(line);
+                    std::string cpu_label;
+                    ss >> cpu_label;
+                    uint64_t user, nice, system, idle, iowait, irq, softirq, steal;
+                    ss >> user >> nice >> system >> idle >> iowait >> irq >> softirq >> steal;
+                    uint64_t idle_time = idle + iowait;
+                    uint64_t total_time = user + nice + system + idle + iowait + irq + softirq + steal;
+                    second_cpu_times[cpu_label] = {total_time, idle_time};
+                }
+            }
+        }
         CpuMetrics metrics{};
-        std::ifstream file("/proc/stat");
-        std::string line;
-        
-        std::map<std::string, std::pair<uint64_t, uint64_t>> current_cpu_times;
-        
-        while (std::getline(file, line)) {
-            if (line.rfind("cpu", 0) == 0) {
-                std::istringstream ss(line);
-                std::string cpu_label;
-                ss >> cpu_label;
-                
-                uint64_t user, nice, system, idle, iowait, irq, softirq, steal;
-                ss >> user >> nice >> system >> idle >> iowait >> irq >> softirq >> steal;
-                
-                uint64_t idle_time = idle + iowait;
-                uint64_t total_time = user + nice + system + idle + iowait + irq + softirq + steal;
-                
-                current_cpu_times[cpu_label] = {total_time, idle_time};
+        // Общая загрузка
+        if (first_cpu_times.count("cpu") && second_cpu_times.count("cpu")) {
+            auto& first = first_cpu_times["cpu"];
+            auto& second = second_cpu_times["cpu"];
+            uint64_t total_diff = second.first - first.first;
+            uint64_t idle_diff = second.second - first.second;
+            if (total_diff > 0) {
+                metrics.usage_percent = static_cast<double>(total_diff - idle_diff) * 100.0 / total_diff;
             }
         }
-        
-        if (!last_cpu_times.empty()) {
-            if (current_cpu_times.count("cpu") && last_cpu_times.count("cpu")) {
-                auto& current = current_cpu_times["cpu"];
-                auto& last = last_cpu_times["cpu"];
-                
-                uint64_t total_diff = current.first - last.first;
-                uint64_t idle_diff = current.second - last.second;
-                
+        // По ядрам
+        for (auto const& [key, first] : first_cpu_times) {
+            if (key.rfind("cpu", 0) == 0 && key != "cpu" && second_cpu_times.count(key)) {
+                auto& second = second_cpu_times[key];
+                uint64_t total_diff = second.first - first.first;
+                uint64_t idle_diff = second.second - first.second;
                 if (total_diff > 0) {
-                    metrics.usage_percent = static_cast<double>(total_diff - idle_diff) * 100.0 / total_diff;
-                }
-            }
-
-            for (auto const& [key, val] : current_cpu_times) {
-                if (key.rfind("cpu", 0) == 0 && key != "cpu") {
-                     if (last_cpu_times.count(key)) {
-                        auto& current = val;
-                        auto& last = last_cpu_times[key];
-                        
-                        uint64_t total_diff = current.first - last.first;
-                        uint64_t idle_diff = current.second - last.second;
-                        
-                        if (total_diff > 0) {
-                            metrics.core_usage.push_back(static_cast<double>(total_diff - idle_diff) * 100.0 / total_diff);
-                        } else {
-                            metrics.core_usage.push_back(0.0);
-                        }
-                    }
+                    metrics.core_usage.push_back(static_cast<double>(total_diff - idle_diff) * 100.0 / total_diff);
+                } else {
+                    metrics.core_usage.push_back(0.0);
                 }
             }
         }
-        
-        last_cpu_times = current_cpu_times;
-
+        // Температура CPU (оставляю как было)
         try {
             double max_temp = 0.0;
             for (const auto& entry : std::filesystem::directory_iterator("/sys/class/thermal/")) {
@@ -338,7 +344,6 @@ private:
             }
             metrics.temperature = max_temp;
         } catch (...) {}
-
         try {
             for (const auto& hwmon_entry : std::filesystem::directory_iterator("/sys/class/hwmon")) {
                 for (const auto& file_entry : std::filesystem::directory_iterator(hwmon_entry.path())) {
@@ -353,7 +358,6 @@ private:
                 }
             }
         } catch (...) {}
-
         return metrics;
     }
 
@@ -445,32 +449,21 @@ private:
      */
     void collect_network_metrics(NetworkMetrics& metrics) {
         metrics.interfaces.clear();
-        std::map<std::string, std::pair<uint64_t, uint64_t>> current_stats;
-
         std::ifstream file("/proc/net/dev");
         if (!file.is_open()) return;
-
         std::string line;
         std::getline(file, line); // Skip header
         std::getline(file, line); // Skip header
-
-        auto now = std::chrono::steady_clock::now();
-        double time_delta = std::chrono::duration_cast<std::chrono::duration<double>>(now - last_network_collection_time).count();
-        
         while (std::getline(file, line)) {
             std::istringstream ss(line);
             std::string if_name;
             ss >> if_name;
             if (if_name.empty() || if_name == "lo:") continue;
             if (if_name.back() == ':') if_name.pop_back();
-
             uint64_t recv_bytes, recv_packets, sent_bytes, sent_packets;
             ss >> recv_bytes >> recv_packets;
             for(int i=0; i<6; ++i) ss.ignore(std::numeric_limits<std::streamsize>::max(), ' '); // Skip to sent bytes
             ss >> sent_bytes >> sent_packets;
-            
-            current_stats[if_name] = {sent_bytes, recv_bytes};
-
             NetworkInterface netif;
             netif.name = if_name;
             netif.bytes_sent = sent_bytes;
@@ -479,19 +472,10 @@ private:
             netif.packets_received = recv_packets;
             netif.bandwidth_sent = 0;
             netif.bandwidth_received = 0;
-
-            if (last_network_stats.count(if_name) && time_delta > 0) {
-                auto& last = last_network_stats[if_name];
-                netif.bandwidth_sent = (sent_bytes > last.first) ? (sent_bytes - last.first) / time_delta : 0;
-                netif.bandwidth_received = (recv_bytes > last.second) ? (recv_bytes - last.second) / time_delta : 0;
-            }
+            // Не вычисляем bandwidth по разнице, только текущее значение
             metrics.interfaces.push_back(netif);
         }
-
-        last_network_stats = current_stats;
-        last_network_collection_time = now;
-
-        // === Сбор TCP и UDP соединений ===
+        // TCP/UDP соединения оставляем как есть
         auto parse_proc_net = [&](const char* path, const std::string& proto) {
             std::ifstream f(path);
             if (!f.is_open()) return;
@@ -504,7 +488,6 @@ private:
                 unsigned long local_ip, remote_ip;
                 unsigned int local_port, remote_port;
                 ss >> stmp >> slocal >> sremote >> std::hex >> state;
-                // slocal: IP:PORT (hex)
                 size_t colon = slocal.find(":");
                 if (colon == std::string::npos) continue;
                 local_ip = std::stoul(slocal.substr(0, colon), nullptr, 16);
@@ -513,7 +496,6 @@ private:
                 if (colon == std::string::npos) continue;
                 remote_ip = std::stoul(sremote.substr(0, colon), nullptr, 16);
                 remote_port = std::stoul(sremote.substr(colon + 1), nullptr, 16);
-                // IP в строку
                 char lip[INET_ADDRSTRLEN], rip[INET_ADDRSTRLEN];
                 snprintf(lip, sizeof(lip), "%u.%u.%u.%u",
                     (unsigned)(local_ip & 0xFF),
@@ -584,7 +566,7 @@ private:
         std::string amd_result = execute("rocm-smi --showtemp --showuse --showmemuse --json 2>/dev/null");
         if (!amd_result.empty()) {
             try {
-                auto json = nlohmann::json::parse(amd_result);
+                auto json = nlohmann::json::parse(amd_result);я
                 if (!json.empty()) {
                     // rocm-smi returns a json object with cardX keys
                     const auto& gpu = json.begin().value();
@@ -671,7 +653,7 @@ private:
     // Вспомогательная функция для определения виртуалка/физика
     std::string detect_machine_type_linux() {
         // 1. Попробовать systemd-detect-virt
-        FILE* pipe = popen("systemd-detect-virt --quiet", "r");
+        FILE* pipe = popen_hidden("systemd-detect-virt --quiet", "r");
         if (pipe) {
             int status = pclose(pipe);
             if (WIFEXITED(status) && WEXITSTATUS(status) == 0) {
@@ -703,6 +685,30 @@ private:
         return "physical";
     }
 };
+
+// Вспомогательная функция для безопасного запуска процесса и получения stdout
+FILE* popen_hidden(const char* command, const char* mode) {
+    if (strcmp(mode, "r") != 0) return nullptr; // Только чтение поддерживается
+    int pipefd[2];
+    if (pipe(pipefd) == -1) return nullptr;
+    pid_t pid = fork();
+    if (pid == -1) {
+        close(pipefd[0]); close(pipefd[1]); return nullptr;
+    }
+    if (pid == 0) {
+        // Дочерний процесс
+        close(pipefd[0]);
+        dup2(pipefd[1], STDOUT_FILENO);
+        dup2(pipefd[1], STDERR_FILENO);
+        close(pipefd[1]);
+        execl("/bin/sh", "sh", "-c", command, (char*)NULL);
+        _exit(127);
+    }
+    // Родитель
+    close(pipefd[1]);
+    FILE* f = fdopen(pipefd[0], "r");
+    return f;
+}
 
 #else
 // Заглушка для не-Linux систем

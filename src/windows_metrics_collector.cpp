@@ -34,6 +34,9 @@
 #include <fstream>
 #include <locale.h>
 #include <codecvt>
+#include <stdio.h>
+#include <io.h>
+#include <fcntl.h>
 
 #pragma comment(lib, "pdh.lib")
 #pragma comment(lib, "iphlpapi.lib")
@@ -42,6 +45,7 @@
 
 namespace monitoring {
 
+FILE* popen_hidden(const char* command, const char* mode);
 std::string detect_machine_type_windows();
 
 /**
@@ -458,37 +462,35 @@ CpuMetrics WindowsMetricsCollector::collect_cpu_metrics() {
     metrics.temperature = 0.0;
     metrics.core_temperatures.resize(num_processors, 0.0);
     metrics.core_usage.resize(num_processors, 0.0);
-    
     if (!is_initialized) {
         return metrics;
     }
-
-    // Получаем текущие значения времени
-    FILETIME idle_time, kernel_time, user_time;
-    if (!GetSystemTimes(&idle_time, &kernel_time, &user_time)) {
+    // Первый замер
+    FILETIME idle_time1, kernel_time1, user_time1;
+    if (!GetSystemTimes(&idle_time1, &kernel_time1, &user_time1)) {
         return metrics;
     }
-
-    // Конвертируем FILETIME в uint64_t
-    uint64_t current_idle_time = ((uint64_t)idle_time.dwHighDateTime << 32) | idle_time.dwLowDateTime;
-    uint64_t current_kernel_time = ((uint64_t)kernel_time.dwHighDateTime << 32) | kernel_time.dwLowDateTime;
-    uint64_t current_user_time = ((uint64_t)user_time.dwHighDateTime << 32) | user_time.dwLowDateTime;
-
-    // Вычисляем разницу во времени
-    uint64_t idle_time_diff = current_idle_time - last_idle_time;
-    uint64_t kernel_time_diff = current_kernel_time - last_kernel_time;
-    uint64_t user_time_diff = current_user_time - last_user_time;
-
-    // Вычисляем общее время процессора
-    uint64_t total_time_diff = kernel_time_diff + user_time_diff;
-    
-    if (total_time_diff > 0) {
-        // Вычисляем процент использования CPU
-        double idle_percent = (double)idle_time_diff / total_time_diff * 100.0;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    // Второй замер
+    FILETIME idle_time2, kernel_time2, user_time2;
+    if (!GetSystemTimes(&idle_time2, &kernel_time2, &user_time2)) {
+        return metrics;
+    }
+    uint64_t idle1 = ((uint64_t)idle_time1.dwHighDateTime << 32) | idle_time1.dwLowDateTime;
+    uint64_t kernel1 = ((uint64_t)kernel_time1.dwHighDateTime << 32) | kernel_time1.dwLowDateTime;
+    uint64_t user1 = ((uint64_t)user_time1.dwHighDateTime << 32) | user_time1.dwLowDateTime;
+    uint64_t idle2 = ((uint64_t)idle_time2.dwHighDateTime << 32) | idle_time2.dwLowDateTime;
+    uint64_t kernel2 = ((uint64_t)kernel_time2.dwHighDateTime << 32) | kernel_time2.dwLowDateTime;
+    uint64_t user2 = ((uint64_t)user_time2.dwHighDateTime << 32) | user_time2.dwLowDateTime;
+    uint64_t idle_diff = idle2 - idle1;
+    uint64_t kernel_diff = kernel2 - kernel1;
+    uint64_t user_diff = user2 - user1;
+    uint64_t total_diff = kernel_diff + user_diff;
+    if (total_diff > 0) {
+        double idle_percent = (double)idle_diff / total_diff * 100.0;
         metrics.usage_percent = 100.0 - idle_percent;
     }
-
-    // Сбор загрузки по каждому ядру через PDH
+    // Сбор загрузки по каждому ядру через PDH (оставляю как есть, т.к. PDH сам считает за короткий интервал)
     if (cpu_query && !core_counters.empty()) {
         PdhCollectQueryData(cpu_query);
         for (size_t i = 0; i < core_counters.size(); ++i) {
@@ -505,38 +507,16 @@ CpuMetrics WindowsMetricsCollector::collect_cpu_metrics() {
             }
         }
     } else {
-        // fallback: для каждого ядра используем общее значение
         for (size_t i = 0; i < num_processors; ++i) {
             metrics.core_usage[i] = metrics.usage_percent;
         }
     }
-
-    // Получение температуры CPU только через WMI
+    // Температура CPU через WMI
     double wmi_temp = get_cpu_temperature_wmi();
     if (wmi_temp > 0.0) {
         metrics.temperature = wmi_temp;
     }
-
-    // Обновляем предыдущие значения
-    last_idle_time = current_idle_time;
-    last_kernel_time = current_kernel_time;
-    last_user_time = current_user_time;
-    last_collection_time = std::chrono::steady_clock::now();
-
-    // Температура по ядрам CPU на Windows невозможна без сторонних утилит (LibreHardwareMonitor, HWiNFO и др.)
-    // metrics.core_temperatures всегда 0.0
-    //
-    //
-    // В collect_gpu_metrics:
-    // Для AMD/Intel GPU без сторонних утилит сбор метрик невозможен, возвращаем usage_percent = -1.0
-    //
-    // В collect_hdd_metrics:
-    // Используется только smartctl, старый WMI-код удалён (или закомментирован как fallback)
-    //
-    // В collect_network_metrics:
-    // Bandwidth считается через два замера с задержкой, корректно работает для stateless-агента
-    //
-    // Для всех метрик добавлены комментарии о поддержке и ограничениях
+    // Не сохраняем предыдущие значения
     return metrics;
 }
 
@@ -741,7 +721,7 @@ GpuMetrics WindowsMetricsCollector::collect_gpu_metrics() {
     {
         std::array<char, 256> buffer;
         std::string result;
-        std::unique_ptr<FILE, decltype(&_pclose)> pipe(_popen(
+        std::unique_ptr<FILE, decltype(&_pclose)> pipe(popen_hidden(
             "nvidia-smi --query-gpu=temperature.gpu,utilization.gpu,memory.used,memory.total --format=csv,noheader,nounits 2>&1", "r"), _pclose);
         if (pipe && fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
             result = buffer.data();
@@ -772,7 +752,7 @@ HddMetrics WindowsMetricsCollector::collect_hdd_metrics() {
     // Требуется установленный smartmontools и права администратора!
     // Получаем список устройств через smartctl --scan
     std::vector<std::pair<std::string, std::string>> devices;
-    FILE* pipe = _popen("smartctl --scan", "r");
+    FILE* pipe = popen_hidden("smartctl --scan", "r");
     if (pipe) {
         char buffer[256];
         while (fgets(buffer, sizeof(buffer), pipe)) {
@@ -793,7 +773,7 @@ HddMetrics WindowsMetricsCollector::collect_hdd_metrics() {
         drive.health_status = "Unknown";
         // smartctl -A -d ...
         std::string cmd = "smartctl -A -d " + dtype + " " + dev + " 2>&1";
-        FILE* pipeA = _popen(cmd.c_str(), "r");
+        FILE* pipeA = popen_hidden(cmd.c_str(), "r");
         if (pipeA) {
             char buffer[512];
             std::string output;
@@ -852,7 +832,7 @@ HddMetrics WindowsMetricsCollector::collect_hdd_metrics() {
         }
         // smartctl -H -d ...
         cmd = "smartctl -H -d " + dtype + " " + dev + " 2>&1";
-        FILE* pipeH = _popen(cmd.c_str(), "r");
+        FILE* pipeH = popen_hidden(cmd.c_str(), "r");
         if (pipeH) {
             char buffer[256];
             std::string output;
@@ -950,6 +930,45 @@ std::string detect_machine_type_windows() {
     pLoc->Release();
     CoUninitialize();
     return result;
+}
+
+FILE* popen_hidden(const char* command, const char* mode) {
+    if (strcmp(mode, "r") != 0) return nullptr; // Только чтение поддерживается
+    SECURITY_ATTRIBUTES saAttr{};
+    saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
+    saAttr.bInheritHandle = TRUE;
+    saAttr.lpSecurityDescriptor = NULL;
+    HANDLE hRead = NULL, hWrite = NULL;
+    if (!CreatePipe(&hRead, &hWrite, &saAttr, 0)) return nullptr;
+    if (!SetHandleInformation(hRead, HANDLE_FLAG_INHERIT, 0)) {
+        CloseHandle(hRead); CloseHandle(hWrite); return nullptr;
+    }
+    STARTUPINFOA si{};
+    PROCESS_INFORMATION pi{};
+    si.cb = sizeof(STARTUPINFOA);
+    si.dwFlags = STARTF_USESHOWWINDOW | STARTF_USESTDHANDLES;
+    si.wShowWindow = SW_HIDE;
+    si.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
+    si.hStdOutput = hWrite;
+    si.hStdError = hWrite;
+    char cmdLine[4096];
+    snprintf(cmdLine, sizeof(cmdLine), "cmd.exe /C %s", command);
+    BOOL success = CreateProcessA(
+        NULL, cmdLine, NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi);
+    CloseHandle(hWrite);
+    if (!success) {
+        CloseHandle(hRead);
+        return nullptr;
+    }
+    CloseHandle(pi.hThread);
+    // Вернём файловый поток для чтения
+    int fd = _open_osfhandle((intptr_t)hRead, _O_RDONLY);
+    FILE* file = _fdopen(fd, "r");
+    // Закроем процесс после чтения (в _pclose)
+    // Сохраним pid для _pclose
+    // Для простоты: не реализуем _pclose, используем fclose (процесс завершится сам)
+    CloseHandle(pi.hProcess);
+    return file;
 }
 
 } // namespace monitoring  

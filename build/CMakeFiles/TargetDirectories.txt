@@ -1,4 +1,5 @@
 C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/CMakeFiles/monitoring_agent.dir
+C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/CMakeFiles/monitoring_agent_new.dir
 C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/CMakeFiles/INSTALL.dir
 C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/CMakeFiles/ALL_BUILD.dir
 C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/CMakeFiles/ZERO_CHECK.dir

@@ -7,14 +7,24 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Опции сборки
 option(BUILD_TESTS "Build tests" OFF)
+option(USE_NEW_AGENT "Use new agent architecture" ON)
 
 # Добавляем директорию с заголовочными файлами
 include_directories(${PROJECT_SOURCE_DIR}/include)
+include_directories(${PROJECT_SOURCE_DIR}/src)
 
 # Список исходных файлов
 set(SOURCES
     src/main.cpp
 )
+
+# Добавляем новые файлы агента
+if(USE_NEW_AGENT)
+    list(APPEND SOURCES
+        src/agent_config.cpp
+        src/agent_api.cpp
+    )
+endif()
 
 if(WIN32)
     list(APPEND SOURCES src/windows_metrics_collector.cpp)
@@ -93,4 +103,50 @@ endif()
 if(WIN32)
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
+endif()
+
+# Создаем альтернативную версию с новой архитектурой
+if(USE_NEW_AGENT)
+    set(SOURCES_NEW
+        src/main_new.cpp 
+        src/agent_config.cpp 
+        src/agent_api.cpp
+    )
+    
+    if(WIN32)
+        list(APPEND SOURCES_NEW src/windows_metrics_collector.cpp)
+        add_executable(${PROJECT_NAME}_new ${SOURCES_NEW})
+        # set_target_properties(${PROJECT_NAME}_new PROPERTIES WIN32_EXECUTABLE TRUE)
+        target_link_libraries(${PROJECT_NAME}_new PRIVATE
+            cpr::cpr
+            pdh
+            iphlpapi
+            ws2_32
+        )
+    else()
+        list(APPEND SOURCES_NEW src/linux_metrics_collector.cpp)
+        add_executable(${PROJECT_NAME}_new ${SOURCES_NEW})
+        target_link_libraries(${PROJECT_NAME}_new PRIVATE cpr::cpr)
+    endif()
+    
+    set_target_properties(${PROJECT_NAME}_new PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+        RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_BINARY_DIR}/bin/Debug"
+        RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/bin/Release"
+    )
+    
+    if(WIN32)
+        target_compile_definitions(${PROJECT_NAME}_new PRIVATE
+            _WIN32_WINNT=0x0601
+            NOMINMAX
+            WIN32_LEAN_AND_MEAN
+        )
+    endif()
+    
+    # Копирование DLL для новой версии
+    if(WIN32)
+        copy_dependency_dll_to_output(${PROJECT_NAME}_new cpr::cpr)
+        copy_dependency_dll_to_output(${PROJECT_NAME}_new CURL::libcurl_shared)
+        copy_dependency_dll_to_output(${PROJECT_NAME}_new zlib)
+    endif()
 endif()

@@ -4,6 +4,12 @@
     <ClCompile Include="C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\src\agent_config.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\src\agent_api.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="C:\Users\rosih\OneDrive\Desktop\Работа\Cursor\monitoring_agent\src\windows_metrics_collector.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

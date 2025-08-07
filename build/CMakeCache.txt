@@ -669,6 +669,9 @@ USE_LIBIDN2:BOOL=ON
 //Use msquic library for HTTP/3 support
 USE_MSH3:BOOL=OFF
 
+//Use new agent architecture
+USE_NEW_AGENT:BOOL=ON
+
 //Use nghttp2 library
 USE_NGHTTP2:BOOL=OFF
 

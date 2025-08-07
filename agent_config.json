@@ -1,0 +1,22 @@
+{
+  "agent_id": "",
+  "machine_name": "",
+  "server_url": "http://localhost:8000",
+  "command_server_url": "http://localhost:8081",
+  "command_server_port": 8081,
+  "command_server_host": "0.0.0.0",
+  "send_timeout_ms": 2000,
+  "max_buffer_size": 10,
+  "heartbeat_interval_seconds": 60,
+  "auto_detect_id": true,
+  "auto_detect_name": true,
+  "enabled_metrics": {
+    "cpu": true,
+    "memory": true,
+    "disk": true,
+    "network": true,
+    "gpu": false,
+    "hdd": false,
+    "inventory": true
+  }
+} 

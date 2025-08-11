@@ -5,6 +5,7 @@ import uvicorn
 from datetime import datetime
 import json
 from typing import Optional, Dict, Any
+import os
 
 # Импорт новых модулей
 from .api.agents import router as agents_router
@@ -57,11 +58,10 @@ async def root():
             "metrics": "/metrics",
             "agents": "/api/agents",
             "agent_statistics": "/api/agents/statistics",
-            "agent_config": "/api/agents/{agent_id}/config",
-            "request_metrics": "/api/agents/{agent_id}/request_metrics",
-            "request_all_metrics": "/api/agents/request_metrics_from_all",
-            "restart_agent": "/api/agents/{agent_id}/restart",
-            "stop_agent": "/api/agents/{agent_id}/stop",
+            "send_command": "/api/agents/{agent_id}/command",
+            "send_command_all": "/api/agents/command_all",
+            "register_agent": "/api/agents/register",
+            "register_agent_with_id": "/api/agents/{agent_id}/register",
             "docs": "/docs"
         }
     }
@@ -70,24 +70,25 @@ async def root():
 async def receive_metrics(metrics: MetricsData, request: Request):
     """Получение метрик от агента"""
     try:
+        print(f"📊 Получены метрики от агента")
+        print(f"   Timestamp: {metrics.timestamp}")
+        print(f"   Machine type: {metrics.machine_type}")
+        print(f"   Agent ID: {metrics.agent_id}")
+        print(f"   Machine name: {metrics.machine_name}")
+        print(f"   Request URL: {request.url}")
+        print(f"   Request method: {request.method}")
+        print(f"   Request headers: {dict(request.headers)}")
+        
         # Генерируем ID агента, если не указан
         agent_id = metrics.agent_id or f"agent_{int(metrics.timestamp)}"
+        print(f"   Используемый Agent ID: {agent_id}")
         
         # Получаем IP адрес агента из запроса
         client_ip = request.client.host if request.client else "127.0.0.1"
+        print(f"   Client IP: {client_ip}")
         
-        # Регистрируем агента, если его нет
-        if agent_id not in agent_service.agents:
-            machine_name = metrics.machine_name or f"Machine_{agent_id}"
-            agent_service.register_agent(
-                agent_id=agent_id,
-                machine_name=machine_name,
-                machine_type=metrics.machine_type,
-                ip_address=client_ip
-            )
-        
-        # Обновляем статус агента
-        agent_service.update_agent_status(agent_id, AgentStatus.ONLINE)
+        # Обрабатываем метрики через сервис (регистрация + обновление)
+        agent_service.process_agent_metrics(agent_id, metrics.dict(), client_ip)
         
         # Сохраняем метрики (пока в памяти)
         agents_data[agent_id] = {
@@ -95,8 +96,16 @@ async def receive_metrics(metrics: MetricsData, request: Request):
             "data": metrics.dict()
         }
         
+        # --- ЛОГИРОВАНИЕ В ФАЙЛ ---
+        log_path = os.path.join(os.path.dirname(__file__), "metrics_log.jsonl")
+        with open(log_path, "a", encoding="utf-8") as f:
+            f.write(json.dumps(metrics.dict(), ensure_ascii=False) + "\n")
+        # --- КОНЕЦ ЛОГИРОВАНИЯ ---
+        
+        print(f"💾 Метрики сохранены для агента {agent_id}")
         return {"status": "success", "message": "Metrics received"}
     except Exception as e:
+        print(f"❌ Ошибка при обработке метрик: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/agents")
@@ -130,28 +139,38 @@ async def get_agent_config(agent_id: str):
     
     return agent.config
 
-@app.post("/api/agents/{agent_id}/config")
-async def update_agent_config(agent_id: str, config: Dict[str, Any]):
-    """Обновление конфигурации агента (устаревший endpoint)"""
-    agent = agent_service.get_agent(agent_id)
-    if not agent:
-        raise HTTPException(status_code=404, detail="Agent not found")
-    
-    # Обновляем конфигурацию
-    agent.config.update_frequency = config.get("update_frequency", 60)
-    agent.config.enabled_metrics = config.get("enabled_metrics", ["cpu", "memory", "disk", "network"])
-    
-    return {"status": "success", "message": "Configuration updated"}
 
-@app.post("/api/agents/{agent_id}/execute_script")
-async def execute_script(agent_id: str, script: str):
-    """Выполнение скрипта на агенте (устаревший endpoint)"""
-    # TODO: Реализовать выполнение скриптов
-    return {
-        "status": "success",
-        "message": "Script execution requested",
-        "script": script
-    }
+
+@app.post("/api/agents/{agent_id}/command")
+async def send_command_to_agent(agent_id: str, command: Dict[str, Any]):
+    """Отправка команды агенту"""
+    try:
+        from .models.agent import AgentCommand
+        from .services.agent_service import agent_service
+        
+        # Создаем объект команды
+        agent_command = AgentCommand(
+            command=command.get("command", ""),
+            data=command.get("data", {}),
+            timestamp=datetime.now()
+        )
+        
+        print(f"🚀 Отправка команды '{agent_command.command}' агенту {agent_id}")
+        print(f"   Данные: {agent_command.data}")
+        
+        # Отправляем команду через сервис
+        response = await agent_service.send_command_to_agent(agent_id, agent_command)
+        
+        if response.success:
+            print(f"✅ Команда успешно отправлена агенту {agent_id}")
+        else:
+            print(f"❌ Ошибка отправки команды: {response.message}")
+        
+        return response.dict()
+        
+    except Exception as e:
+        print(f"❌ Ошибка при отправке команды: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/health")
 async def health_check():
@@ -164,6 +183,12 @@ async def health_check():
         "total_agents": stats["total_agents"],
         "online_percentage": stats["online_percentage"]
     }
+
+@app.exception_handler(404)
+async def not_found_handler(request: Request, exc: HTTPException):
+    """Обработчик для несуществующих эндпоинтов"""
+    print(f"❌ 404 ошибка для {request.method} {request.url}")
+    return {"detail": "Not Found", "path": str(request.url.path)}
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000) 

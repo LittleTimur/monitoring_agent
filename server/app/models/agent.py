@@ -17,6 +17,13 @@ class MetricType(str, Enum):
     HDD = "hdd"
     INVENTORY = "inventory"
 
+class AgentRegistration(BaseModel):
+    """Данные для регистрации агента"""
+    machine_name: str
+    machine_type: str
+    ip_address: Optional[str] = None
+    version: Optional[str] = None
+
 class AgentConfig(BaseModel):
     """Конфигурация агента"""
     update_frequency: int = 600  # секунды (10 минут по умолчанию)

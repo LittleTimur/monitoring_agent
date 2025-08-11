@@ -6,7 +6,14 @@
 #include <cpr/cpr.h>
 
 #ifdef _WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
 #include "windows_metrics_collector.hpp"
+#else
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <unistd.h>
+#include <arpa/inet.h>
 #endif
 
 namespace agent {
@@ -39,22 +46,19 @@ nlohmann::json CommandResponse::to_json() const {
 }
 
 // AgentHttpServer implementation
-AgentHttpServer::AgentHttpServer(const AgentConfig& config) : config_(config) {
-    // Регистрируем стандартные обработчики команд
+AgentHttpServer::AgentHttpServer(const AgentConfig& config, AgentManager* manager) : config_(config), manager_(manager) {
+    // Регистрируем настоящие обработчики команд
     register_command_handler("collect_metrics", [this](const Command& cmd) {
-        return CommandResponse{true, "Metrics collection requested", {}, ""};
+        return manager_->handle_collect_metrics(cmd);
     });
-    
     register_command_handler("update_config", [this](const Command& cmd) {
-        return CommandResponse{true, "Configuration update requested", {}, ""};
+        return manager_->handle_update_config(cmd);
     });
-    
     register_command_handler("restart", [this](const Command& cmd) {
-        return CommandResponse{true, "Restart requested", {}, ""};
+        return manager_->handle_restart(cmd);
     });
-    
     register_command_handler("stop", [this](const Command& cmd) {
-        return CommandResponse{true, "Stop requested", {}, ""};
+        return manager_->handle_stop(cmd);
     });
 }
 
@@ -86,48 +90,142 @@ void AgentHttpServer::register_command_handler(const std::string& command, Comma
 
 void AgentHttpServer::server_loop() {
     // Простая реализация HTTP сервера через TCP сокеты
-    // В реальной реализации здесь будет полноценный HTTP сервер
+    std::cout << "HTTP server loop started" << std::endl;
     
-    std::cout << "HTTP server loop started (simplified implementation)" << std::endl;
-    
-    // Создаем простой TCP сервер для приема команд
-    // Пока просто выводим сообщение о готовности
+#ifdef _WIN32
+    WSADATA wsaData;
+    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
+        std::cerr << "WSAStartup failed" << std::endl;
+        return;
+    }
+#endif
+
+    int server_socket = socket(AF_INET, SOCK_STREAM, 0);
+    if (server_socket < 0) {
+        std::cerr << "Failed to create socket" << std::endl;
+        return;
+    }
+
+    // Устанавливаем опцию переиспользования адреса
+    int opt = 1;
+    setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, (char*)&opt, sizeof(opt));
+
+    struct sockaddr_in server_addr;
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_addr.s_addr = INADDR_ANY;
+    server_addr.sin_port = htons(config_.command_server_port);
+
+    if (bind(server_socket, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
+        std::cerr << "Bind failed" << std::endl;
+        return;
+    }
+
+    if (listen(server_socket, 5) < 0) {
+        std::cerr << "Listen failed" << std::endl;
+        return;
+    }
+
     std::cout << "Agent HTTP server ready on port " << config_.command_server_port << std::endl;
     std::cout << "Waiting for commands from server..." << std::endl;
-    
+
     while (running_) {
-        // Здесь будет код для приема HTTP запросов
-        // Пока просто ждем
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        struct sockaddr_in client_addr;
+        socklen_t client_len = sizeof(client_addr);
         
-        // Симуляция обработки команд (для тестирования)
-        // static int counter = 0;
-        // if (counter++ % 100 == 0) {  // Каждые 10 секунд
-        //     std::cout << "Agent HTTP server heartbeat..." << std::endl;
-        // }
+        int client_socket = accept(server_socket, (struct sockaddr*)&client_addr, &client_len);
+        if (client_socket < 0) {
+            if (running_) {
+                std::cerr << "Accept failed" << std::endl;
+            }
+            continue;
+        }
+
+        // Обрабатываем запрос в отдельном потоке или синхронно
+        std::thread([this, client_socket]() {
+            this->handle_client_request(client_socket);
+        }).detach();
     }
+
+#ifdef _WIN32
+    closesocket(server_socket);
+    WSACleanup();
+#else
+    close(server_socket);
+#endif
 }
 
-void AgentHttpServer::handle_request(const std::string& request, std::string& response) {
+void AgentHttpServer::handle_client_request(int client_socket) {
+    char buffer[4096];
+    int bytes_received = recv(client_socket, buffer, sizeof(buffer) - 1, 0);
+    
+    if (bytes_received > 0) {
+        buffer[bytes_received] = '\0';
+        
+        // Парсим HTTP запрос
+        std::string request(buffer);
+        std::string response;
+        
+        std::cout << "[RECV] Received HTTP request:" << std::endl;
+        std::cout << "   " << request.substr(0, request.find('\n')) << std::endl;
+        
+        if (request.find("POST /command") != std::string::npos) {
+            // Извлекаем JSON из тела запроса
+            size_t json_start = request.find("\r\n\r\n");
+            if (json_start != std::string::npos) {
+                std::string json_data = request.substr(json_start + 4);
+                std::cout << "[JSON] JSON data: " << json_data << std::endl;
+                
+                // Обрабатываем команду
+                CommandResponse cmd_response = handle_command_request(json_data);
+                response = generate_response(200, "application/json", cmd_response.to_json().dump());
+            } else {
+                response = generate_response(400, "application/json", 
+                    "{\"success\": false, \"message\": \"No JSON data found\"}");
+            }
+        } else {
+            response = generate_response(404, "application/json", 
+                "{\"success\": false, \"message\": \"Endpoint not found\"}");
+        }
+        
+        send(client_socket, response.c_str(), response.length(), 0);
+    }
+    
+#ifdef _WIN32
+    closesocket(client_socket);
+#else
+    close(client_socket);
+#endif
+}
+
+CommandResponse AgentHttpServer::handle_command_request(const std::string& json_data) {
     try {
+        std::cout << "[CMD] Processing command..." << std::endl;
+        
         // Парсим JSON запрос
-        nlohmann::json request_json = nlohmann::json::parse(request);
+        nlohmann::json request_json = nlohmann::json::parse(json_data);
         Command cmd = Command::from_json(request_json);
+        
+        std::cout << "[CMD] Command: " << cmd.command << std::endl;
+        std::cout << "[CMD] Data: " << cmd.data.dump() << std::endl;
         
         // Ищем обработчик
         auto it = command_handlers_.find(cmd.command);
         if (it != command_handlers_.end()) {
+            std::cout << "[CMD] Found handler for command: " << cmd.command << std::endl;
             CommandResponse resp = it->second(cmd);
-            response = resp.to_json().dump();
+            std::cout << "[RESP] Response: " << resp.to_json().dump() << std::endl;
+            return resp;
         } else {
-            CommandResponse resp{false, "Unknown command: " + cmd.command, {}, ""};
-            response = resp.to_json().dump();
+            std::cout << "[ERROR] Unknown command: " << cmd.command << std::endl;
+            return CommandResponse{false, "Unknown command: " + cmd.command, {}, ""};
         }
     } catch (const std::exception& e) {
-        CommandResponse resp{false, "Error parsing request: " + std::string(e.what()), {}, ""};
-        response = resp.to_json().dump();
+        std::cout << "[ERROR] Request parsing error: " << e.what() << std::endl;
+        return CommandResponse{false, "Error parsing request: " + std::string(e.what()), {}, ""};
     }
 }
+
+
 
 std::string AgentHttpServer::generate_response(int status_code, const std::string& content_type, const std::string& body) {
     std::ostringstream oss;
@@ -147,8 +245,10 @@ MonitoringServerClient::MonitoringServerClient(const AgentConfig& config) : conf
     agent_id_ = config_.agent_id;
     machine_name_ = config_.machine_name;
     
-    std::cout << "Agent initialized with ID: " << agent_id_ << std::endl;
-    std::cout << "Machine name: " << machine_name_ << std::endl;
+    std::cout << "[INIT] Agent initialized with ID: " << agent_id_ << std::endl;
+    std::cout << "[INIT] Machine name: " << machine_name_ << std::endl;
+    std::cout << "[INIT] Server URL: " << config_.server_url << std::endl;
+    std::cout << "[INIT] Command server port: " << config_.command_server_port << std::endl;
 }
 
 bool MonitoringServerClient::send_metrics(const nlohmann::json& metrics) {
@@ -158,34 +258,36 @@ bool MonitoringServerClient::send_metrics(const nlohmann::json& metrics) {
         data["agent_id"] = agent_id_;
         data["machine_name"] = machine_name_;
         
+        // Проверяем корректность JSON перед отправкой
+        std::string json_str = data.dump();
+        std::cout << "[SEND] Sending metrics to server:" << std::endl;
+        std::cout << "   JSON size: " << json_str.length() << " bytes" << std::endl;
+        std::cout << "   First 100 chars: " << json_str.substr(0, 100) << std::endl;
+        
         nlohmann::json response;
-        return make_request("/metrics", data, response);
+        bool success = make_request("/metrics", data, response);
+        
+        if (success) {
+            std::cout << "[SUCCESS] Metrics sent successfully" << std::endl;
+        } else {
+            std::cout << "[ERROR] Failed to send metrics" << std::endl;
+        }
+        
+        return success;
     } catch (const std::exception& e) {
-        std::cerr << "Error sending metrics: " << e.what() << std::endl;
+        std::cerr << "[ERROR] Error sending metrics: " << e.what() << std::endl;
         return false;
     }
 }
 
 bool MonitoringServerClient::register_agent() {
     try {
-        nlohmann::json data;
-        data["agent_id"] = agent_id_;
-        data["machine_name"] = machine_name_;
-        data["machine_type"] = "Windows"; // TODO: определить автоматически
-        data["ip_address"] = "127.0.0.1"; // TODO: получить реальный IP
-        
-        nlohmann::json response;
-        bool success = make_request("/api/agents/" + agent_id_ + "/register", data, response);
-        
-        if (success) {
-            std::cout << "Agent registered successfully on server" << std::endl;
-        } else {
-            std::cout << "Agent registration failed" << std::endl;
-        }
-        
-        return success;
+        // Agent registration happens automatically when sending metrics
+        // The server creates agent records when receiving metrics
+        std::cout << "[REG] Agent registration not required - will register automatically with first metrics" << std::endl;
+        return true;
     } catch (const std::exception& e) {
-        std::cerr << "Error registering agent: " << e.what() << std::endl;
+        std::cerr << "[ERROR] Agent registration error: " << e.what() << std::endl;
         return false;
     }
 }
@@ -208,31 +310,48 @@ bool MonitoringServerClient::update_config_from_server() {
 
 bool MonitoringServerClient::make_request(const std::string& endpoint, const nlohmann::json& data, nlohmann::json& response) {
     try {
-        std::string url = config_.server_url;
-        if (endpoint != "/metrics") {
-            // Для всех запросов кроме метрик используем базовый URL сервера
-            url = config_.server_url.substr(0, config_.server_url.find("/metrics"));
+        std::cout << "[DEBUG] config_.server_url = " << config_.server_url << std::endl;
+        std::cout << "[DEBUG] endpoint = " << endpoint << std::endl;
+        
+        std::string url;
+        // Всегда используем базовый URL + endpoint
+        url = config_.server_url + endpoint;
+        std::cout << "[DEBUG] Using base URL + endpoint: " << url << std::endl;
+        
+        // Проверяем корректность JSON данных
+        std::string json_body;
+        try {
+            json_body = data.dump();
+                    std::cout << "[HTTP] Sending request to: " << url << std::endl;
+        std::cout << "   Request body: " << json_body.substr(0, 200) << "..." << std::endl;
+        } catch (const std::exception& e) {
+            std::cerr << "[ERROR] JSON serialization error: " << e.what() << std::endl;
+            return false;
         }
-        url += endpoint;
         
         auto cpr_response = cpr::Post(
             cpr::Url{url},
-            cpr::Header{{"Content-Type", "application/json"}},
-            cpr::Body{data.dump()},
+            cpr::Header{{"Content-Type", "application/json; charset=utf-8"}},
+            cpr::Body{json_body},
             cpr::Timeout{config_.send_timeout_ms}
         );
         
         if (cpr_response.status_code == 200) {
             if (!cpr_response.text.empty()) {
-                response = nlohmann::json::parse(cpr_response.text);
+                try {
+                    response = nlohmann::json::parse(cpr_response.text);
+                } catch (const std::exception& e) {
+                                    std::cerr << "[ERROR] Server response parsing error: " << e.what() << std::endl;
+                std::cerr << "   Server response: " << cpr_response.text.substr(0, 200) << std::endl;
+                }
             }
             return true;
         } else {
-            std::cerr << "HTTP request failed: " << cpr_response.status_code << " - " << cpr_response.text << std::endl;
+            std::cerr << "[ERROR] HTTP request failed: " << cpr_response.status_code << " - " << cpr_response.text << std::endl;
             return false;
         }
     } catch (const std::exception& e) {
-        std::cerr << "Error making HTTP request: " << e.what() << std::endl;
+        std::cerr << "[ERROR] HTTP request error: " << e.what() << std::endl;
         return false;
     }
 }
@@ -240,8 +359,7 @@ bool MonitoringServerClient::make_request(const std::string& endpoint, const nlo
 // AgentManager implementation
 AgentManager::AgentManager(const AgentConfig& config) : config_(config) {
     initialize_metrics_collector();
-    
-    http_server_ = std::make_unique<AgentHttpServer>(config_);
+    http_server_ = std::make_unique<AgentHttpServer>(config_, this);
     server_client_ = std::make_unique<MonitoringServerClient>(config_);
 }
 
@@ -304,7 +422,12 @@ CommandResponse AgentManager::handle_collect_metrics(const Command& cmd) {
         auto metrics = collect_metrics(requested_metrics);
         server_client_->send_metrics(metrics);
         
-        return CommandResponse{true, "Metrics collected and sent", metrics, ""};
+        // ✅ Добавляем текущее время в ответ
+        auto now = std::chrono::system_clock::now();
+        auto timestamp = std::chrono::duration_cast<std::chrono::seconds>(
+            now.time_since_epoch()).count();
+        
+        return CommandResponse{true, "Metrics collected and sent", metrics, std::to_string(timestamp)};
     } catch (const std::exception& e) {
         return CommandResponse{false, "Error collecting metrics: " + std::string(e.what()), {}, ""};
     }
@@ -317,7 +440,12 @@ CommandResponse AgentManager::handle_update_config(const Command& cmd) {
         
         std::cout << "Configuration updated from server command" << std::endl;
         
-        return CommandResponse{true, "Configuration updated", config_.to_json(), ""};
+        // ✅ Добавляем текущее время в ответ
+        auto now = std::chrono::system_clock::now();
+        auto timestamp = std::chrono::duration_cast<std::chrono::seconds>(
+            now.time_since_epoch()).count();
+        
+        return CommandResponse{true, "Configuration updated", config_.to_json(), std::to_string(timestamp)};
     } catch (const std::exception& e) {
         return CommandResponse{false, "Error updating config: " + std::string(e.what()), {}, ""};
     }
@@ -325,13 +453,21 @@ CommandResponse AgentManager::handle_update_config(const Command& cmd) {
 
 CommandResponse AgentManager::handle_restart(const Command& cmd) {
     // В реальной реализации здесь будет перезапуск агента
-    return CommandResponse{true, "Restart command received", {}, ""};
+    auto now = std::chrono::system_clock::now();
+    auto timestamp = std::chrono::duration_cast<std::chrono::seconds>(
+        now.time_since_epoch()).count();
+    
+    return CommandResponse{true, "Restart command received", {}, std::to_string(timestamp)};
 }
 
 CommandResponse AgentManager::handle_stop(const Command& cmd) {
     // Останавливаем агент
+    auto now = std::chrono::system_clock::now();
+    auto timestamp = std::chrono::duration_cast<std::chrono::seconds>(
+        now.time_since_epoch()).count();
+    
     stop();
-    return CommandResponse{true, "Stop command received", {}, ""};
+    return CommandResponse{true, "Stop command received", {}, std::to_string(timestamp)};
 }
 
 nlohmann::json AgentManager::collect_metrics(const std::vector<std::string>& requested_metrics) {
@@ -411,7 +547,7 @@ void AgentManager::metrics_loop() {
             std::cerr << "Error in metrics loop: " << e.what() << std::endl;
         }
         
-        // Используем heartbeat_interval_seconds как интервал сбора метрик
+        // Используем update_frequency как интервал сбора метрик
         std::this_thread::sleep_for(std::chrono::seconds(config_.update_frequency));
     }
 }

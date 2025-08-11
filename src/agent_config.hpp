@@ -12,7 +12,7 @@ struct AgentConfig {
     // Основные настройки
     std::string agent_id;
     std::string machine_name;
-    std::string server_url = "http://localhost:8000/metrics";
+    std::string server_url = "http://localhost:8000";
     std::string command_server_url = "http://localhost:8081";
     
     // Настройки сбора метрик - теперь словарь с флагами

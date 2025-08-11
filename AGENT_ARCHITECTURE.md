@@ -42,7 +42,7 @@
   "agent_id": "",  // Автоматически определяется
   "machine_name": "",  // Автоматически определяется
   "server_url": "http://localhost:8000/metrics",
-  "heartbeat_interval_seconds": 60,
+      "update_frequency": 60,
   "auto_detect_id": true,
   "auto_detect_name": true,
   "enabled_metrics": {
@@ -124,7 +124,7 @@ curl -X POST "http://localhost:8000/api/agents/agent_001/config" \
       "memory": true,
       "disk": false
     },
-    "heartbeat_interval_seconds": 30
+    "update_frequency": 30
   }'
 ```
 
@@ -181,7 +181,7 @@ make -j$(nproc)
   "agent_id": "",  // Автоматически определится
   "machine_name": "",  // Автоматически определится
   "server_url": "http://monitoring-server:8000/metrics",
-  "heartbeat_interval_seconds": 60,
+      "update_frequency": 60,
   "auto_detect_id": true,
   "auto_detect_name": true,
   "enabled_metrics": {

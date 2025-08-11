@@ -103,8 +103,7 @@ void AgentConfig::save_to_file(const std::string& filename) const {
 
 void AgentConfig::update_from_json(const nlohmann::json& j) {
     if (j.contains("update_frequency")) {
-        // Для обратной совместимости
-        std::cout << "Warning: update_frequency is deprecated, use heartbeat_interval_seconds" << std::endl;
+        update_frequency = j["update_frequency"];
     }
     if (j.contains("enabled_metrics")) {
         const auto& metrics_obj = j["enabled_metrics"];

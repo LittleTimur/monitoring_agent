@@ -32,10 +32,12 @@ struct CommandResponse {
     nlohmann::json to_json() const;
 };
 
+class AgentManager; // Forward declaration
+
 // Класс для HTTP сервера агента
 class AgentHttpServer {
 public:
-    AgentHttpServer(const AgentConfig& config);
+    AgentHttpServer(const AgentConfig& config, AgentManager* manager);
     ~AgentHttpServer();
     
     // Запуск/остановка сервера
@@ -47,14 +49,18 @@ public:
     using CommandHandler = std::function<CommandResponse(const Command&)>;
     void register_command_handler(const std::string& command, CommandHandler handler);
     
+    // Обработка команд
+    CommandResponse handle_command_request(const std::string& json_data);
+    
 private:
     AgentConfig config_;
+    AgentManager* manager_; // Добавлено
     std::atomic<bool> running_{false};
     std::thread server_thread_;
     std::map<std::string, CommandHandler> command_handlers_;
     
     void server_loop();
-    void handle_request(const std::string& request, std::string& response);
+    void handle_client_request(int client_socket);
     std::string generate_response(int status_code, const std::string& content_type, const std::string& body);
 };
 

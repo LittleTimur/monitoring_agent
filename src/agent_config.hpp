@@ -47,6 +47,9 @@ struct AgentConfig {
     static AgentConfig load_from_file(const std::string& filename = "agent_config.json");
     void save_to_file(const std::string& filename = "agent_config.json") const;
     
+    // Получение пути к конфигурационному файлу рядом с исполняемым файлом
+    static std::string get_config_path(const std::string& filename = "agent_config.json");
+    
     // Обновление конфигурации
     void update_from_json(const nlohmann::json& j);
     

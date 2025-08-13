@@ -13,6 +13,7 @@
 #else
 #include <unistd.h>
 #include <sys/utsname.h>
+#include <linux/limits.h>
 #endif
 
 namespace agent {
@@ -87,6 +88,32 @@ AgentConfig AgentConfig::load_from_file(const std::string& filename) {
     }
     
     return config;
+}
+
+std::string AgentConfig::get_config_path(const std::string& filename) {
+    std::string config_path = filename;
+    
+    try {
+        #ifdef _WIN32
+        char exe_path[MAX_PATH];
+        GetModuleFileNameA(NULL, exe_path, MAX_PATH);
+        std::string exe_dir = std::filesystem::path(exe_path).parent_path().string();
+        config_path = exe_dir + "/" + filename;
+        #else
+        // Для Linux используем /proc/self/exe
+        char exe_path[PATH_MAX];
+        ssize_t len = readlink("/proc/self/exe", exe_path, sizeof(exe_path)-1);
+        if (len != -1) {
+            exe_path[len] = '\0';
+            std::string exe_dir = std::filesystem::path(exe_path).parent_path().string();
+            config_path = exe_dir + "/" + filename;
+        }
+        #endif
+    } catch (const std::exception& e) {
+        std::cerr << "Warning: Could not determine executable path, using relative path: " << e.what() << std::endl;
+    }
+    
+    return config_path;
 }
 
 void AgentConfig::save_to_file(const std::string& filename) const {

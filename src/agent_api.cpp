@@ -357,7 +357,7 @@ bool MonitoringServerClient::make_request(const std::string& endpoint, const nlo
 }
 
 // AgentManager implementation
-AgentManager::AgentManager(const AgentConfig& config) : config_(config) {
+AgentManager::AgentManager(const AgentConfig& config, const std::string& config_path) : config_(config), config_path_(config_path) {
     initialize_metrics_collector();
     http_server_ = std::make_unique<AgentHttpServer>(config_, this);
     server_client_ = std::make_unique<MonitoringServerClient>(config_);
@@ -436,7 +436,15 @@ CommandResponse AgentManager::handle_collect_metrics(const Command& cmd) {
 CommandResponse AgentManager::handle_update_config(const Command& cmd) {
     try {
         config_.update_from_json(cmd.data);
-        config_.save_to_file();
+        
+        // Используем сохраненный путь к конфигурационному файлу
+        if (!config_path_.empty()) {
+            config_.save_to_file(config_path_);
+            std::cout << "Configuration updated and saved to: " << config_path_ << std::endl;
+        } else {
+            config_.save_to_file();
+            std::cout << "Configuration updated and saved to default location" << std::endl;
+        }
         
         std::cout << "Configuration updated from server command" << std::endl;
         
@@ -488,33 +496,71 @@ nlohmann::json AgentManager::collect_metrics(const std::vector<std::string>& req
     j["agent_id"] = config_.agent_id;
     j["machine_name"] = config_.machine_name;
     
-    // Добавляем метрики согласно enabled_metrics
+    // Добавляем метрики согласно enabled_metrics (убираем проверку config_.is_metric_enabled)
     for (const auto& metric_type : enabled_metrics) {
-        if (metric_type == "cpu" && config_.is_metric_enabled("cpu")) {
+        if (metric_type == "cpu") {
             j["cpu"]["usage_percent"] = metrics.cpu.usage_percent;
             j["cpu"]["temperature"] = metrics.cpu.temperature;
             j["cpu"]["core_temperatures"] = metrics.cpu.core_temperatures;
             j["cpu"]["core_usage"] = metrics.cpu.core_usage;
-        } else if (metric_type == "memory" && config_.is_metric_enabled("memory")) {
+        } else if (metric_type == "memory") {
             j["memory"]["total_bytes"] = metrics.memory.total_bytes;
             j["memory"]["used_bytes"] = metrics.memory.used_bytes;
             j["memory"]["free_bytes"] = metrics.memory.free_bytes;
             j["memory"]["usage_percent"] = metrics.memory.usage_percent;
-        } else if (metric_type == "disk" && config_.is_metric_enabled("disk")) {
-            // TODO: Добавить обработку дисков
+        } else if (metric_type == "disk") {
             j["disk"]["partitions"] = nlohmann::json::array();
-        } else if (metric_type == "network" && config_.is_metric_enabled("network")) {
-            // TODO: Добавить обработку сети
+            for (const auto& part : metrics.disk.partitions) {
+                nlohmann::json jp;
+                jp["mount_point"] = part.mount_point;
+                jp["filesystem"] = part.filesystem;
+                jp["total_bytes"] = static_cast<int64_t>(part.total_bytes);
+                jp["used_bytes"] = static_cast<int64_t>(part.used_bytes);
+                jp["free_bytes"] = static_cast<int64_t>(part.free_bytes);
+                if (part.usage_percent >= 0) {
+                    jp["usage_percent"] = static_cast<double>(part.usage_percent);
+                }
+                j["disk"]["partitions"].push_back(jp);
+            }
+        } else if (metric_type == "network") {
             j["network"]["interfaces"] = nlohmann::json::array();
-        } else if (metric_type == "gpu" && config_.is_metric_enabled("gpu")) {
+            for (const auto& iface : metrics.network.interfaces) {
+                nlohmann::json ji;
+                ji["name"] = iface.name;
+                ji["bytes_sent"] = static_cast<int64_t>(iface.bytes_sent);
+                ji["bytes_received"] = static_cast<int64_t>(iface.bytes_received);
+                ji["packets_sent"] = static_cast<int64_t>(iface.packets_sent);
+                ji["packets_received"] = static_cast<int64_t>(iface.packets_received);
+                if (iface.bandwidth_sent >= 0) {
+                    ji["bandwidth_sent"] = static_cast<double>(iface.bandwidth_sent);
+                }
+                if (iface.bandwidth_received >= 0) {
+                    ji["bandwidth_received"] = static_cast<double>(iface.bandwidth_received);
+                }
+                j["network"]["interfaces"].push_back(ji);
+            }
+            
+            // Добавляем сериализацию connections
+            j["network"]["connections"] = nlohmann::json::array();
+            for (const auto& conn : metrics.network.connections) {
+                nlohmann::json jc;
+                jc["local_ip"] = conn.local_ip;
+                jc["local_port"] = conn.local_port;
+                jc["remote_ip"] = conn.remote_ip;
+                jc["remote_port"] = conn.remote_port;
+                jc["protocol"] = conn.protocol;
+                j["network"]["connections"].push_back(jc);
+            }
+        } else if (metric_type == "gpu") {
             j["gpu"]["temperature"] = metrics.gpu.temperature;
             j["gpu"]["usage_percent"] = metrics.gpu.usage_percent;
             j["gpu"]["memory_used"] = metrics.gpu.memory_used;
             j["gpu"]["memory_total"] = metrics.gpu.memory_total;
-        } else if (metric_type == "hdd" && config_.is_metric_enabled("hdd")) {
-            // TODO: Добавить обработку HDD
+        } else if (metric_type == "hdd") {
+            // HDD метрики (если доступны)
             j["hdd"]["drives"] = nlohmann::json::array();
-        } else if (metric_type == "inventory" && config_.is_metric_enabled("inventory")) {
+            // TODO: Добавить сбор HDD метрик, когда они будут реализованы в MetricsCollector
+        } else if (metric_type == "inventory") {
             j["inventory"]["device_type"] = metrics.inventory.device_type;
             j["inventory"]["manufacturer"] = metrics.inventory.manufacturer;
             j["inventory"]["model"] = metrics.inventory.model;

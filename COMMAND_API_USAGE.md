@@ -50,8 +50,12 @@ POST /api/agents/command_all
   "command": "collect_metrics",
   "data": {
     "metrics": {
-      "cpu": true,
+      "cpu": false,
       "memory": true,
+      "disk": false,
+      "network": false,
+      "gpu": false,
+      "hdd": false,
       "inventory": false
     },
     "immediate": true

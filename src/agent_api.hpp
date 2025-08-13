@@ -89,7 +89,7 @@ private:
 // Класс для управления агентом
 class AgentManager {
 public:
-    AgentManager(const AgentConfig& config);
+    AgentManager(const AgentConfig& config, const std::string& config_path = "");
     ~AgentManager();
     
     // Основные методы
@@ -108,6 +108,7 @@ public:
     
 private:
     AgentConfig config_;
+    std::string config_path_; // Путь к конфигурационному файлу
     std::atomic<bool> running_{false};
     std::unique_ptr<monitoring::MetricsCollector> metrics_collector_;
     std::unique_ptr<AgentHttpServer> http_server_;

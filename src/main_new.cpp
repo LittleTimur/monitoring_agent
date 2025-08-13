@@ -15,6 +15,9 @@
 
 #ifdef _WIN32
 #include <windows.h>
+#else
+#include <unistd.h>
+#include <linux/limits.h>
 #endif
 
 // Включение новых заголовочных файлов
@@ -164,14 +167,19 @@ int main() {
     try {
         std::cout << "[START] Starting Monitoring Agent..." << std::endl;
         
+        // Определяем путь к конфигурационному файлу рядом с исполняемым файлом
+        std::string config_path = agent::AgentConfig::get_config_path("agent_config.json");
+        
+        std::cout << "Config path: " << config_path << std::endl;
+        
         // Загружаем конфигурацию
-        agent::AgentConfig config = agent::AgentConfig::load_from_file("agent_config.json");
+        agent::AgentConfig config = agent::AgentConfig::load_from_file(config_path);
         
         // Автоматически определяем ID и имя машины, если не заданы
         config.auto_detect_agent_info();
         
         // Сохраняем конфигурацию с автоматически определенными значениями
-        config.save_to_file();
+        config.save_to_file(config_path);
         
         std::cout << "Agent ID: " << config.agent_id << std::endl;
         std::cout << "Machine: " << config.machine_name << std::endl;
@@ -186,7 +194,7 @@ int main() {
         }
         
         // Создаем и запускаем менеджер агента
-        auto agent_manager = std::make_unique<agent::AgentManager>(config);
+        auto agent_manager = std::make_unique<agent::AgentManager>(config, config_path);
         
         std::cout << "Starting agent manager..." << std::endl;
         agent_manager->start();

@@ -5,7 +5,8 @@ import asyncio
 
 from ..models.agent import (
     AgentInfo, AgentConfig, AgentStatus, AgentCommand, 
-    AgentResponse, MetricsRequest, MetricType, AgentCommandRequest, AgentRegistration
+    AgentResponse, MetricsRequest, MetricType, AgentCommandRequest, AgentRegistration,
+    RunScriptRequest
 )
 from ..services.agent_service import agent_service, CommandStatus, CommandExecution
 
@@ -77,6 +78,115 @@ async def send_command_to_agent(
     background_tasks.add_task(agent_service.send_command_to_agent, agent_id, agent_command)
     
     return {"status": "success", "message": f"Command '{command_name}' sent to agent {agent_id}"}
+
+
+# --- Script execution convenience endpoints ---
+
+@router.post("/{agent_id}/run_script")
+async def run_script(agent_id: str, req: RunScriptRequest, background_tasks: BackgroundTasks):
+    """Запуск скрипта на агенте с валидацией payload."""
+    agent = agent_service.get_agent(agent_id)
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+
+    # Базовая проверка наличия одного из полей
+    if not (req.script or req.script_path or req.key):
+        raise HTTPException(status_code=400, detail="One of script, script_path or key is required")
+
+    cmd = AgentCommand(
+        command="run_script",
+        data=req.dict(),
+        timestamp=datetime.now()
+    )
+    agent_service.command_queue[agent_id].append(cmd)
+    background_tasks.add_task(agent_service.send_command_to_agent, agent_id, cmd)
+    return {"status": "queued", "message": "run_script queued"}
+
+
+@router.get("/{agent_id}/jobs/{job_id}")
+async def get_job_output(agent_id: str, job_id: str):
+    """Получение статуса/вывода фоновой задачи на агенте."""
+    agent = agent_service.get_agent(agent_id)
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+
+    cmd = AgentCommand(
+        command="get_job_output",
+        data={"job_id": job_id},
+        timestamp=datetime.now()
+    )
+    resp = await agent_service.send_command_to_agent(agent_id, cmd)
+    return resp.dict()
+
+
+@router.delete("/{agent_id}/jobs/{job_id}")
+async def kill_job(agent_id: str, job_id: str):
+    """Остановка фоновой задачи на агенте."""
+    agent = agent_service.get_agent(agent_id)
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+
+    cmd = AgentCommand(
+        command="kill_job",
+        data={"job_id": job_id},
+        timestamp=datetime.now()
+    )
+    resp = await agent_service.send_command_to_agent(agent_id, cmd)
+    return resp.dict()
+
+
+@router.get("/{agent_id}/jobs")
+async def list_jobs(agent_id: str):
+    """Список фоновых задач на агенте."""
+    agent = agent_service.get_agent(agent_id)
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    cmd = AgentCommand(
+        command="list_jobs",
+        data={},
+        timestamp=datetime.now()
+    )
+    resp = await agent_service.send_command_to_agent(agent_id, cmd)
+    return resp.dict()
+
+
+@router.post("/{agent_id}/scripts")
+async def push_script(agent_id: str, body: Dict[str, Any]):
+    """Загрузка/обновление скрипта на агенте. body: {name, content, chmod?}"""
+    agent = agent_service.get_agent(agent_id)
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    name = body.get("name")
+    content = body.get("content")
+    if not name or not content:
+        raise HTTPException(status_code=400, detail="name and content required")
+    cmd = AgentCommand(
+        command="push_script",
+        data={"name": name, "content": content, **({"chmod": body.get("chmod")} if body.get("chmod") else {})},
+        timestamp=datetime.now()
+    )
+    resp = await agent_service.send_command_to_agent(agent_id, cmd)
+    return resp.dict()
+
+
+@router.get("/{agent_id}/scripts")
+async def list_scripts(agent_id: str):
+    agent = agent_service.get_agent(agent_id)
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    cmd = AgentCommand(command="list_scripts", data={}, timestamp=datetime.now())
+    resp = await agent_service.send_command_to_agent(agent_id, cmd)
+    return resp.dict()
+
+
+@router.delete("/{agent_id}/scripts/{name}")
+async def delete_script(agent_id: str, name: str):
+    agent = agent_service.get_agent(agent_id)
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    cmd = AgentCommand(command="delete_script", data={"name": name}, timestamp=datetime.now())
+    resp = await agent_service.send_command_to_agent(agent_id, cmd)
+    return resp.dict()
 
 @router.post("/command_all")
 async def send_command_to_all_agents(

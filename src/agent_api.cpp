@@ -4,19 +4,720 @@
 #include <chrono>
 #include <iomanip>
 #include <cpr/cpr.h>
+#include <fstream>
+#include <filesystem>
+#include <vector>
+#include <unordered_map>
+#include <random>
+#include <functional>
+#include <algorithm>
 
 #ifdef _WIN32
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include "windows_metrics_collector.hpp"
+#include <windows.h>
 #else
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
 #include <arpa/inet.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <signal.h>
+#include <fcntl.h>
 #endif
 
 namespace agent {
+
+
+
+static std::string current_iso_time() {
+    auto now = std::chrono::system_clock::now();
+    std::time_t t = std::chrono::system_clock::to_time_t(now);
+    std::tm tm;
+#ifdef _WIN32
+    localtime_s(&tm, &t);
+#else
+    localtime_r(&t, &tm);
+#endif
+    char buf[32];
+    std::strftime(buf, sizeof(buf), "%Y-%m-%dT%H:%M:%S", &tm);
+    return std::string(buf);
+}
+
+static void append_audit(const agent::AgentConfig& cfg, const std::string& line) {
+    if (!cfg.audit_log_enabled) return;
+    try {
+        std::filesystem::path path = cfg.audit_log_path.empty() ? agent::AgentConfig::get_config_path("agent_audit.log") : cfg.audit_log_path;
+        std::ofstream f(path, std::ios::app);
+        if (!f.is_open()) return;
+        auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+        f << std::put_time(std::localtime(&now), "%Y-%m-%d %H:%M:%S") << " " << line << "\n";
+    } catch (...) {}
+}
+
+// Forward declaration required before first use
+static bool is_subpath(const std::filesystem::path& base, const std::filesystem::path& path);
+
+// Function to clean invalid UTF-8 bytes from string
+static std::string clean_utf8(const std::string& str) {
+    std::string result;
+    result.reserve(str.length());
+    
+    size_t i = 0;
+    while (i < str.length()) {
+        unsigned char c = static_cast<unsigned char>(str[i]);
+        
+        if (c < 0x80) {
+            // ASCII character
+            result.push_back(static_cast<char>(c));
+            i++;
+        } else if (c < 0xC2) {
+            // Invalid UTF-8 start byte, skip
+            i++;
+        } else if (c < 0xE0) {
+            // 2-byte UTF-8 sequence
+            if (i + 1 < str.length() && (static_cast<unsigned char>(str[i + 1]) & 0xC0) == 0x80) {
+                result.push_back(str[i]);
+                result.push_back(str[i + 1]);
+                i += 2;
+            } else {
+                // Invalid sequence, skip
+                i++;
+            }
+        } else if (c < 0xF0) {
+            // 3-byte UTF-8 sequence
+            if (i + 2 < str.length() && 
+                (static_cast<unsigned char>(str[i + 1]) & 0xC0) == 0x80 &&
+                (static_cast<unsigned char>(str[i + 2]) & 0xC0) == 0x80) {
+                result.push_back(str[i]);
+                result.push_back(str[i + 1]);
+                result.push_back(str[i + 2]);
+                i += 3;
+            } else {
+                // Invalid sequence, skip
+                i++;
+            }
+        } else if (c < 0xF5) {
+            // 4-byte UTF-8 sequence
+            if (i + 3 < str.length() && 
+                (static_cast<unsigned char>(str[i + 1]) & 0xC0) == 0x80 &&
+                (static_cast<unsigned char>(str[i + 2]) & 0xC0) == 0x80 &&
+                (static_cast<unsigned char>(str[i + 3]) & 0xC0) == 0x80) {
+                result.push_back(str[i]);
+                result.push_back(str[i + 1]);
+                result.push_back(str[i + 2]);
+                result.push_back(str[i + 3]);
+                i += 4;
+            } else {
+                // Invalid sequence, skip
+                i++;
+            }
+        } else {
+            // Invalid UTF-8 start byte, skip
+            i++;
+        }
+    }
+    
+    return result;
+}
+
+// Function to check UTF-8 validity
+static bool is_valid_utf8(const std::string& str) {
+    size_t i = 0;
+    while (i < str.length()) {
+        unsigned char c = static_cast<unsigned char>(str[i]);
+        
+        if (c < 0x80) {
+            // ASCII character
+            i++;
+        } else if (c < 0xC2) {
+            // Invalid UTF-8 start byte
+            return false;
+        } else if (c < 0xE0) {
+            // 2-byte UTF-8 sequence
+            if (i + 1 >= str.length()) return false;
+            if ((static_cast<unsigned char>(str[i + 1]) & 0xC0) != 0x80) return false;
+            i += 2;
+        } else if (c < 0xF0) {
+            // 3-byte UTF-8 sequence
+            if (i + 2 >= str.length()) return false;
+            if ((static_cast<unsigned char>(str[i + 1]) & 0xC0) != 0x80) return false;
+            if ((static_cast<unsigned char>(str[i + 2]) & 0xC0) != 0x80) return false;
+            i += 3;
+        } else if (c < 0xF5) {
+            // 4-byte UTF-8 sequence
+            if (i + 3 >= str.length()) return false;
+            if ((static_cast<unsigned char>(str[i + 1]) & 0xC0) != 0x80) return false;
+            if ((static_cast<unsigned char>(str[i + 2]) & 0xC0) != 0x80) return false;
+            if ((static_cast<unsigned char>(str[i + 3]) & 0xC0) != 0x80) return false;
+            i += 4;
+        } else {
+            // Invalid UTF-8 start byte
+            return false;
+        }
+    }
+    return true;
+}
+
+CommandResponse AgentManager::handle_push_script(const Command& cmd) {
+    try {
+        std::string name = cmd.data.value("name", "");
+        std::string content = cmd.data.value("content", "");
+        if (name.empty() || content.empty()) return CommandResponse{false, "name and content required", {}, ""};
+        
+        // Дополнительная проверка длины имени файла
+        if (name.length() > 255) {
+            return CommandResponse{false, "Script name too long (max 255 characters)", {}, current_iso_time()};
+        }
+        
+        // Дополнительная проверка размера содержимого
+        if (content.length() > 1024 * 1024) { // 1MB limit
+            return CommandResponse{false, "Script content too large (max 1MB)", {}, current_iso_time()};
+        }
+        
+        std::filesystem::path base = AgentConfig::get_scripts_path(config_.scripts_dir);
+        
+        // Безопасное создание директории
+        try {
+            std::filesystem::create_directories(base);
+        } catch (const std::exception& e) {
+            return CommandResponse{false, "Cannot create scripts directory: " + std::string(e.what()), {}, current_iso_time()};
+        }
+        
+        std::filesystem::path target = base / name;
+        if (!is_subpath(base, target)) return CommandResponse{false, "Invalid target path", {}, ""};
+        
+        // Безопасное создание файла
+        std::ofstream f(target, std::ios::binary);
+        if (!f.is_open()) return CommandResponse{false, "Cannot open file for write", {}, ""};
+        
+        try {
+            f.write(content.data(), static_cast<std::streamsize>(content.size()));
+            f.close();
+        } catch (const std::exception& e) {
+            f.close();
+            std::filesystem::remove(target); // Удаляем частично созданный файл
+            return CommandResponse{false, "Error writing script content: " + std::string(e.what()), {}, current_iso_time()};
+        }
+        
+#ifndef _WIN32
+        if (cmd.data.contains("chmod")) {
+            try {
+                std::string mode = cmd.data["chmod"].get<std::string>();
+                std::string cmdline = "chmod " + mode + " '" + target.string() + "'";
+                std::system(cmdline.c_str());
+            } catch (const std::exception& e) {
+                // Игнорируем ошибки chmod, но логируем
+                std::cerr << "Warning: chmod failed: " << e.what() << std::endl;
+            }
+        }
+#endif
+        
+        nlohmann::json data; 
+        data["path"] = target.string();
+        
+        // Безопасное логирование
+        try {
+            append_audit(config_, std::string("PUSH_SCRIPT ") + target.string());
+        } catch (...) {
+            // Игнорируем ошибки логирования
+            std::cerr << "Warning: Failed to write to audit log" << std::endl;
+        }
+        
+        return CommandResponse{true, "Script saved", data, current_iso_time()};
+    } catch (const std::exception& e) {
+        std::cerr << "Error in handle_push_script: " << e.what() << std::endl;
+        return CommandResponse{false, std::string("Error push_script: ") + e.what(), {}, current_iso_time()};
+    } catch (...) {
+        std::cerr << "Unknown error in handle_push_script" << std::endl;
+        return CommandResponse{false, "Unknown error in push_script", {}, current_iso_time()};
+    }
+}
+
+CommandResponse AgentManager::handle_list_scripts(const Command& cmd) {
+    try {
+        std::filesystem::path base = AgentConfig::get_scripts_path(config_.scripts_dir);
+        nlohmann::json arr = nlohmann::json::array();
+        if (std::filesystem::exists(base)) {
+            for (auto& p : std::filesystem::directory_iterator(base)) {
+                if (!p.is_regular_file()) continue;
+                nlohmann::json j;
+                j["name"] = p.path().filename().string();
+                j["size"] = static_cast<int64_t>(std::filesystem::file_size(p));
+                arr.push_back(j);
+            }
+        }
+        nlohmann::json data; data["scripts"] = arr;
+        return CommandResponse{true, "Scripts listed", data, current_iso_time()};
+    } catch (const std::exception& e) {
+        return CommandResponse{false, std::string("Error list_scripts: ") + e.what(), {}, current_iso_time()};
+    }
+}
+
+CommandResponse AgentManager::handle_delete_script(const Command& cmd) {
+    try {
+        std::string name = cmd.data.value("name", "");
+        if (name.empty()) return CommandResponse{false, "name is required", {}, current_iso_time()};
+        std::filesystem::path base = AgentConfig::get_scripts_path(config_.scripts_dir);
+        std::filesystem::path target = base / name;
+        if (!is_subpath(base, target)) return CommandResponse{false, "Invalid target path", {}, ""};
+        if (std::filesystem::exists(target)) {
+            std::filesystem::remove(target);
+            append_audit(config_, std::string("DELETE_SCRIPT ") + target.string());
+            return CommandResponse{true, "Deleted", {}, current_iso_time()};
+        }
+        return CommandResponse{false, "Not found", {}, current_iso_time()};
+    } catch (const std::exception& e) {
+        return CommandResponse{false, std::string("Error delete_script: ") + e.what(), {}, current_iso_time()};
+    }
+}
+
+static bool is_allowed_interpreter(const std::vector<std::string>& allowlist, const std::string& name) {
+    for (const auto& it : allowlist) {
+        if (it == name) return true;
+    }
+    return false;
+}
+
+static bool is_subpath(const std::filesystem::path& base, const std::filesystem::path& path) {
+    try {
+        auto abs_base = std::filesystem::weakly_canonical(base);
+        auto abs_path = std::filesystem::weakly_canonical(path);
+        auto itb = abs_base.begin();
+        auto itp = abs_path.begin();
+        for (; itb != abs_base.end() && itp != abs_path.end(); ++itb, ++itp) {
+            if (*itb != *itp) return false;
+        }
+        return std::distance(abs_base.begin(), abs_base.end()) <= std::distance(abs_path.begin(), abs_path.end());
+    } catch (...) {
+        return false;
+    }
+}
+
+static std::string substitute_params(const std::string& templ,
+                                     const std::vector<std::string>& params) {
+    std::string out = templ;
+    for (int i = 1; i <= 9; ++i) {
+        std::string needle = "$" + std::to_string(i);
+        const std::string replacement = (i - 1 < static_cast<int>(params.size())) ? params[i - 1] : std::string("");
+        size_t pos = 0;
+        while ((pos = out.find(needle, pos)) != std::string::npos) {
+            out.replace(pos, needle.size(), replacement);
+            pos += replacement.size();
+        }
+    }
+    return out;
+}
+
+#ifdef _WIN32
+ProcessResult run_process_windows(const std::vector<std::string>& argv,
+                                  const std::unordered_map<std::string, std::string>& env,
+                                  const std::string& working_dir,
+                                  int timeout_sec,
+                                  int max_output_bytes,
+                                  const std::function<bool()>& is_cancelled = {}) {
+    ProcessResult result;
+    SECURITY_ATTRIBUTES sa{};
+    sa.nLength = sizeof(SECURITY_ATTRIBUTES);
+    sa.bInheritHandle = TRUE;
+
+    HANDLE out_read = NULL, out_write = NULL;
+    HANDLE err_read = NULL, err_write = NULL;
+    if (!CreatePipe(&out_read, &out_write, &sa, 0)) {
+        result.exit_code = -1;
+        result.combined_output = "CreatePipe failed";
+        return result;
+    }
+    if (!CreatePipe(&err_read, &err_write, &sa, 0)) {
+        result.exit_code = -1;
+        result.combined_output = "CreatePipe (stderr) failed";
+        CloseHandle(out_read); CloseHandle(out_write);
+        return result;
+    }
+    if (!SetHandleInformation(out_read, HANDLE_FLAG_INHERIT, 0) ||
+        !SetHandleInformation(err_read, HANDLE_FLAG_INHERIT, 0)) {
+        result.exit_code = -1;
+        result.combined_output = "SetHandleInformation failed";
+        CloseHandle(out_read); CloseHandle(out_write); CloseHandle(err_read); CloseHandle(err_write);
+        return result;
+    }
+
+    STARTUPINFOA si{};
+    si.cb = sizeof(STARTUPINFOA);
+    si.hStdError = err_write;
+    si.hStdOutput = out_write;
+    si.dwFlags |= STARTF_USESTDHANDLES;
+    PROCESS_INFORMATION pi{};
+
+    // Build command line
+    std::ostringstream oss;
+    for (size_t i = 0; i < argv.size(); ++i) {
+        const std::string& a = argv[i];
+        bool need_quotes = a.find(' ') != std::string::npos || a.find('\"') != std::string::npos;
+        if (i) oss << ' ';
+        if (need_quotes) {
+            oss << '"' << a << '"';
+        } else {
+            oss << a;
+        }
+    }
+    std::string cmd_line = oss.str();
+    std::vector<char> cmd_line_buf(cmd_line.begin(), cmd_line.end());
+    cmd_line_buf.push_back('\0');
+
+    // Build environment block by merging current env with overrides
+    std::vector<char> env_block_buf;
+    LPCH cur_env = GetEnvironmentStringsA();
+    std::vector<std::string> env_strings;
+    if (cur_env) {
+        LPCSTR p = cur_env;
+        while (*p) {
+            std::string s = p;
+            env_strings.push_back(s);
+            p += s.size() + 1;
+        }
+    }
+    // Build case-insensitive map for overrides
+    auto to_upper = [](std::string s){ for (auto& c : s) c = static_cast<char>(::toupper(static_cast<unsigned char>(c))); return s; };
+    std::unordered_map<std::string, size_t> name_to_index;
+    for (size_t i = 0; i < env_strings.size(); ++i) {
+        const std::string& s = env_strings[i];
+        auto pos = s.find('=');
+        if (pos == std::string::npos) continue;
+        std::string name = s.substr(0, pos);
+        name_to_index[to_upper(name)] = i;
+    }
+    for (const auto& kv : env) {
+        std::string name_upper = to_upper(kv.first);
+        std::string pair = kv.first + "=" + kv.second;
+        auto it = name_to_index.find(name_upper);
+        if (it != name_to_index.end()) {
+            env_strings[it->second] = pair;
+        } else {
+            env_strings.push_back(pair);
+        }
+    }
+    if (cur_env) FreeEnvironmentStringsA(cur_env);
+    if (!env_strings.empty()) {
+        size_t total = 1; // final \0
+        for (const auto& s : env_strings) total += s.size() + 1;
+        env_block_buf.resize(total, '\0');
+        size_t off = 0;
+        for (const auto& s : env_strings) {
+            std::memcpy(env_block_buf.data() + off, s.c_str(), s.size());
+            off += s.size();
+            env_block_buf[off++] = '\0';
+        }
+        env_block_buf[off] = '\0';
+    }
+
+    BOOL ok = CreateProcessA(
+        NULL,
+        cmd_line_buf.data(),
+        NULL,
+        NULL,
+        TRUE,
+        CREATE_NO_WINDOW,
+        env_block_buf.empty() ? NULL : env_block_buf.data(),
+        (working_dir.empty() ? NULL : working_dir.c_str()),
+        &si,
+        &pi
+    );
+
+    CloseHandle(out_write); // child inherits; parent reads
+    CloseHandle(err_write);
+
+    if (!ok) {
+        result.exit_code = -1;
+        result.combined_output = "CreateProcess failed";
+        CloseHandle(out_read);
+        return result;
+    }
+
+    DWORD wait_ms = timeout_sec > 0 ? static_cast<DWORD>(timeout_sec * 1000) : INFINITE;
+    DWORD start_tick = GetTickCount();
+    std::string out_buf; out_buf.reserve(4096);
+    std::string err_buf; err_buf.reserve(4096);
+    std::string comb; comb.reserve(8192);
+    char tmp[4096];
+    DWORD bytes_read = 0;
+
+    // Read loop while waiting
+    for (;;) {
+        // Non-blocking peek
+        DWORD available = 0;
+        if (PeekNamedPipe(out_read, NULL, 0, NULL, &available, NULL) && available) {
+            if (ReadFile(out_read, tmp, sizeof(tmp), &bytes_read, NULL) && bytes_read > 0) {
+                size_t to_copy = std::min<size_t>(bytes_read, std::max(0, max_output_bytes - static_cast<int>(out_buf.size())));
+                out_buf.append(tmp, tmp + to_copy);
+                comb.append(tmp, tmp + to_copy);
+                if (out_buf.size() >= static_cast<size_t>(max_output_bytes)) result.truncated = true;
+            }
+        }
+        available = 0;
+        if (PeekNamedPipe(err_read, NULL, 0, NULL, &available, NULL) && available) {
+            if (ReadFile(err_read, tmp, sizeof(tmp), &bytes_read, NULL) && bytes_read > 0) {
+                size_t to_copy = std::min<size_t>(bytes_read, std::max(0, max_output_bytes - static_cast<int>(err_buf.size())));
+                err_buf.append(tmp, tmp + to_copy);
+                comb.append(tmp, tmp + to_copy);
+                if (err_buf.size() >= static_cast<size_t>(max_output_bytes)) result.truncated = true;
+            }
+        }
+        DWORD elapsed = GetTickCount() - start_tick;
+        DWORD remain = (wait_ms == INFINITE) ? 100 : (elapsed >= wait_ms ? 0 : wait_ms - elapsed);
+        if (is_cancelled && is_cancelled()) {
+            TerminateProcess(pi.hProcess, 1);
+            result.timed_out = false;
+            break;
+        }
+        DWORD w = WaitForSingleObject(pi.hProcess, remain == 0 ? 0 : 50);
+        if (w == WAIT_OBJECT_0) break;
+        if (wait_ms != INFINITE && elapsed >= wait_ms) {
+            TerminateProcess(pi.hProcess, 1);
+            result.timed_out = true;
+            break;
+        }
+    }
+
+    // Drain remaining output
+    while (ReadFile(out_read, tmp, sizeof(tmp), &bytes_read, NULL) && bytes_read > 0) {
+        size_t to_copy = std::min<size_t>(bytes_read, std::max(0, max_output_bytes - static_cast<int>(out_buf.size())));
+        out_buf.append(tmp, tmp + to_copy);
+        comb.append(tmp, tmp + to_copy);
+        if (out_buf.size() >= static_cast<size_t>(max_output_bytes)) { result.truncated = true; break; }
+    }
+    while (ReadFile(err_read, tmp, sizeof(tmp), &bytes_read, NULL) && bytes_read > 0) {
+        size_t to_copy = std::min<size_t>(bytes_read, std::max(0, max_output_bytes - static_cast<int>(err_buf.size())));
+        err_buf.append(tmp, tmp + to_copy);
+        comb.append(tmp, tmp + to_copy);
+        if (err_buf.size() >= static_cast<size_t>(max_output_bytes)) { result.truncated = true; break; }
+    }
+
+    DWORD exit_code = 0;
+    GetExitCodeProcess(pi.hProcess, &exit_code);
+    result.exit_code = static_cast<int>(exit_code);
+    
+    // Clean invalid UTF-8 bytes from output
+    result.stdout_output = clean_utf8(out_buf);
+    result.stderr_output = clean_utf8(err_buf);
+    result.combined_output = clean_utf8(comb);
+
+    CloseHandle(out_read);
+    CloseHandle(err_read);
+    CloseHandle(pi.hThread);
+    CloseHandle(pi.hProcess);
+    return result;
+}
+#else
+ProcessResult run_process_posix(const std::vector<std::string>& argv,
+                                const std::unordered_map<std::string, std::string>& env,
+                                const std::string& working_dir,
+                                int timeout_sec,
+                                int max_output_bytes,
+                                const std::function<bool()>& is_cancelled = {}) {
+    ProcessResult result;
+    int outfd[2];
+    int errfd[2];
+    if (pipe(outfd) != 0 || pipe(errfd) != 0) {
+        result.exit_code = -1;
+        result.combined_output = "pipe failed";
+        return result;
+    }
+
+    pid_t pid = fork();
+    if (pid == -1) {
+        close(outfd[0]); close(outfd[1]);
+        close(errfd[0]); close(errfd[1]);
+        result.exit_code = -1;
+        result.combined_output = "fork failed";
+        return result;
+    }
+    if (pid == 0) {
+        // Child
+        // Create new process group for easier kill
+        setpgid(0, 0);
+        dup2(outfd[1], STDOUT_FILENO);
+        dup2(errfd[1], STDERR_FILENO);
+        close(outfd[0]); close(outfd[1]);
+        close(errfd[0]); close(errfd[1]);
+        if (!working_dir.empty()) {
+            chdir(working_dir.c_str());
+        }
+        for (const auto& kv : env) {
+            setenv(kv.first.c_str(), kv.second.c_str(), 1);
+        }
+        std::vector<char*> cargv;
+        cargv.reserve(argv.size() + 1);
+        for (const auto& s : argv) cargv.push_back(const_cast<char*>(s.c_str()));
+        cargv.push_back(nullptr);
+        execvp(cargv[0], cargv.data());
+        _exit(127);
+    }
+    // Parent
+    close(outfd[1]);
+    close(errfd[1]);
+    fcntl(outfd[0], F_SETFL, fcntl(outfd[0], F_GETFL) | O_NONBLOCK);
+    fcntl(errfd[0], F_SETFL, fcntl(errfd[0], F_GETFL) | O_NONBLOCK);
+    std::string out_buf; out_buf.reserve(4096);
+    std::string err_buf; err_buf.reserve(4096);
+    std::string comb; comb.reserve(8192);
+    auto start = std::chrono::steady_clock::now();
+    char tmp[4096];
+    for (;;) {
+        ssize_t n = read(outfd[0], tmp, sizeof(tmp));
+        if (n > 0) {
+            size_t to_copy = std::min<size_t>(n, std::max(0, max_output_bytes - static_cast<int>(out_buf.size())));
+            out_buf.append(tmp, tmp + to_copy);
+            comb.append(tmp, tmp + to_copy);
+            if (out_buf.size() >= static_cast<size_t>(max_output_bytes)) result.truncated = true;
+        }
+        n = read(errfd[0], tmp, sizeof(tmp));
+        if (n > 0) {
+            size_t to_copy = std::min<size_t>(n, std::max(0, max_output_bytes - static_cast<int>(err_buf.size())));
+            err_buf.append(tmp, tmp + to_copy);
+            comb.append(tmp, tmp + to_copy);
+            if (err_buf.size() >= static_cast<size_t>(max_output_bytes)) result.truncated = true;
+        }
+
+        int status = 0;
+        pid_t w = waitpid(pid, &status, WNOHANG);
+        if (w == pid) {
+            if (WIFEXITED(status)) result.exit_code = WEXITSTATUS(status);
+            else if (WIFSIGNALED(status)) result.exit_code = 128 + WTERMSIG(status);
+            break;
+        }
+        if (is_cancelled && is_cancelled()) {
+            kill(-pid, SIGKILL);
+            waitpid(pid, nullptr, 0);
+            break;
+        }
+        auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - start).count();
+        if (timeout_sec > 0 && elapsed >= timeout_sec) {
+            result.timed_out = true;
+            kill(-pid, SIGKILL);
+            waitpid(pid, nullptr, 0);
+            break;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    }
+    // Drain remaining
+    for (;;) {
+        ssize_t n = read(outfd[0], tmp, sizeof(tmp));
+        if (n > 0) {
+            size_t to_copy = std::min<size_t>(n, std::max(0, max_output_bytes - static_cast<int>(out_buf.size())));
+            out_buf.append(tmp, tmp + to_copy);
+            comb.append(tmp, tmp + to_copy);
+            if (out_buf.size() >= static_cast<size_t>(max_output_bytes)) { result.truncated = true; break; }
+        } else break;
+    }
+    for (;;) {
+        ssize_t n = read(errfd[0], tmp, sizeof(tmp));
+        if (n > 0) {
+            size_t to_copy = std::min<size_t>(n, std::max(0, max_output_bytes - static_cast<int>(err_buf.size())));
+            err_buf.append(tmp, tmp + to_copy);
+            comb.append(tmp, tmp + to_copy);
+            if (err_buf.size() >= static_cast<size_t>(max_output_bytes)) { result.truncated = true; break; }
+        } else break;
+    }
+    close(outfd[0]);
+    close(errfd[0]);
+    
+    // Clean invalid UTF-8 bytes from output (same as Windows version)
+    result.stdout_output = clean_utf8(out_buf);
+    result.stderr_output = clean_utf8(err_buf);
+    result.combined_output = clean_utf8(comb);
+    return result;
+}
+#endif
+
+
+std::string AgentManager::generate_job_id() {
+    static const char* chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> dis(0, 35);
+    std::string s(12, ' ');
+    for (auto& c : s) c = chars[dis(gen)];
+    return s;
+}
+
+CommandResponse AgentManager::handle_get_job_output(const Command& cmd) {
+    try {
+        std::string job_id;
+        if (cmd.data.contains("job_id")) job_id = cmd.data["job_id"].get<std::string>();
+        if (job_id.empty()) return CommandResponse{false, "job_id is required", {}, ""};
+        std::shared_ptr<BackgroundJobInfo> job;
+        {
+            std::lock_guard<std::mutex> lock(jobs_mutex_);
+            auto it = jobs_.find(job_id);
+            if (it == jobs_.end()) return CommandResponse{false, "job not found", {}, ""};
+            job = it->second;
+        }
+        nlohmann::json data;
+        data["job_id"] = job->job_id;
+        data["completed"] = job->completed.load();
+        data["timed_out"] = job->timed_out.load();
+        data["exit_code"] = job->exit_code.load();
+        data["duration_ms"] = static_cast<int64_t>(job->duration_ms);
+        data["truncated"] = job->truncated.load();
+        data["output"] = job->output;
+        bool success = job->completed.load() ? (job->exit_code == 0) : true;
+        return CommandResponse{success, job->completed.load() ? "Job completed" : "Job running", data, current_iso_time()};
+    } catch (const std::exception& e) {
+        return CommandResponse{false, std::string("Error get_job_output: ") + e.what(), {}, current_iso_time()};
+    }
+}
+
+CommandResponse AgentManager::handle_kill_job(const Command& cmd) {
+    try {
+        std::string job_id;
+        if (cmd.data.contains("job_id")) job_id = cmd.data["job_id"].get<std::string>();
+        if (job_id.empty()) return CommandResponse{false, "job_id is required", {}, current_iso_time()};
+        std::shared_ptr<BackgroundJobInfo> job;
+        {
+            std::lock_guard<std::mutex> lock(jobs_mutex_);
+            auto it = jobs_.find(job_id);
+            if (it == jobs_.end()) return CommandResponse{false, "job not found", {}, ""};
+            job = it->second;
+            job->cancel_requested = true;
+        }
+        append_audit(config_, std::string("JOB_KILL id=") + job_id);
+        nlohmann::json data;
+        data["job_id"] = job_id;
+        data["cancel_requested"] = true;
+        return CommandResponse{true, "Cancel requested", data, current_iso_time()};
+    } catch (const std::exception& e) {
+        return CommandResponse{false, std::string("Error kill_job: ") + e.what(), {}, current_iso_time()};
+    }
+}
+
+CommandResponse AgentManager::handle_list_jobs(const Command& cmd) {
+    try {
+        purge_old_jobs();
+        nlohmann::json arr = nlohmann::json::array();
+        std::lock_guard<std::mutex> lock(jobs_mutex_);
+        for (const auto& [id, job] : jobs_) {
+            nlohmann::json j;
+            j["job_id"] = id;
+            j["completed"] = job->completed.load();
+            j["timed_out"] = job->timed_out.load();
+            j["cancel_requested"] = job->cancel_requested.load();
+            j["exit_code"] = job->exit_code.load();
+            j["duration_ms"] = static_cast<int64_t>(job->duration_ms);
+            j["truncated"] = job->truncated.load();
+            j["started_at_sec"] = static_cast<int64_t>(job->started_at_sec);
+            j["completed_at_sec"] = static_cast<int64_t>(job->completed_at_sec);
+            arr.push_back(j);
+        }
+        nlohmann::json data;
+        data["jobs"] = arr;
+        return CommandResponse{true, "Jobs listed", data, current_iso_time()};
+    } catch (const std::exception& e) {
+        return CommandResponse{false, std::string("Error list_jobs: ") + e.what(), {}, current_iso_time()};
+    }
+}
 
 // Command implementation
 Command Command::from_json(const nlohmann::json& j) {
@@ -60,6 +761,27 @@ AgentHttpServer::AgentHttpServer(const AgentConfig& config, AgentManager* manage
     register_command_handler("stop", [this](const Command& cmd) {
         return manager_->handle_stop(cmd);
     });
+    register_command_handler("run_script", [this](const Command& cmd) {
+        return manager_->handle_run_script(cmd);
+    });
+    register_command_handler("get_job_output", [this](const Command& cmd) {
+        return manager_->handle_get_job_output(cmd);
+    });
+    register_command_handler("kill_job", [this](const Command& cmd) {
+        return manager_->handle_kill_job(cmd);
+    });
+    register_command_handler("list_jobs", [this](const Command& cmd) {
+        return manager_->handle_list_jobs(cmd);
+    });
+    register_command_handler("push_script", [this](const Command& cmd) {
+        return manager_->handle_push_script(cmd);
+    });
+    register_command_handler("list_scripts", [this](const Command& cmd) {
+        return manager_->handle_list_scripts(cmd);
+    });
+    register_command_handler("delete_script", [this](const Command& cmd) {
+        return manager_->handle_delete_script(cmd);
+    });
 }
 
 AgentHttpServer::~AgentHttpServer() {
@@ -71,7 +793,7 @@ void AgentHttpServer::start() {
     
     running_ = true;
     server_thread_ = std::thread(&AgentHttpServer::server_loop, this);
-    std::cout << "Agent HTTP server started on port " << config_.command_server_port << std::endl;
+            
 }
 
 void AgentHttpServer::stop() {
@@ -81,7 +803,7 @@ void AgentHttpServer::stop() {
     if (server_thread_.joinable()) {
         server_thread_.join();
     }
-    std::cout << "Agent HTTP server stopped" << std::endl;
+            
 }
 
 void AgentHttpServer::register_command_handler(const std::string& command, CommandHandler handler) {
@@ -90,19 +812,23 @@ void AgentHttpServer::register_command_handler(const std::string& command, Comma
 
 void AgentHttpServer::server_loop() {
     // Простая реализация HTTP сервера через TCP сокеты
-    std::cout << "HTTP server loop started" << std::endl;
+            
     
 #ifdef _WIN32
+    // Устанавливаем кодировку UTF-8 для корректной работы с русским текстом
+    SetConsoleCP(CP_UTF8);
+    SetConsoleOutputCP(CP_UTF8);
+    
     WSADATA wsaData;
     if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
-        std::cerr << "WSAStartup failed" << std::endl;
+        
         return;
     }
 #endif
 
     int server_socket = socket(AF_INET, SOCK_STREAM, 0);
     if (server_socket < 0) {
-        std::cerr << "Failed to create socket" << std::endl;
+        
         return;
     }
 
@@ -116,17 +842,16 @@ void AgentHttpServer::server_loop() {
     server_addr.sin_port = htons(config_.command_server_port);
 
     if (bind(server_socket, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
-        std::cerr << "Bind failed" << std::endl;
+        
         return;
     }
 
     if (listen(server_socket, 5) < 0) {
-        std::cerr << "Listen failed" << std::endl;
+        
         return;
     }
 
-    std::cout << "Agent HTTP server ready on port " << config_.command_server_port << std::endl;
-    std::cout << "Waiting for commands from server..." << std::endl;
+            
 
     while (running_) {
         struct sockaddr_in client_addr;
@@ -135,14 +860,28 @@ void AgentHttpServer::server_loop() {
         int client_socket = accept(server_socket, (struct sockaddr*)&client_addr, &client_len);
         if (client_socket < 0) {
             if (running_) {
-                std::cerr << "Accept failed" << std::endl;
+                
             }
             continue;
         }
 
         // Обрабатываем запрос в отдельном потоке или синхронно
         std::thread([this, client_socket]() {
-            this->handle_client_request(client_socket);
+            try {
+                this->handle_client_request(client_socket);
+            } catch (const std::exception& e) {
+                std::cerr << "Error handling client request: " << e.what() << std::endl;
+                // Отправляем ошибку клиенту
+                std::string error_response = generate_response(500, "application/json", 
+                    "{\"success\": false, \"message\": \"Internal server error\"}");
+                send(client_socket, error_response.c_str(), error_response.length(), 0);
+            } catch (...) {
+                std::cerr << "Unknown error handling client request" << std::endl;
+                // Отправляем ошибку клиенту
+                std::string error_response = generate_response(500, "application/json", 
+                    "{\"success\": false, \"message\": \"Unknown internal error\"}");
+                send(client_socket, error_response.c_str(), error_response.length(), 0);
+            }
         }).detach();
     }
 
@@ -155,38 +894,69 @@ void AgentHttpServer::server_loop() {
 }
 
 void AgentHttpServer::handle_client_request(int client_socket) {
+    std::string request;
     char buffer[4096];
-    int bytes_received = recv(client_socket, buffer, sizeof(buffer) - 1, 0);
-    
+    int bytes_received = recv(client_socket, buffer, sizeof(buffer), 0);
     if (bytes_received > 0) {
-        buffer[bytes_received] = '\0';
+        request.append(buffer, buffer + bytes_received);
         
-        // Парсим HTTP запрос
-        std::string request(buffer);
-        std::string response;
-        
-        std::cout << "[RECV] Received HTTP request:" << std::endl;
-        std::cout << "   " << request.substr(0, request.find('\n')) << std::endl;
-        
-        if (request.find("POST /command") != std::string::npos) {
-            // Извлекаем JSON из тела запроса
-            size_t json_start = request.find("\r\n\r\n");
-            if (json_start != std::string::npos) {
-                std::string json_data = request.substr(json_start + 4);
-                std::cout << "[JSON] JSON data: " << json_data << std::endl;
-                
-                // Обрабатываем команду
-                CommandResponse cmd_response = handle_command_request(json_data);
-                response = generate_response(200, "application/json", cmd_response.to_json().dump());
-            } else {
-                response = generate_response(400, "application/json", 
-                    "{\"success\": false, \"message\": \"No JSON data found\"}");
+        // Try to read remaining bytes if Content-Length present
+        auto cl_pos = request.find("Content-Length:");
+        size_t content_length = 0;
+        if (cl_pos != std::string::npos) {
+            auto endline = request.find("\r\n", cl_pos);
+            if (endline != std::string::npos) {
+                std::string header_line = request.substr(cl_pos, endline - cl_pos);
+                size_t colon = header_line.find(":");
+                if (colon != std::string::npos) {
+                    try { 
+                        std::string length_str = header_line.substr(colon + 1);
+                        // Убираем пробелы
+                        length_str.erase(0, length_str.find_first_not_of(" \t"));
+                        content_length = static_cast<size_t>(std::stoul(length_str)); 
+                    } catch (...) {}
+                }
             }
-        } else {
-            response = generate_response(404, "application/json", 
-                "{\"success\": false, \"message\": \"Endpoint not found\"}");
         }
         
+        // Читаем тело запроса полностью
+        size_t json_start = request.find("\r\n\r\n");
+        if (json_start != std::string::npos) {
+            size_t have = request.size() - (json_start + 4);
+            while (content_length > 0 && have < content_length) {
+                bytes_received = recv(client_socket, buffer, sizeof(buffer), 0);
+                if (bytes_received <= 0) break;
+                request.append(buffer, buffer + bytes_received);
+                have += bytes_received;
+            }
+        }
+
+        std::string response;
+        
+        
+        if (request.find("POST /command") != std::string::npos) {
+            size_t body_pos = request.find("\r\n\r\n");
+            if (body_pos != std::string::npos) {
+                std::string json_data = request.substr(body_pos + 4);
+                
+                
+                // Проверяем корректность UTF-8
+                if (!is_valid_utf8(json_data)) {
+                    
+                    
+                    response = generate_response(400, "application/json", 
+                        "{\"success\": false, \"message\": \"Invalid UTF-8 encoding in request\"}");
+                } else {
+                    
+                    CommandResponse cmd_response = handle_command_request(json_data);
+                    response = generate_response(200, "application/json", cmd_response.to_json().dump());
+                }
+            } else {
+                response = generate_response(400, "application/json", "{\"success\": false, \"message\": \"No JSON data found\"}");
+            }
+        } else {
+            response = generate_response(404, "application/json", "{\"success\": false, \"message\": \"Endpoint not found\"}");
+        }
         send(client_socket, response.c_str(), response.length(), 0);
     }
     
@@ -199,29 +969,40 @@ void AgentHttpServer::handle_client_request(int client_socket) {
 
 CommandResponse AgentHttpServer::handle_command_request(const std::string& json_data) {
     try {
-        std::cout << "[CMD] Processing command..." << std::endl;
+        // Дополнительная проверка UTF-8
+        if (!is_valid_utf8(json_data)) {
+            return CommandResponse{false, "Invalid UTF-8 encoding in request", {}, current_iso_time()};
+        }
         
         // Парсим JSON запрос
         nlohmann::json request_json = nlohmann::json::parse(json_data);
         Command cmd = Command::from_json(request_json);
         
-        std::cout << "[CMD] Command: " << cmd.command << std::endl;
-        std::cout << "[CMD] Data: " << cmd.data.dump() << std::endl;
-        
         // Ищем обработчик
         auto it = command_handlers_.find(cmd.command);
         if (it != command_handlers_.end()) {
-            std::cout << "[CMD] Found handler for command: " << cmd.command << std::endl;
-            CommandResponse resp = it->second(cmd);
-            std::cout << "[RESP] Response: " << resp.to_json().dump() << std::endl;
-            return resp;
+            try {
+                // Дополнительная защита от исключений в обработчике команд
+                CommandResponse resp = it->second(cmd);
+                return resp;
+            } catch (const std::exception& e) {
+                // Логируем ошибку и возвращаем безопасный ответ
+                std::cerr << "Error in command handler '" << cmd.command << "': " << e.what() << std::endl;
+                return CommandResponse{false, "Internal error in command handler: " + std::string(e.what()), {}, current_iso_time()};
+            } catch (...) {
+                // Защита от неизвестных исключений
+                std::cerr << "Unknown error in command handler '" << cmd.command << "'" << std::endl;
+                return CommandResponse{false, "Unknown internal error in command handler", {}, current_iso_time()};
+            }
         } else {
-            std::cout << "[ERROR] Unknown command: " << cmd.command << std::endl;
-            return CommandResponse{false, "Unknown command: " + cmd.command, {}, ""};
+            return CommandResponse{false, "Unknown command: " + cmd.command, {}, current_iso_time()};
         }
     } catch (const std::exception& e) {
-        std::cout << "[ERROR] Request parsing error: " << e.what() << std::endl;
-        return CommandResponse{false, "Error parsing request: " + std::string(e.what()), {}, ""};
+        std::cerr << "Error parsing request: " << e.what() << std::endl;
+        return CommandResponse{false, "Error parsing request: " + std::string(e.what()), {}, current_iso_time()};
+    } catch (...) {
+        std::cerr << "Unknown error parsing request" << std::endl;
+        return CommandResponse{false, "Unknown error parsing request", {}, current_iso_time()};
     }
 }
 
@@ -230,8 +1011,11 @@ CommandResponse AgentHttpServer::handle_command_request(const std::string& json_
 std::string AgentHttpServer::generate_response(int status_code, const std::string& content_type, const std::string& body) {
     std::ostringstream oss;
     oss << "HTTP/1.1 " << status_code << " OK\r\n";
-    oss << "Content-Type: " << content_type << "\r\n";
+    oss << "Content-Type: " << content_type << "; charset=utf-8\r\n";
     oss << "Content-Length: " << body.length() << "\r\n";
+    oss << "Access-Control-Allow-Origin: *\r\n";
+    oss << "Access-Control-Allow-Methods: POST, GET, OPTIONS\r\n";
+    oss << "Access-Control-Allow-Headers: Content-Type\r\n";
     oss << "\r\n";
     oss << body;
     return oss.str();
@@ -245,10 +1029,7 @@ MonitoringServerClient::MonitoringServerClient(const AgentConfig& config) : conf
     agent_id_ = config_.agent_id;
     machine_name_ = config_.machine_name;
     
-    std::cout << "[INIT] Agent initialized with ID: " << agent_id_ << std::endl;
-    std::cout << "[INIT] Machine name: " << machine_name_ << std::endl;
-    std::cout << "[INIT] Server URL: " << config_.server_url << std::endl;
-    std::cout << "[INIT] Command server port: " << config_.command_server_port << std::endl;
+            
 }
 
 bool MonitoringServerClient::send_metrics(const nlohmann::json& metrics) {
@@ -260,22 +1041,20 @@ bool MonitoringServerClient::send_metrics(const nlohmann::json& metrics) {
         
         // Проверяем корректность JSON перед отправкой
         std::string json_str = data.dump();
-        std::cout << "[SEND] Sending metrics to server:" << std::endl;
-        std::cout << "   JSON size: " << json_str.length() << " bytes" << std::endl;
-        std::cout << "   First 100 chars: " << json_str.substr(0, 100) << std::endl;
+        
         
         nlohmann::json response;
         bool success = make_request("/metrics", data, response);
         
         if (success) {
-            std::cout << "[SUCCESS] Metrics sent successfully" << std::endl;
+            
         } else {
-            std::cout << "[ERROR] Failed to send metrics" << std::endl;
+            
         }
         
         return success;
     } catch (const std::exception& e) {
-        std::cerr << "[ERROR] Error sending metrics: " << e.what() << std::endl;
+        
         return false;
     }
 }
@@ -284,10 +1063,10 @@ bool MonitoringServerClient::register_agent() {
     try {
         // Agent registration happens automatically when sending metrics
         // The server creates agent records when receiving metrics
-        std::cout << "[REG] Agent registration not required - will register automatically with first metrics" << std::endl;
+        
         return true;
     } catch (const std::exception& e) {
-        std::cerr << "[ERROR] Agent registration error: " << e.what() << std::endl;
+        
         return false;
     }
 }
@@ -298,34 +1077,32 @@ bool MonitoringServerClient::update_config_from_server() {
         if (make_request("/api/agents/" + agent_id_ + "/config", {}, response)) {
             // Обновляем конфигурацию
             config_.update_from_json(response);
-            std::cout << "Configuration updated from server" << std::endl;
+            
             return true;
         }
         return false;
     } catch (const std::exception& e) {
-        std::cerr << "Error updating config from server: " << e.what() << std::endl;
+        
         return false;
     }
 }
 
 bool MonitoringServerClient::make_request(const std::string& endpoint, const nlohmann::json& data, nlohmann::json& response) {
     try {
-        std::cout << "[DEBUG] config_.server_url = " << config_.server_url << std::endl;
-        std::cout << "[DEBUG] endpoint = " << endpoint << std::endl;
+        
         
         std::string url;
         // Всегда используем базовый URL + endpoint
         url = config_.server_url + endpoint;
-        std::cout << "[DEBUG] Using base URL + endpoint: " << url << std::endl;
+                    
         
         // Проверяем корректность JSON данных
         std::string json_body;
         try {
             json_body = data.dump();
-                    std::cout << "[HTTP] Sending request to: " << url << std::endl;
-        std::cout << "   Request body: " << json_body.substr(0, 200) << "..." << std::endl;
+                    
         } catch (const std::exception& e) {
-            std::cerr << "[ERROR] JSON serialization error: " << e.what() << std::endl;
+            
             return false;
         }
         
@@ -341,17 +1118,16 @@ bool MonitoringServerClient::make_request(const std::string& endpoint, const nlo
                 try {
                     response = nlohmann::json::parse(cpr_response.text);
                 } catch (const std::exception& e) {
-                                    std::cerr << "[ERROR] Server response parsing error: " << e.what() << std::endl;
-                std::cerr << "   Server response: " << cpr_response.text.substr(0, 200) << std::endl;
+                                    
                 }
             }
             return true;
         } else {
-            std::cerr << "[ERROR] HTTP request failed: " << cpr_response.status_code << " - " << cpr_response.text << std::endl;
+            
             return false;
         }
     } catch (const std::exception& e) {
-        std::cerr << "[ERROR] HTTP request error: " << e.what() << std::endl;
+        
         return false;
     }
 }
@@ -381,7 +1157,7 @@ void AgentManager::start() {
     // Запускаем потоки
     metrics_thread_ = std::thread(&AgentManager::metrics_loop, this);
     
-    std::cout << "Agent manager started" << std::endl;
+    
 }
 
 void AgentManager::stop() {
@@ -399,7 +1175,7 @@ void AgentManager::stop() {
         metrics_thread_.join();
     }
     
-    std::cout << "Agent manager stopped" << std::endl;
+    
 }
 
 CommandResponse AgentManager::handle_collect_metrics(const Command& cmd) {
@@ -422,14 +1198,9 @@ CommandResponse AgentManager::handle_collect_metrics(const Command& cmd) {
         auto metrics = collect_metrics(requested_metrics);
         server_client_->send_metrics(metrics);
         
-        // ✅ Добавляем текущее время в ответ
-        auto now = std::chrono::system_clock::now();
-        auto timestamp = std::chrono::duration_cast<std::chrono::seconds>(
-            now.time_since_epoch()).count();
-        
-        return CommandResponse{true, "Metrics collected and sent", metrics, std::to_string(timestamp)};
+        return CommandResponse{true, "Metrics collected and sent", metrics, current_iso_time()};
     } catch (const std::exception& e) {
-        return CommandResponse{false, "Error collecting metrics: " + std::string(e.what()), {}, ""};
+        return CommandResponse{false, "Error collecting metrics: " + std::string(e.what()), {}, current_iso_time()};
     }
 }
 
@@ -440,42 +1211,279 @@ CommandResponse AgentManager::handle_update_config(const Command& cmd) {
         // Используем сохраненный путь к конфигурационному файлу
         if (!config_path_.empty()) {
             config_.save_to_file(config_path_);
-            std::cout << "Configuration updated and saved to: " << config_path_ << std::endl;
+            
         } else {
             config_.save_to_file();
-            std::cout << "Configuration updated and saved to default location" << std::endl;
+            
         }
         
-        std::cout << "Configuration updated from server command" << std::endl;
         
-        // ✅ Добавляем текущее время в ответ
-        auto now = std::chrono::system_clock::now();
-        auto timestamp = std::chrono::duration_cast<std::chrono::seconds>(
-            now.time_since_epoch()).count();
         
-        return CommandResponse{true, "Configuration updated", config_.to_json(), std::to_string(timestamp)};
+        return CommandResponse{true, "Configuration updated", config_.to_json(), current_iso_time()};
     } catch (const std::exception& e) {
-        return CommandResponse{false, "Error updating config: " + std::string(e.what()), {}, ""};
+        return CommandResponse{false, "Error updating config: " + std::string(e.what()), {}, current_iso_time()};
     }
 }
 
 CommandResponse AgentManager::handle_restart(const Command& cmd) {
     // В реальной реализации здесь будет перезапуск агента
-    auto now = std::chrono::system_clock::now();
-    auto timestamp = std::chrono::duration_cast<std::chrono::seconds>(
-        now.time_since_epoch()).count();
-    
-    return CommandResponse{true, "Restart command received", {}, std::to_string(timestamp)};
+    return CommandResponse{true, "Restart command received", {}, current_iso_time()};
 }
 
 CommandResponse AgentManager::handle_stop(const Command& cmd) {
     // Останавливаем агент
-    auto now = std::chrono::system_clock::now();
-    auto timestamp = std::chrono::duration_cast<std::chrono::seconds>(
-        now.time_since_epoch()).count();
-    
     stop();
-    return CommandResponse{true, "Stop command received", {}, std::to_string(timestamp)};
+    return CommandResponse{true, "Stop command received", {}, current_iso_time()};
+}
+
+CommandResponse AgentManager::handle_run_script(const Command& cmd) {
+    try {
+        // Extract options
+        std::string interpreter = "auto";
+        std::string script;
+        std::string script_path;
+        std::vector<std::string> args;
+        std::unordered_map<std::string, std::string> env;
+        std::string working_dir;
+        int timeout_sec = config_.max_script_timeout_sec;
+        bool capture_output = true;
+        // UserParameter-like
+        std::string key;
+        std::vector<std::string> key_params;
+
+        if (cmd.data.contains("interpreter")) interpreter = cmd.data["interpreter"].get<std::string>();
+        if (cmd.data.contains("script") && cmd.data["script"].is_string()) script = cmd.data["script"].get<std::string>();
+        if (cmd.data.contains("script_path") && cmd.data["script_path"].is_string()) script_path = cmd.data["script_path"].get<std::string>();
+        if (cmd.data.contains("args") && cmd.data["args"].is_array()) {
+            for (const auto& a : cmd.data["args"]) args.push_back(a.get<std::string>());
+        }
+        if (cmd.data.contains("env") && cmd.data["env"].is_object()) {
+            for (auto it = cmd.data["env"].begin(); it != cmd.data["env"].end(); ++it) env[it.key()] = it.value().get<std::string>();
+        }
+        if (cmd.data.contains("working_dir")) working_dir = cmd.data["working_dir"].get<std::string>();
+        if (cmd.data.contains("timeout_sec")) timeout_sec = std::min<int>(cmd.data["timeout_sec"].get<int>(), config_.max_script_timeout_sec);
+        if (cmd.data.contains("capture_output")) capture_output = cmd.data["capture_output"].get<bool>();
+        if (cmd.data.contains("key") && cmd.data["key"].is_string()) key = cmd.data["key"].get<std::string>();
+        if (cmd.data.contains("params") && cmd.data["params"].is_array()) {
+            for (const auto& p : cmd.data["params"]) key_params.push_back(p.get<std::string>());
+        }
+
+        // Resolve UserParameter mapping
+        if (!key.empty()) {
+            auto it = config_.user_parameters.find(key);
+            if (it == config_.user_parameters.end()) {
+                // try wildcard form key[*]
+                auto itw = config_.user_parameters.find(key + "[*]");
+                if (itw == config_.user_parameters.end()) {
+                    return CommandResponse{false, "Unknown user parameter key: " + key, {}, ""};
+                }
+                std::string templ = itw->second;
+                std::string resolved = substitute_params(templ, key_params);
+                script = resolved;
+                // allow inline for user parameters regardless of flag
+            } else {
+                script = substitute_params(it->second, key_params);
+            }
+            interpreter = "auto"; // pick based on platform/heuristics
+        }
+
+        // Validate interpreter
+        auto pick_interpreter = [&](const std::string& path_or_empty) -> std::string {
+            if (interpreter != "auto") return interpreter;
+#ifdef _WIN32
+            // Detect by extension
+            if (!path_or_empty.empty()) {
+                std::filesystem::path p(path_or_empty);
+                auto ext = p.extension().string();
+                if (ext == ".ps1") return "powershell";
+                if (ext == ".py") return "python";
+                if (ext == ".bat" || ext == ".cmd") return "cmd";
+            }
+            
+            // For inline scripts, try to detect PowerShell commands
+            if (!script.empty()) {
+                // Check if script contains PowerShell-specific commands
+                std::string script_lower = script;
+                std::transform(script_lower.begin(), script_lower.end(), script_lower.begin(), ::tolower);
+                if (script_lower.find("write-host") != std::string::npos ||
+                    script_lower.find("write-output") != std::string::npos ||
+                    script_lower.find("write-error") != std::string::npos ||
+                    script_lower.find("get-process") != std::string::npos ||
+                    script_lower.find("get-service") != std::string::npos ||
+                    script_lower.find("$") != std::string::npos) {
+                    
+                    return "powershell";
+                }
+            }
+            
+            return "cmd";
+#else
+            if (!path_or_empty.empty()) {
+                std::filesystem::path p(path_or_empty);
+                auto ext = p.extension().string();
+                if (ext == ".sh") return "bash";
+                if (ext == ".py") return "python";
+            }
+            return "bash";
+#endif
+        };
+
+        // If using script_path, ensure within scripts_dir
+        if (!script_path.empty()) {
+            std::filesystem::path base = AgentConfig::get_scripts_path(config_.scripts_dir);
+            std::filesystem::path target = script_path;
+            if (!is_subpath(base, target)) {
+                return CommandResponse{false, "script_path is outside scripts_dir", {}, ""};
+            }
+        } else if (script.empty()) {
+            return CommandResponse{false, "Either script or script_path must be provided", {}, ""};
+        } else {
+            // inline script allowed?
+            if (!config_.enable_inline_commands && key.empty()) {
+                return CommandResponse{false, "Inline scripts are disabled by configuration", {}, ""};
+            }
+        }
+
+        std::string chosen = pick_interpreter(script_path);
+        if (!is_allowed_interpreter(config_.allowed_interpreters, chosen)) {
+            return CommandResponse{false, "Interpreter is not allowed: " + chosen, {}, ""};
+        }
+
+        // Build argv per platform/interpreter
+        std::vector<std::string> argv;
+#ifdef _WIN32
+        if (chosen == "powershell") {
+            argv = {"powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", "chcp 65001"};
+            if (!script.empty()) {
+                // Для inline скриптов добавляем команду смены кодировки
+                std::string full_script = "chcp 65001; " + script;
+                argv.push_back("-Command");
+                argv.push_back(full_script);
+            } else {
+                // Для файлов добавляем команду смены кодировки перед выполнением
+                std::string full_script = "chcp 65001; & '" + script_path + "'";
+                for (const auto& a : args) full_script += " " + a;
+                argv.push_back("-Command");
+                argv.push_back(full_script);
+            }
+        } else if (chosen == "cmd") {
+            argv = {"cmd.exe", "/c"};
+            std::ostringstream cmdline;
+            // Добавляем команду смены кодировки для CMD
+            cmdline << "chcp 65001 >nul && ";
+            if (!script.empty()) cmdline << script;
+            else {
+                cmdline << '"' << script_path << '"';
+                for (const auto& a : args) { cmdline << ' ' << a; }
+            }
+            argv.push_back(cmdline.str());
+        } else if (chosen == "python") {
+            argv = {"python"};
+            if (!script.empty()) { argv.push_back("-c"); argv.push_back(script); }
+            else { argv.push_back(script_path); for (const auto& a : args) argv.push_back(a); }
+        } else {
+            return CommandResponse{false, "Unsupported interpreter on Windows: " + chosen, {}, ""};
+        }
+#else
+        if (chosen == "bash") {
+            if (!script.empty()) {
+                argv = {"/bin/bash", "-lc", script};
+            } else {
+                argv = {"/bin/bash", script_path};
+                for (const auto& a : args) argv.push_back(a);
+            }
+        } else if (chosen == "python") {
+            if (!script.empty()) { argv = {"python3", "-c", script}; }
+            else { argv = {"python3", script_path}; for (const auto& a : args) argv.push_back(a); }
+        } else {
+            return CommandResponse{false, "Unsupported interpreter on POSIX: " + chosen, {}, ""};
+        }
+#endif
+
+        auto start = std::chrono::steady_clock::now();
+        std::shared_ptr<BackgroundJobInfo> bg_ref;
+#ifdef _WIN32
+        auto exec_callable = [this, argv, env, working_dir, timeout_sec, &bg_ref]() {
+            auto cancelled = [&bg_ref]() -> bool { return bg_ref && bg_ref->cancel_requested.load(); };
+            return run_process_windows(argv, env, working_dir, timeout_sec, config_.max_output_bytes, cancelled);
+        };
+#else
+        auto exec_callable = [this, argv, env, working_dir, timeout_sec, &bg_ref]() {
+            auto cancelled = [&bg_ref]() -> bool { return bg_ref && bg_ref->cancel_requested.load(); };
+            return run_process_posix(argv, env, working_dir, timeout_sec, config_.max_output_bytes, cancelled);
+        };
+#endif
+
+        if (cmd.data.contains("background") && cmd.data["background"].get<bool>()) {
+            // enforce max concurrent jobs
+            {
+                std::lock_guard<std::mutex> lock(jobs_mutex_);
+                size_t active = 0;
+                for (const auto& [_, j] : jobs_) if (!j->completed.load()) ++active;
+                if (active >= static_cast<size_t>(config_.max_concurrent_jobs)) {
+                    return CommandResponse{false, "Too many concurrent jobs", {}, ""};
+                }
+            }
+            auto job = std::make_shared<BackgroundJobInfo>();
+            job->job_id = generate_job_id();
+            bg_ref = job;
+            {
+                std::lock_guard<std::mutex> lock(jobs_mutex_);
+                jobs_[job->job_id] = job;
+            }
+            std::thread([this, job, exec_callable]() {
+                auto t0 = std::chrono::steady_clock::now();
+                job->started_at_sec = std::chrono::duration_cast<std::chrono::seconds>(t0.time_since_epoch()).count();
+                ProcessResult pr = exec_callable();
+                auto t1 = std::chrono::steady_clock::now();
+                job->duration_ms = static_cast<int64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count());
+                job->completed_at_sec = std::chrono::duration_cast<std::chrono::seconds>(t1.time_since_epoch()).count();
+                job->timed_out = pr.timed_out;
+                job->exit_code = pr.exit_code;
+                job->truncated = pr.truncated;
+                job->output = std::move(pr.combined_output);
+                job->completed = true;
+                append_audit(config_, std::string("JOB_COMPLETE id=") + job->job_id + " exit=" + std::to_string(job->exit_code.load()));
+            }).detach();
+            append_audit(config_, std::string("JOB_START id=") + job->job_id);
+            nlohmann::json jd;
+            jd["job_id"] = job->job_id;
+            return CommandResponse{true, "Job started", jd, ""};
+        }
+
+        ProcessResult pr = exec_callable();
+        auto end = std::chrono::steady_clock::now();
+        auto dur_ms = static_cast<int64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
+
+        nlohmann::json data;
+        data["exit_code"] = pr.exit_code;
+        data["stdout"] = capture_output ? pr.stdout_output : "";
+        data["stderr"] = capture_output ? pr.stderr_output : "";
+        data["combined_output"] = capture_output ? pr.combined_output : "";
+        data["duration_ms"] = dur_ms;
+        data["truncated"] = pr.truncated;
+        if (pr.timed_out) {
+            append_audit(config_, "RUN_SCRIPT timeout");
+            return CommandResponse{false, "Process timed out", data, current_iso_time()};
+        }
+        bool success = (pr.exit_code == 0);
+        append_audit(config_, std::string("RUN_SCRIPT exit=") + std::to_string(pr.exit_code));
+        return CommandResponse{success, success ? "Exited with code 0" : (std::string("Exited with code ") + std::to_string(pr.exit_code)), data, current_iso_time()};
+    } catch (const std::exception& e) {
+        return CommandResponse{false, std::string("Error running script: ") + e.what(), {}, ""};
+    }
+}
+void AgentManager::purge_old_jobs() {
+    const auto now_sec = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    std::lock_guard<std::mutex> lock(jobs_mutex_);
+    for (auto it = jobs_.begin(); it != jobs_.end();) {
+        const auto& job = it->second;
+        if (job->completed.load() && job->completed_at_sec > 0 && (now_sec - job->completed_at_sec) > config_.job_retention_seconds) {
+            it = jobs_.erase(it);
+        } else {
+            ++it;
+        }
+    }
 }
 
 nlohmann::json AgentManager::collect_metrics(const std::vector<std::string>& requested_metrics) {
@@ -589,8 +1597,10 @@ void AgentManager::metrics_loop() {
         try {
             auto metrics = collect_metrics();
             server_client_->send_metrics(metrics);
+            // periodic purge of old jobs
+            purge_old_jobs();
         } catch (const std::exception& e) {
-            std::cerr << "Error in metrics loop: " << e.what() << std::endl;
+            
         }
         
         // Используем update_frequency как интервал сбора метрик

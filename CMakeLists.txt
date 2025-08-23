@@ -84,6 +84,14 @@ if(WIN32)
     copy_dependency_dll_to_output(${PROJECT_NAME} zlib)
 endif()
 
+# Копирование конфигурационного файла
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${CMAKE_SOURCE_DIR}/agent_config.json"
+        "$<TARGET_FILE_DIR:${PROJECT_NAME}>/agent_config.json"
+    COMMENT "Copying configuration file to output directory"
+)
+
 # Если включены тесты, добавляем их
 if(BUILD_TESTS)
     enable_testing()
@@ -149,4 +157,12 @@ if(USE_NEW_AGENT)
         copy_dependency_dll_to_output(${PROJECT_NAME}_new CURL::libcurl_shared)
         copy_dependency_dll_to_output(${PROJECT_NAME}_new zlib)
     endif()
+    
+    # Копирование конфигурационного файла для новой версии
+    add_custom_command(TARGET ${PROJECT_NAME}_new POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_SOURCE_DIR}/agent_config.json"
+            "$<TARGET_FILE_DIR:${PROJECT_NAME}_new>/agent_config.json"
+        COMMENT "Copying configuration file to output directory (new version)"
+    )
 endif()

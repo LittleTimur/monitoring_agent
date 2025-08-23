@@ -39,6 +39,23 @@ struct AgentConfig {
     bool auto_detect_id = true;
     bool auto_detect_name = true;
     
+    // Настройки выполнения скриптов
+    std::string scripts_dir = "scripts";
+    std::vector<std::string> allowed_interpreters = {"python", "bash", "cmd", "powershell"};
+    int max_script_timeout_sec = 300;
+    int max_output_bytes = 1048576; // 1MB
+    bool enable_user_parameters = true;
+    bool enable_inline_commands = true;
+    int max_concurrent_jobs = 5;
+    int job_retention_seconds = 3600; // 1 hour
+    
+    // Настройки аудита
+    bool audit_log_enabled = false;
+    std::string audit_log_path = "audit.log";
+    
+    // Пользовательские параметры
+    std::map<std::string, std::string> user_parameters;
+    
     // Методы для работы с JSON
     nlohmann::json to_json() const;
     static AgentConfig from_json(const nlohmann::json& j);
@@ -49,6 +66,9 @@ struct AgentConfig {
     
     // Получение пути к конфигурационному файлу рядом с исполняемым файлом
     static std::string get_config_path(const std::string& filename = "agent_config.json");
+    
+    // Получение пути к папке со скриптами
+    static std::string get_scripts_path(const std::string& scripts_dir);
     
     // Обновление конфигурации
     void update_from_json(const nlohmann::json& j);

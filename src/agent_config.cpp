@@ -31,6 +31,16 @@ nlohmann::json AgentConfig::to_json() const {
     j["auto_detect_id"] = auto_detect_id;
     j["auto_detect_name"] = auto_detect_name;
     j["update_frequency"] = update_frequency;
+    j["scripts_dir"] = scripts_dir;
+    j["allowed_interpreters"] = allowed_interpreters;
+    j["max_script_timeout_sec"] = max_script_timeout_sec;
+    j["max_output_bytes"] = max_output_bytes;
+    j["enable_user_parameters"] = enable_user_parameters;
+    j["enable_inline_commands"] = enable_inline_commands;
+    j["max_concurrent_jobs"] = max_concurrent_jobs;
+    j["job_retention_seconds"] = job_retention_seconds;
+    j["audit_log_enabled"] = audit_log_enabled;
+    j["audit_log_path"] = audit_log_path;
     
     // Сохраняем метрики как объект с флагами
     nlohmann::json metrics_obj;
@@ -39,6 +49,12 @@ nlohmann::json AgentConfig::to_json() const {
     }
     j["enabled_metrics"] = metrics_obj;
     
+    // user_parameters as object
+    nlohmann::json up;
+    for (const auto& kv : user_parameters) {
+        up[kv.first] = kv.second;
+    }
+    j["user_parameters"] = up;
     return j;
 }
 
@@ -56,6 +72,16 @@ AgentConfig AgentConfig::from_json(const nlohmann::json& j) {
     if (j.contains("auto_detect_id")) config.auto_detect_id = j["auto_detect_id"];
     if (j.contains("auto_detect_name")) config.auto_detect_name = j["auto_detect_name"];
     if (j.contains("update_frequency")) config.update_frequency = j["update_frequency"];
+    if (j.contains("scripts_dir")) config.scripts_dir = j["scripts_dir"];
+    if (j.contains("allowed_interpreters")) config.allowed_interpreters = j["allowed_interpreters"].get<std::vector<std::string>>();
+    if (j.contains("max_script_timeout_sec")) config.max_script_timeout_sec = j["max_script_timeout_sec"];
+    if (j.contains("max_output_bytes")) config.max_output_bytes = j["max_output_bytes"];
+    if (j.contains("enable_user_parameters")) config.enable_user_parameters = j["enable_user_parameters"];
+    if (j.contains("enable_inline_commands")) config.enable_inline_commands = j["enable_inline_commands"];
+    if (j.contains("max_concurrent_jobs")) config.max_concurrent_jobs = j["max_concurrent_jobs"];
+    if (j.contains("job_retention_seconds")) config.job_retention_seconds = j["job_retention_seconds"];
+    if (j.contains("audit_log_enabled")) config.audit_log_enabled = j["audit_log_enabled"];
+    if (j.contains("audit_log_path")) config.audit_log_path = j["audit_log_path"];
     
     // Загружаем метрики из объекта с флагами
     if (j.contains("enabled_metrics")) {
@@ -64,6 +90,12 @@ AgentConfig AgentConfig::from_json(const nlohmann::json& j) {
             for (auto it = metrics_obj.begin(); it != metrics_obj.end(); ++it) {
                 config.enabled_metrics[it.key()] = it.value().get<bool>();
             }
+        }
+    }
+    // user_parameters
+    if (j.contains("user_parameters") && j["user_parameters"].is_object()) {
+        for (auto it = j["user_parameters"].begin(); it != j["user_parameters"].end(); ++it) {
+            config.user_parameters[it.key()] = it.value().get<std::string>();
         }
     }
     
@@ -116,6 +148,32 @@ std::string AgentConfig::get_config_path(const std::string& filename) {
     return config_path;
 }
 
+std::string AgentConfig::get_scripts_path(const std::string& scripts_dir) {
+    std::string scripts_path = scripts_dir;
+    
+    try {
+        #ifdef _WIN32
+        char exe_path[MAX_PATH];
+        GetModuleFileNameA(NULL, exe_path, MAX_PATH);
+        std::string exe_dir = std::filesystem::path(exe_path).parent_path().string();
+        scripts_path = exe_dir + "/" + scripts_dir;
+        #else
+        // Для Linux используем /proc/self/exe
+        char exe_path[PATH_MAX];
+        ssize_t len = readlink("/proc/self/exe", exe_path, sizeof(exe_path)-1);
+        if (len != -1) {
+            exe_path[len] = '\0';
+            std::string exe_dir = std::filesystem::path(exe_path).parent_path().string();
+            scripts_path = exe_dir + "/" + scripts_dir;
+        }
+        #endif
+    } catch (const std::exception& e) {
+        std::cerr << "Warning: Could not determine executable path, using relative path: " << e.what() << std::endl;
+    }
+    
+    return scripts_path;
+}
+
 void AgentConfig::save_to_file(const std::string& filename) const {
     try {
         std::ofstream file(filename);
@@ -144,6 +202,22 @@ void AgentConfig::update_from_json(const nlohmann::json& j) {
     if (j.contains("agent_id")) agent_id = j["agent_id"];
     if (j.contains("machine_name")) machine_name = j["machine_name"];
     if (j.contains("update_frequency")) update_frequency = j["update_frequency"];
+
+    // New script execution related fields
+    if (j.contains("scripts_dir")) scripts_dir = j["scripts_dir"];
+    if (j.contains("allowed_interpreters")) {
+        try { allowed_interpreters = j["allowed_interpreters"].get<std::vector<std::string>>(); } catch (...) {}
+    }
+    if (j.contains("max_script_timeout_sec")) max_script_timeout_sec = j["max_script_timeout_sec"];
+    if (j.contains("max_output_bytes")) max_output_bytes = j["max_output_bytes"];
+    if (j.contains("enable_user_parameters")) enable_user_parameters = j["enable_user_parameters"];
+    if (j.contains("enable_inline_commands")) enable_inline_commands = j["enable_inline_commands"];
+    if (j.contains("user_parameters") && j["user_parameters"].is_object()) {
+        user_parameters.clear();
+        for (auto it = j["user_parameters"].begin(); it != j["user_parameters"].end(); ++it) {
+            user_parameters[it.key()] = it.value().get<std::string>();
+        }
+    }
 }
 
 std::string AgentConfig::generate_agent_id() {

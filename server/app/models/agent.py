@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Literal
 from datetime import datetime
 from enum import Enum
 
@@ -39,6 +39,14 @@ class AgentConfig(BaseModel):
     server_url: str = "http://localhost:8000/metrics"
     agent_id: Optional[str] = None
     machine_name: Optional[str] = None
+    # Настройки запуска скриптов
+    scripts_dir: str = "scripts"
+    allowed_interpreters: List[str] = ["bash", "powershell", "cmd", "python"]
+    max_script_timeout_sec: int = 60
+    max_output_bytes: int = 1_000_000
+    enable_user_parameters: bool = True
+    enable_inline_commands: bool = False
+    user_parameters: Dict[str, str] = {}
 
 class AgentInfo(BaseModel):
     """Информация об агенте"""
@@ -74,3 +82,30 @@ class AgentCommandRequest(BaseModel):
     command: str
     agent_id: Optional[str] = None  # Если None, команда для всех агентов
     data: Optional[Dict[str, Any]] = None 
+
+
+class RunScriptRequest(BaseModel):
+    """Запрос запуска скрипта через агента.
+
+    Примечание (Windows): поле env пока не применяется. Используйте
+    cmd:   cmd.exe /c "set FOO=BAR && your_cmd"
+    PowerShell: $env:FOO='BAR'; your_cmd
+    """
+    # Один из: script | script_path | key
+    script: Optional[str] = None
+    script_path: Optional[str] = None
+    key: Optional[str] = None
+    params: Optional[List[str]] = None
+
+    interpreter: Optional[Literal['auto','bash','powershell','cmd','python']] = 'auto'
+    args: Optional[List[str]] = None
+    env: Optional[Dict[str, str]] = None
+    working_dir: Optional[str] = None
+    timeout_sec: Optional[int] = None
+    capture_output: Optional[bool] = True
+    background: Optional[bool] = False
+
+    def dict(self, *args, **kwargs):  # type: ignore[override]
+        d = super().dict(*args, **kwargs)
+        # Удаляем None, чтобы не засорять payload
+        return {k: v for k, v in d.items() if v is not None}

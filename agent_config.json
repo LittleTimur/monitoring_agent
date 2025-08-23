@@ -17,5 +17,19 @@
     "gpu": false,
     "hdd": false,
     "inventory": true
-  }
+  },
+  "scripts_dir": "scripts",
+  "allowed_interpreters": ["bash", "powershell", "cmd", "python"],
+  "max_script_timeout_sec": 60,
+  "max_output_bytes": 1000000,
+  "enable_user_parameters": true,
+  "enable_inline_commands": false,
+  "user_parameters": {
+    "hello": "echo hello from agent",
+    "app.status[*]": "/opt/app/check_status.sh \"$1\" \"$2\""
+  },
+  "max_concurrent_jobs": 3,
+  "job_retention_seconds": 3600,
+  "audit_log_enabled": true,
+  "audit_log_path": ""
 } 

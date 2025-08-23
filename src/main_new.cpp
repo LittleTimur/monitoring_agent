@@ -158,6 +158,7 @@ void signal_handler(int signal) {
 int main() {
     // Set console to UTF-8 for Windows
     #ifdef _WIN32
+    SetConsoleCP(CP_UTF8);
     SetConsoleOutputCP(CP_UTF8);
     #endif
     // Устанавливаем обработчик сигналов
@@ -206,7 +207,15 @@ int main() {
         
         // Main loop
         while (g_running && agent_manager->is_running()) {
-            std::this_thread::sleep_for(std::chrono::seconds(1));
+            try {
+                std::this_thread::sleep_for(std::chrono::seconds(1));
+            } catch (const std::exception& e) {
+                std::cerr << "[ERROR] Error in main loop: " << e.what() << std::endl;
+                // Продолжаем работу, не завершаем агент
+            } catch (...) {
+                std::cerr << "[ERROR] Unknown error in main loop" << std::endl;
+                // Продолжаем работу, не завершаем агент
+            }
         }
         
         std::cout << "\nStopping agent..." << std::endl;

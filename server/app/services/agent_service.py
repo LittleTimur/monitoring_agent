@@ -239,7 +239,25 @@ class AgentService:
                 ) as response:
                     if response.status == 200:
                         data = await response.json()
-                        agent_response = AgentResponse(**data)
+                        
+                        # Исправляем некорректный timestamp от агента
+                        if 'timestamp' in data and (not data['timestamp'] or data['timestamp'] == ''):
+                            data['timestamp'] = datetime.now().isoformat()
+                        
+                        try:
+                            agent_response = AgentResponse(**data)
+                        except Exception as validation_error:
+                            # Если валидация не прошла, создаем ответ с текущим временем
+                            logger.warning(f"⚠️ Ошибка валидации ответа от агента: {validation_error}")
+                            logger.warning(f"   Полученные данные: {data}")
+                            
+                            # Создаем корректный ответ
+                            agent_response = AgentResponse(
+                                success=data.get('success', False),
+                                message=data.get('message', 'Invalid response format'),
+                                data=data.get('data'),
+                                timestamp=datetime.now()
+                            )
                         
                         if agent_response.success:
                             execution.status = CommandStatus.COMPLETED
@@ -260,7 +278,12 @@ class AgentService:
                             execution.retry_count += 1
                             logger.info(f"🔄 Повторная попытка {execution.retry_count}/{execution.max_retries}")
                             await asyncio.sleep(2 ** execution.retry_count)  # Экспоненциальная задержка
-                            return await self.send_command_to_agent(agent_id, command)
+                            # Не вызываем рекурсивно, а просто возвращаем ошибку
+                            # Повторная попытка будет обработана на уровне выше
+                            execution.status = CommandStatus.FAILED
+                            execution.error_message = error_msg
+                            execution.end_time = datetime.now()
+                            return AgentResponse(success=False, message=error_msg)
                         else:
                             execution.status = CommandStatus.FAILED
                             execution.error_message = error_msg
@@ -275,7 +298,11 @@ class AgentService:
                 execution.retry_count += 1
                 logger.info(f"🔄 Повторная попытка {execution.retry_count}/{execution.max_retries} после таймаута")
                 await asyncio.sleep(2 ** execution.retry_count)
-                return await self.send_command_to_agent(agent_id, command)
+                # Не вызываем рекурсивно
+                execution.status = CommandStatus.TIMEOUT
+                execution.error_message = error_msg
+                execution.end_time = datetime.now()
+                return AgentResponse(success=False, message=error_msg)
             else:
                 execution.status = CommandStatus.TIMEOUT
                 execution.error_message = error_msg
@@ -290,7 +317,11 @@ class AgentService:
                 execution.retry_count += 1
                 logger.info(f"🔄 Повторная попытка {execution.retry_count}/{execution.max_retries} после ошибки")
                 await asyncio.sleep(2 ** execution.retry_count)
-                return await self.send_command_to_agent(agent_id, command)
+                # Не вызываем рекурсивно
+                execution.status = CommandStatus.FAILED
+                execution.error_message = error_msg
+                execution.end_time = datetime.now()
+                return AgentResponse(success=False, message=error_msg)
             else:
                 execution.status = CommandStatus.FAILED
                 execution.error_message = error_msg

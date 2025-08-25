@@ -71,6 +71,7 @@ public:
     
     // Обработка команд
     CommandResponse handle_command_request(const std::string& json_data);
+    CommandResponse process_cleaned_json_request(const std::string& json_data);
     
 private:
     AgentConfig config_;

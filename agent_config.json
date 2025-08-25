@@ -11,19 +11,19 @@
   "auto_detect_name": true,
   "enabled_metrics": {
     "cpu": true,
-    "memory": true,
-    "disk": true,
-    "network": true,
+    "memory": false,
+    "disk": false,
+    "network": false,
     "gpu": false,
     "hdd": false,
-    "inventory": true
+    "inventory": false
   },
   "scripts_dir": "scripts",
   "allowed_interpreters": ["bash", "powershell", "cmd", "python"],
   "max_script_timeout_sec": 60,
   "max_output_bytes": 1000000,
   "enable_user_parameters": true,
-  "enable_inline_commands": false,
+  "enable_inline_commands": true,
   "user_parameters": {
     "hello": "echo hello from agent",
     "app.status[*]": "/opt/app/check_status.sh \"$1\" \"$2\""

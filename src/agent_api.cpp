@@ -41,9 +41,15 @@ static std::string current_iso_time() {
 #else
     localtime_r(&t, &tm);
 #endif
-    char buf[32];
+    char buf[64];
     std::strftime(buf, sizeof(buf), "%Y-%m-%dT%H:%M:%S", &tm);
-    return std::string(buf);
+    
+    // Добавляем миллисекунды
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
+    std::string result(buf);
+    result += "." + std::to_string(ms.count()).substr(0, 3);
+    
+    return result;
 }
 
 static void append_audit(const agent::AgentConfig& cfg, const std::string& line) {
@@ -70,20 +76,28 @@ static std::string clean_utf8(const std::string& str) {
         unsigned char c = static_cast<unsigned char>(str[i]);
         
         if (c < 0x80) {
-            // ASCII character
+            // ASCII character - всегда безопасно
             result.push_back(static_cast<char>(c));
             i++;
         } else if (c < 0xC2) {
-            // Invalid UTF-8 start byte, skip
+            // Invalid UTF-8 start byte - заменяем на пробел
+            result.push_back(' ');
             i++;
         } else if (c < 0xE0) {
             // 2-byte UTF-8 sequence
             if (i + 1 < str.length() && (static_cast<unsigned char>(str[i + 1]) & 0xC0) == 0x80) {
-                result.push_back(str[i]);
-                result.push_back(str[i + 1]);
-                i += 2;
+                // Проверяем, что это валидная последовательность
+                if (c >= 0xC2) { // Минимальное значение для 2-байтовой последовательности
+                    result.push_back(str[i]);
+                    result.push_back(str[i + 1]);
+                    i += 2;
+                } else {
+                    result.push_back(' ');
+                    i += 2;
+                }
             } else {
-                // Invalid sequence, skip
+                // Неполная последовательность - заменяем на пробел
+                result.push_back(' ');
                 i++;
             }
         } else if (c < 0xF0) {
@@ -91,12 +105,19 @@ static std::string clean_utf8(const std::string& str) {
             if (i + 2 < str.length() && 
                 (static_cast<unsigned char>(str[i + 1]) & 0xC0) == 0x80 &&
                 (static_cast<unsigned char>(str[i + 2]) & 0xC0) == 0x80) {
-                result.push_back(str[i]);
-                result.push_back(str[i + 1]);
-                result.push_back(str[i + 2]);
-                i += 3;
+                // Проверяем валидность
+                if (c >= 0xE0 && c <= 0xEF) {
+                    result.push_back(str[i]);
+                    result.push_back(str[i + 1]);
+                    result.push_back(str[i + 2]);
+                    i += 3;
+                } else {
+                    result.push_back(' ');
+                    i += 3;
+                }
             } else {
-                // Invalid sequence, skip
+                // Неполная последовательность
+                result.push_back(' ');
                 i++;
             }
         } else if (c < 0xF5) {
@@ -105,17 +126,25 @@ static std::string clean_utf8(const std::string& str) {
                 (static_cast<unsigned char>(str[i + 1]) & 0xC0) == 0x80 &&
                 (static_cast<unsigned char>(str[i + 2]) & 0xC0) == 0x80 &&
                 (static_cast<unsigned char>(str[i + 3]) & 0xC0) == 0x80) {
-                result.push_back(str[i]);
-                result.push_back(str[i + 1]);
-                result.push_back(str[i + 2]);
-                result.push_back(str[i + 3]);
-                i += 4;
+                // Проверяем валидность
+                if (c >= 0xF0 && c <= 0xF4) {
+                    result.push_back(str[i]);
+                    result.push_back(str[i + 1]);
+                    result.push_back(str[i + 2]);
+                    result.push_back(str[i + 3]);
+                    i += 4;
+                } else {
+                    result.push_back(' ');
+                    i += 4;
+                }
             } else {
-                // Invalid sequence, skip
+                // Неполная последовательность
+                result.push_back(' ');
                 i++;
             }
         } else {
-            // Invalid UTF-8 start byte, skip
+            // Invalid UTF-8 start byte - заменяем на пробел
+            result.push_back(' ');
             i++;
         }
     }
@@ -165,7 +194,7 @@ CommandResponse AgentManager::handle_push_script(const Command& cmd) {
     try {
         std::string name = cmd.data.value("name", "");
         std::string content = cmd.data.value("content", "");
-        if (name.empty() || content.empty()) return CommandResponse{false, "name and content required", {}, ""};
+        if (name.empty() || content.empty()) return CommandResponse{false, "name and content required", {}, current_iso_time()};
         
         // Дополнительная проверка длины имени файла
         if (name.length() > 255) {
@@ -177,6 +206,9 @@ CommandResponse AgentManager::handle_push_script(const Command& cmd) {
             return CommandResponse{false, "Script content too large (max 1MB)", {}, current_iso_time()};
         }
         
+        // Очищаем содержимое скрипта от проблемных UTF-8 символов
+        std::string cleaned_content = clean_utf8(content);
+        
         std::filesystem::path base = AgentConfig::get_scripts_path(config_.scripts_dir);
         
         // Безопасное создание директории
@@ -187,14 +219,14 @@ CommandResponse AgentManager::handle_push_script(const Command& cmd) {
         }
         
         std::filesystem::path target = base / name;
-        if (!is_subpath(base, target)) return CommandResponse{false, "Invalid target path", {}, ""};
+        if (!is_subpath(base, target)) return CommandResponse{false, "Invalid target path", {}, current_iso_time()};
         
         // Безопасное создание файла
         std::ofstream f(target, std::ios::binary);
-        if (!f.is_open()) return CommandResponse{false, "Cannot open file for write", {}, ""};
+        if (!f.is_open()) return CommandResponse{false, "Cannot open file for write", {}, current_iso_time()};
         
         try {
-            f.write(content.data(), static_cast<std::streamsize>(content.size()));
+            f.write(cleaned_content.data(), static_cast<std::streamsize>(cleaned_content.size()));
             f.close();
         } catch (const std::exception& e) {
             f.close();
@@ -262,7 +294,7 @@ CommandResponse AgentManager::handle_delete_script(const Command& cmd) {
         if (name.empty()) return CommandResponse{false, "name is required", {}, current_iso_time()};
         std::filesystem::path base = AgentConfig::get_scripts_path(config_.scripts_dir);
         std::filesystem::path target = base / name;
-        if (!is_subpath(base, target)) return CommandResponse{false, "Invalid target path", {}, ""};
+        if (!is_subpath(base, target)) return CommandResponse{false, "Invalid target path", {}, current_iso_time()};
         if (std::filesystem::exists(target)) {
             std::filesystem::remove(target);
             append_audit(config_, std::string("DELETE_SCRIPT ") + target.string());
@@ -647,12 +679,12 @@ CommandResponse AgentManager::handle_get_job_output(const Command& cmd) {
     try {
         std::string job_id;
         if (cmd.data.contains("job_id")) job_id = cmd.data["job_id"].get<std::string>();
-        if (job_id.empty()) return CommandResponse{false, "job_id is required", {}, ""};
+        if (job_id.empty()) return CommandResponse{false, "job_id is required", {}, current_iso_time()};
         std::shared_ptr<BackgroundJobInfo> job;
         {
             std::lock_guard<std::mutex> lock(jobs_mutex_);
             auto it = jobs_.find(job_id);
-            if (it == jobs_.end()) return CommandResponse{false, "job not found", {}, ""};
+            if (it == jobs_.end()) return CommandResponse{false, "job not found", {}, current_iso_time()};
             job = it->second;
         }
         nlohmann::json data;
@@ -679,7 +711,7 @@ CommandResponse AgentManager::handle_kill_job(const Command& cmd) {
         {
             std::lock_guard<std::mutex> lock(jobs_mutex_);
             auto it = jobs_.find(job_id);
-            if (it == jobs_.end()) return CommandResponse{false, "job not found", {}, ""};
+            if (it == jobs_.end()) return CommandResponse{false, "job not found", {}, current_iso_time()};
             job = it->second;
             job->cancel_requested = true;
         }
@@ -971,9 +1003,29 @@ CommandResponse AgentHttpServer::handle_command_request(const std::string& json_
     try {
         // Дополнительная проверка UTF-8
         if (!is_valid_utf8(json_data)) {
-            return CommandResponse{false, "Invalid UTF-8 encoding in request", {}, current_iso_time()};
+            // Пытаемся очистить строку от проблемных символов
+            std::string cleaned_data = clean_utf8(json_data);
+            if (!is_valid_utf8(cleaned_data)) {
+                return CommandResponse{false, "Invalid UTF-8 encoding in request (could not clean)", {}, current_iso_time()};
+            }
+            // Используем очищенную строку
+            return process_cleaned_json_request(cleaned_data);
         }
         
+        // Оригинальная строка валидна, обрабатываем её
+        return process_cleaned_json_request(json_data);
+    } catch (const std::exception& e) {
+        std::cerr << "Error parsing request: " << e.what() << std::endl;
+        return CommandResponse{false, "Error parsing request: " + std::string(e.what()), {}, current_iso_time()};
+    } catch (...) {
+        std::cerr << "Unknown error parsing request" << std::endl;
+        return CommandResponse{false, "Unknown error parsing request", {}, current_iso_time()};
+    }
+}
+
+// Вспомогательная функция для обработки очищенного JSON
+CommandResponse AgentHttpServer::process_cleaned_json_request(const std::string& json_data) {
+    try {
         // Парсим JSON запрос
         nlohmann::json request_json = nlohmann::json::parse(json_data);
         Command cmd = Command::from_json(request_json);
@@ -998,14 +1050,13 @@ CommandResponse AgentHttpServer::handle_command_request(const std::string& json_
             return CommandResponse{false, "Unknown command: " + cmd.command, {}, current_iso_time()};
         }
     } catch (const std::exception& e) {
-        std::cerr << "Error parsing request: " << e.what() << std::endl;
-        return CommandResponse{false, "Error parsing request: " + std::string(e.what()), {}, current_iso_time()};
+        std::cerr << "Error processing cleaned JSON: " << e.what() << std::endl;
+        return CommandResponse{false, "Error processing JSON: " + std::string(e.what()), {}, current_iso_time()};
     } catch (...) {
-        std::cerr << "Unknown error parsing request" << std::endl;
-        return CommandResponse{false, "Unknown error parsing request", {}, current_iso_time()};
+        std::cerr << "Unknown error processing cleaned JSON" << std::endl;
+        return CommandResponse{false, "Unknown error processing JSON", {}, current_iso_time()};
     }
 }
-
 
 
 std::string AgentHttpServer::generate_response(int status_code, const std::string& content_type, const std::string& body) {
@@ -1275,7 +1326,7 @@ CommandResponse AgentManager::handle_run_script(const Command& cmd) {
                 // try wildcard form key[*]
                 auto itw = config_.user_parameters.find(key + "[*]");
                 if (itw == config_.user_parameters.end()) {
-                    return CommandResponse{false, "Unknown user parameter key: " + key, {}, ""};
+                    return CommandResponse{false, "Unknown user parameter key: " + key, {}, current_iso_time()};
                 }
                 std::string templ = itw->second;
                 std::string resolved = substitute_params(templ, key_params);
@@ -1331,39 +1382,41 @@ CommandResponse AgentManager::handle_run_script(const Command& cmd) {
         // If using script_path, ensure within scripts_dir
         if (!script_path.empty()) {
             std::filesystem::path base = AgentConfig::get_scripts_path(config_.scripts_dir);
-            std::filesystem::path target = script_path;
+            std::filesystem::path target = base / script_path; // Создаем полный путь
+            
+            // Проверяем, что целевой путь находится внутри базовой папки scripts
             if (!is_subpath(base, target)) {
-                return CommandResponse{false, "script_path is outside scripts_dir", {}, ""};
+                return CommandResponse{false, "script_path is outside scripts_dir", {}, current_iso_time()};
             }
         } else if (script.empty()) {
-            return CommandResponse{false, "Either script or script_path must be provided", {}, ""};
+            return CommandResponse{false, "Either script or script_path must be provided", {}, current_iso_time()};
         } else {
             // inline script allowed?
             if (!config_.enable_inline_commands && key.empty()) {
-                return CommandResponse{false, "Inline scripts are disabled by configuration", {}, ""};
+                return CommandResponse{false, "Inline scripts are disabled by configuration", {}, current_iso_time()};
             }
         }
 
         std::string chosen = pick_interpreter(script_path);
         if (!is_allowed_interpreter(config_.allowed_interpreters, chosen)) {
-            return CommandResponse{false, "Interpreter is not allowed: " + chosen, {}, ""};
+            return CommandResponse{false, "Interpreter is not allowed: " + chosen, {}, current_iso_time()};
         }
 
         // Build argv per platform/interpreter
         std::vector<std::string> argv;
 #ifdef _WIN32
         if (chosen == "powershell") {
-            argv = {"powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", "chcp 65001"};
+            argv = {"powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command"};
             if (!script.empty()) {
                 // Для inline скриптов добавляем команду смены кодировки
-                std::string full_script = "chcp 65001; " + script;
-                argv.push_back("-Command");
+                std::string full_script = "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; [Console]::InputEncoding = [System.Text.Encoding]::UTF8; chcp 65001 >nul; " + script;
                 argv.push_back(full_script);
             } else {
                 // Для файлов добавляем команду смены кодировки перед выполнением
-                std::string full_script = "chcp 65001; & '" + script_path + "'";
+                std::filesystem::path scripts_base = AgentConfig::get_scripts_path(config_.scripts_dir);
+                std::filesystem::path full_script_path = scripts_base / script_path;
+                std::string full_script = "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; [Console]::InputEncoding = [System.Text.Encoding]::UTF8; chcp 65001 >nul; & '" + full_script_path.string() + "'";
                 for (const auto& a : args) full_script += " " + a;
-                argv.push_back("-Command");
                 argv.push_back(full_script);
             }
         } else if (chosen == "cmd") {
@@ -1373,30 +1426,96 @@ CommandResponse AgentManager::handle_run_script(const Command& cmd) {
             cmdline << "chcp 65001 >nul && ";
             if (!script.empty()) cmdline << script;
             else {
-                cmdline << '"' << script_path << '"';
+                // Создаем полный путь к файлу для CMD
+                std::filesystem::path scripts_base = AgentConfig::get_scripts_path(config_.scripts_dir);
+                std::filesystem::path full_script_path = scripts_base / script_path;
+                cmdline << '"' << full_script_path.string() << '"';
                 for (const auto& a : args) { cmdline << ' ' << a; }
             }
             argv.push_back(cmdline.str());
         } else if (chosen == "python") {
-            argv = {"python"};
-            if (!script.empty()) { argv.push_back("-c"); argv.push_back(script); }
-            else { argv.push_back(script_path); for (const auto& a : args) argv.push_back(a); }
+            // На Windows пробуем разные варианты Python
+#ifdef _WIN32
+            std::string python_cmd = "python";
+            // Проверяем доступность python.exe
+            if (system("python --version >nul 2>&1") != 0) {
+                // Пробуем python3
+                if (system("python3 --version >nul 2>&1") == 0) {
+                    python_cmd = "python3";
+                } else if (system("py --version >nul 2>&1") == 0) {
+                    python_cmd = "py";
+                } else {
+                    // Пробуем найти Python в стандартных путях
+                    std::vector<std::string> python_paths = {
+                        "C:\\Python311\\python.exe",
+                        "C:\\Python310\\python.exe", 
+                        "C:\\Python39\\python.exe",
+                        "C:\\Users\\rosih\\AppData\\Local\\Programs\\Python\\Launcher\\py.exe",
+                        "C:\\Users\\rosih\\AppData\\Local\\Programs\\Python\\Python311\\python.exe",
+                        "C:\\Users\\rosih\\AppData\\Local\\Programs\\Python\\Python310\\python.exe",
+                        "C:\\Users\\rosih\\AppData\\Local\\Programs\\Python\\Python39\\python.exe"
+                    };
+                    
+                    // Также пробуем найти py.exe в PATH через where
+                    std::string where_cmd = "where py >nul 2>&1";
+                    if (system(where_cmd.c_str()) == 0) {
+                        python_cmd = "py";
+                    } else {
+                        bool found = false;
+                        for (const auto& path : python_paths) {
+                            if (std::filesystem::exists(path)) {
+                                python_cmd = path;
+                                found = true;
+                                break;
+                            }
+                        }
+                        
+                        if (!found) {
+                            return CommandResponse{false, "Python not found. Please install Python and add it to PATH", {}, current_iso_time()};
+                        }
+                    }
+                }
+            }
+            argv = {python_cmd};
+            // Логируем выбранную команду Python
+            append_audit(config_, std::string("PYTHON_CMD: ") + python_cmd);
+#else
+            argv = {"python3"};
+#endif
+            if (!script.empty()) { 
+                // Выполняем inline скрипт Python
+                argv.push_back("-c"); 
+                argv.push_back(script); 
+            }
+            else { 
+                std::filesystem::path scripts_base = AgentConfig::get_scripts_path(config_.scripts_dir);
+                std::filesystem::path full_script_path = scripts_base / script_path;
+                argv.push_back(full_script_path.string()); 
+                for (const auto& a : args) argv.push_back(a); 
+            }
         } else {
-            return CommandResponse{false, "Unsupported interpreter on Windows: " + chosen, {}, ""};
+            return CommandResponse{false, "Unsupported interpreter on Windows: " + chosen, {}, current_iso_time()};
         }
 #else
         if (chosen == "bash") {
             if (!script.empty()) {
                 argv = {"/bin/bash", "-lc", script};
             } else {
-                argv = {"/bin/bash", script_path};
+                std::filesystem::path scripts_base = AgentConfig::get_scripts_path(config_.scripts_dir);
+                std::filesystem::path full_script_path = scripts_base / script_path;
+                argv = {"/bin/bash", full_script_path.string()};
                 for (const auto& a : args) argv.push_back(a);
             }
         } else if (chosen == "python") {
             if (!script.empty()) { argv = {"python3", "-c", script}; }
-            else { argv = {"python3", script_path}; for (const auto& a : args) argv.push_back(a); }
+            else { 
+                std::filesystem::path scripts_base = AgentConfig::get_scripts_path(config_.scripts_dir);
+                std::filesystem::path full_script_path = scripts_base / script_path;
+                argv = {"python3", full_script_path.string()}; 
+                for (const auto& a : args) argv.push_back(a); 
+            }
         } else {
-            return CommandResponse{false, "Unsupported interpreter on POSIX: " + chosen, {}, ""};
+            return CommandResponse{false, "Unsupported interpreter on POSIX: " + chosen, {}, current_iso_time()};
         }
 #endif
 
@@ -1421,7 +1540,7 @@ CommandResponse AgentManager::handle_run_script(const Command& cmd) {
                 size_t active = 0;
                 for (const auto& [_, j] : jobs_) if (!j->completed.load()) ++active;
                 if (active >= static_cast<size_t>(config_.max_concurrent_jobs)) {
-                    return CommandResponse{false, "Too many concurrent jobs", {}, ""};
+                    return CommandResponse{false, "Too many concurrent jobs", {}, current_iso_time()};
                 }
             }
             auto job = std::make_shared<BackgroundJobInfo>();
@@ -1448,7 +1567,7 @@ CommandResponse AgentManager::handle_run_script(const Command& cmd) {
             append_audit(config_, std::string("JOB_START id=") + job->job_id);
             nlohmann::json jd;
             jd["job_id"] = job->job_id;
-            return CommandResponse{true, "Job started", jd, ""};
+            return CommandResponse{true, "Job started", jd, current_iso_time()};
         }
 
         ProcessResult pr = exec_callable();
@@ -1470,7 +1589,7 @@ CommandResponse AgentManager::handle_run_script(const Command& cmd) {
         append_audit(config_, std::string("RUN_SCRIPT exit=") + std::to_string(pr.exit_code));
         return CommandResponse{success, success ? "Exited with code 0" : (std::string("Exited with code ") + std::to_string(pr.exit_code)), data, current_iso_time()};
     } catch (const std::exception& e) {
-        return CommandResponse{false, std::string("Error running script: ") + e.what(), {}, ""};
+        return CommandResponse{false, std::string("Error running script: ") + e.what(), {}, current_iso_time()};
     }
 }
 void AgentManager::purge_old_jobs() {

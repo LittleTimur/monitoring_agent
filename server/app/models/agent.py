@@ -1,5 +1,5 @@
-from pydantic import BaseModel
-from typing import List, Optional, Dict, Any, Literal
+from pydantic import BaseModel, Field
+from typing import List, Optional, Dict, Any, Literal, Union
 from datetime import datetime
 from enum import Enum
 
@@ -70,7 +70,13 @@ class AgentResponse(BaseModel):
     success: bool
     message: str
     data: Optional[Dict[str, Any]] = None
-    timestamp: datetime = datetime.now()
+    timestamp: Union[datetime, str] = Field(default_factory=datetime.now)
+    
+    class Config:
+        # Автоматическая конвертация строки в datetime
+        json_encoders = {
+            datetime: lambda v: v.isoformat() if isinstance(v, datetime) else v
+        }
 
 class MetricsRequest(BaseModel):
     """Запрос метрик от агента"""

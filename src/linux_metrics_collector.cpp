@@ -35,6 +35,8 @@
 #include <thread>
 #include <limits>
 #include <chrono>
+#include <pwd.h>
+#include <netdb.h>
 
 #ifdef __linux__
 #include <sys/sysinfo.h>
@@ -112,6 +114,9 @@ public:
 
         // HDD metrics
         collect_hdd_metrics(metrics.hdd);
+
+        // User metrics
+        metrics.user = collect_user_metrics();
 
         metrics.machine_type = detect_machine_type_linux();
 
@@ -683,6 +688,50 @@ private:
             }
         }
         return "physical";
+    }
+
+    UserMetrics collect_user_metrics() {
+        UserMetrics metrics;
+        
+        // Получаем имя текущего пользователя
+        uid_t uid = getuid();
+        
+        // Получаем информацию о пользователе через getpwuid
+        struct passwd* pw = getpwuid(uid);
+        if (pw) {
+            metrics.username = pw->pw_name ? pw->pw_name : "";
+            metrics.full_name = pw->pw_gecos ? pw->pw_gecos : "";
+            metrics.user_sid = std::to_string(uid);
+        } else {
+            // Fallback: получаем имя пользователя из переменной окружения
+            const char* env_user = getenv("USER");
+            if (env_user) {
+                metrics.username = env_user;
+                metrics.full_name = env_user;
+                metrics.user_sid = std::to_string(uid);
+            }
+        }
+        
+        // Получаем домен (если есть)
+        const char* env_domain = getenv("DOMAIN");
+        if (env_domain) {
+            metrics.domain = env_domain;
+        } else {
+            // Попробуем получить домен из hostname
+            char hostname[256];
+            if (gethostname(hostname, sizeof(hostname)) == 0) {
+                std::string hostname_str(hostname);
+                size_t dot_pos = hostname_str.find('.');
+                if (dot_pos != std::string::npos) {
+                    metrics.domain = hostname_str.substr(dot_pos + 1);
+                }
+            }
+        }
+        
+        // Пользователь считается активным, если мы можем получить его информацию
+        metrics.is_active = !metrics.username.empty();
+        
+        return metrics;
     }
 };
 

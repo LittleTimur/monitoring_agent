@@ -23,7 +23,8 @@ struct AgentConfig {
         {"network", true},
         {"gpu", false},
         {"hdd", false},
-        {"inventory", true}
+        {"inventory", true},
+        {"user", true}
     };
     
     // Настройки HTTP сервера агента

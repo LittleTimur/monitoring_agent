@@ -11,12 +11,13 @@
   "auto_detect_name": true,
   "enabled_metrics": {
     "cpu": true,
-    "memory": false,
     "disk": false,
-    "network": false,
     "gpu": false,
     "hdd": false,
-    "inventory": false
+    "inventory": false,
+    "memory": false,
+    "network": false,
+    "user": true
   },
   "scripts_dir": "scripts",
   "allowed_interpreters": ["bash", "powershell", "cmd", "python"],

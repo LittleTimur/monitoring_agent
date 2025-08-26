@@ -136,6 +136,21 @@ struct HddMetrics {
 };
 
 /**
+ * @struct UserMetrics
+ * @brief Структура для хранения метрик текущего пользователя
+ * 
+ * Содержит информацию о текущем пользователе системы, включая
+ * имя пользователя, домен и дополнительную информацию
+ */
+struct UserMetrics {
+    std::string username;              ///< Имя пользователя
+    std::string domain;                ///< Домен (если есть)
+    std::string full_name;             ///< Полное имя пользователя
+    std::string user_sid;              ///< Security Identifier (Windows) или UID (Linux)
+    bool is_active;                    ///< Активен ли пользователь
+};
+
+/**
  * @struct InventoryInfo
  * @brief Структура для хранения инвентаризационных данных системы
  */
@@ -174,6 +189,7 @@ struct SystemMetrics {
     NetworkMetrics network;           ///< Метрики сети
     GpuMetrics gpu;                   ///< Метрики GPU
     HddMetrics hdd;                   ///< Метрики HDD
+    UserMetrics user;                 ///< Метрики текущего пользователя
     std::string machine_type;         ///< Тип устройства: "virtual" или "physical"
     InventoryInfo inventory;          ///< Инвентаризационная информация
 };

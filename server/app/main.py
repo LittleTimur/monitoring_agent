@@ -40,6 +40,7 @@ class MetricsData(BaseModel):
     network: Optional[Dict[str, Any]] = None
     gpu: Optional[Dict[str, Any]] = None
     hdd: Optional[Dict[str, Any]] = None
+    user: Optional[Dict[str, Any]] = None
     inventory: Optional[Dict[str, Any]] = None
 
 # Хранилище данных (временно в памяти, потом заменим на БД)

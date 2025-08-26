@@ -1687,6 +1687,12 @@ nlohmann::json AgentManager::collect_metrics(const std::vector<std::string>& req
             // HDD метрики (если доступны)
             j["hdd"]["drives"] = nlohmann::json::array();
             // TODO: Добавить сбор HDD метрик, когда они будут реализованы в MetricsCollector
+        } else if (metric_type == "user") {
+            j["user"]["username"] = metrics.user.username;
+            j["user"]["domain"] = metrics.user.domain;
+            j["user"]["full_name"] = metrics.user.full_name;
+            j["user"]["user_sid"] = metrics.user.user_sid;
+            j["user"]["is_active"] = metrics.user.is_active;
         } else if (metric_type == "inventory") {
             j["inventory"]["device_type"] = metrics.inventory.device_type;
             j["inventory"]["manufacturer"] = metrics.inventory.manufacturer;

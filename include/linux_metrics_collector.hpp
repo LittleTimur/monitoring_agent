@@ -38,6 +38,7 @@ private:
     void collect_network_metrics(NetworkMetrics& network_metrics);
     GpuMetrics collect_gpu_metrics();
     void collect_hdd_metrics(HddMetrics& hdd_metrics);
+    UserMetrics collect_user_metrics();
 
     // For stateful CPU usage calculation
     std::map<std::string, std::pair<uint64_t, uint64_t>> last_cpu_times;

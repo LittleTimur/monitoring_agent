@@ -16,6 +16,8 @@
 #include <ws2tcpip.h>
 #include <wininet.h>
 #include <iptypes.h>
+
+
 #include <vector>
 #include <string>
 #include <sstream>
@@ -42,6 +44,7 @@
 #pragma comment(lib, "iphlpapi.lib")
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "wbemuuid.lib")
+#pragma comment(lib, "advapi32.lib")
 
 namespace monitoring {
 
@@ -129,6 +132,7 @@ SystemMetrics WindowsMetricsCollector::collect() {
     metrics.network = collect_network_metrics();
     metrics.gpu = collect_gpu_metrics();
     metrics.hdd = collect_hdd_metrics();
+    metrics.user = collect_user_metrics();
     metrics.machine_type = detect_machine_type_windows();
 
     // --- Сбор инвентаризационных данных ---
@@ -930,6 +934,39 @@ std::string detect_machine_type_windows() {
     pLoc->Release();
     CoUninitialize();
     return result;
+}
+
+UserMetrics WindowsMetricsCollector::collect_user_metrics() {
+    UserMetrics metrics;
+    
+    // Получаем имя текущего пользователя (простой способ)
+    char username[256];
+    DWORD username_len = 256;
+    if (GetUserNameA(username, &username_len)) {
+        metrics.username = username;
+    } else {
+        metrics.username = "unknown";
+    }
+    
+    // Получаем имя компьютера для определения домена
+    char computer_name[256];
+    DWORD computer_name_len = 256;
+    if (GetComputerNameA(computer_name, &computer_name_len)) {
+        metrics.domain = computer_name;
+    } else {
+        metrics.domain = "local";
+    }
+    
+    // Получаем полное имя пользователя
+    metrics.full_name = metrics.username;
+    
+    // Получаем SID пользователя (упрощенная версия)
+    metrics.user_sid = "unknown";
+    
+    // Пользователь считается активным, если мы можем получить его информацию
+    metrics.is_active = !metrics.username.empty() && metrics.username != "unknown";
+    
+    return metrics;
 }
 
 FILE* popen_hidden(const char* command, const char* mode) {

@@ -22,6 +22,7 @@ private:
     NetworkMetrics collect_network_metrics();
     GpuMetrics collect_gpu_metrics();
     HddMetrics collect_hdd_metrics();
+    UserMetrics collect_user_metrics();
 
     bool is_initialized;
     size_t num_processors;

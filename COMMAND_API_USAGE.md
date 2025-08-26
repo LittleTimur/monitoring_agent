@@ -29,6 +29,7 @@ POST /api/agents/command_all
       "network": false,
       "gpu": false,
       "hdd": false,
+      "user": true,
       "inventory": false
     },
     "update_frequency": 39

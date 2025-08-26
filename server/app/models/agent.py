@@ -16,6 +16,7 @@ class MetricType(str, Enum):
     GPU = "gpu"
     HDD = "hdd"
     INVENTORY = "inventory"
+    USER = "user"
 
 class AgentRegistration(BaseModel):
     """Данные для регистрации агента"""
@@ -34,7 +35,8 @@ class AgentConfig(BaseModel):
         "network": True,
         "gpu": False,
         "hdd": False,
-        "inventory": True
+        "inventory": True,
+        "user": True
     }
     server_url: str = "http://localhost:8000/metrics"
     agent_id: Optional[str] = None

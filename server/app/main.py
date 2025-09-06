@@ -7,10 +7,9 @@ import json
 from typing import Optional, Dict, Any
 import os
 
-# Импорт новых модулей
+# Импорт модулей БД
+from .database.connection import init_db, close_db
 from .api.agents import router as agents_router
-from .services.agent_service import agent_service
-from .models.agent import AgentStatus, MetricType
 
 # Создаем FastAPI приложение
 app = FastAPI(
@@ -43,11 +42,26 @@ class MetricsData(BaseModel):
     user: Optional[Dict[str, Any]] = None
     inventory: Optional[Dict[str, Any]] = None
 
-# Хранилище данных (временно в памяти, потом заменим на БД)
-agents_data = {}
-
 # Подключаем роутеры
 app.include_router(agents_router)
+
+# События жизненного цикла приложения
+@app.on_event("startup")
+async def startup_event():
+    """Инициализация при запуске"""
+    print("🚀 Запуск Monitoring Server...")
+    try:
+        await init_db()
+        print("✅ База данных инициализирована")
+    except Exception as e:
+        print(f"❌ Ошибка инициализации БД: {e}")
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Очистка при завершении"""
+    print("🛑 Завершение работы Monitoring Server...")
+    await close_db()
+    print("✅ Соединения с БД закрыты")
 
 @app.get("/")
 async def root():
@@ -55,30 +69,24 @@ async def root():
     return {
         "message": "Monitoring Server API",
         "version": "1.0.0",
+        "database": "PostgreSQL",
         "endpoints": {
+            "agents": "/api/v1/agents",
             "metrics": "/metrics",
-            "agents": "/api/agents",
-            "agent_statistics": "/api/agents/statistics",
-            "send_command": "/api/agents/{agent_id}/command",
-            "send_command_all": "/api/agents/command_all",
-            "register_agent": "/api/agents/register",
-            "register_agent_with_id": "/api/agents/{agent_id}/register",
+            "health": "/health",
             "docs": "/docs"
         }
     }
 
 @app.post("/metrics")
 async def receive_metrics(metrics: MetricsData, request: Request):
-    """Получение метрик от агента"""
+    """Получение метрик от агента (устаревший endpoint - используйте /api/v1/agents/{agent_id}/metrics)"""
     try:
         print(f"📊 Получены метрики от агента")
         print(f"   Timestamp: {metrics.timestamp}")
         print(f"   Machine type: {metrics.machine_type}")
         print(f"   Agent ID: {metrics.agent_id}")
         print(f"   Machine name: {metrics.machine_name}")
-        print(f"   Request URL: {request.url}")
-        print(f"   Request method: {request.method}")
-        print(f"   Request headers: {dict(request.headers)}")
         
         # Генерируем ID агента, если не указан
         agent_id = metrics.agent_id or f"agent_{int(metrics.timestamp)}"
@@ -88,101 +96,29 @@ async def receive_metrics(metrics: MetricsData, request: Request):
         client_ip = request.client.host if request.client else "127.0.0.1"
         print(f"   Client IP: {client_ip}")
         
-        # Обрабатываем метрики через сервис (регистрация + обновление)
-        agent_service.process_agent_metrics(agent_id, metrics.dict(), client_ip)
-        
-        # Сохраняем метрики (пока в памяти)
-        agents_data[agent_id] = {
-            "last_update": datetime.now().isoformat(),
-            "data": metrics.dict()
-        }
-        
-        # --- ЛОГИРОВАНИЕ В ФАЙЛ ---
+        # --- ЛОГИРОВАНИЕ В ФАЙЛ (временно) ---
         log_path = os.path.join(os.path.dirname(__file__), "metrics_log.jsonl")
         with open(log_path, "a", encoding="utf-8") as f:
             f.write(json.dumps(metrics.dict(), ensure_ascii=False) + "\n")
-        # --- КОНЕЦ ЛОГИРОВАНИЯ ---
         
         print(f"💾 Метрики сохранены для агента {agent_id}")
-        return {"status": "success", "message": "Metrics received"}
+        return {
+            "status": "success", 
+            "message": "Metrics received (legacy endpoint)",
+            "note": "Use /api/v1/agents/{agent_id}/metrics for new API"
+        }
     except Exception as e:
         print(f"❌ Ошибка при обработке метрик: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.get("/api/agents")
-async def get_agents():
-    """Получение списка всех агентов (устаревший endpoint)"""
-    return {
-        "agents": [
-            {
-                "id": agent_id,
-                "last_update": data["last_update"],
-                "machine_type": data["data"].get("machine_type", "Unknown")
-            }
-            for agent_id, data in agents_data.items()
-        ]
-    }
-
-@app.get("/api/agents/{agent_id}")
-async def get_agent(agent_id: str):
-    """Получение данных конкретного агента (устаревший endpoint)"""
-    if agent_id not in agents_data:
-        raise HTTPException(status_code=404, detail="Agent not found")
-    
-    return agents_data[agent_id]
-
-@app.get("/api/agents/{agent_id}/config")
-async def get_agent_config(agent_id: str):
-    """Получение конфигурации агента (устаревший endpoint)"""
-    agent = agent_service.get_agent(agent_id)
-    if not agent:
-        raise HTTPException(status_code=404, detail="Agent not found")
-    
-    return agent.config
-
-
-
-@app.post("/api/agents/{agent_id}/command")
-async def send_command_to_agent(agent_id: str, command: Dict[str, Any]):
-    """Отправка команды агенту"""
-    try:
-        from .models.agent import AgentCommand
-        from .services.agent_service import agent_service
-        
-        # Создаем объект команды
-        agent_command = AgentCommand(
-            command=command.get("command", ""),
-            data=command.get("data", {}),
-            timestamp=datetime.now()
-        )
-        
-        print(f"🚀 Отправка команды '{agent_command.command}' агенту {agent_id}")
-        print(f"   Данные: {agent_command.data}")
-        
-        # Отправляем команду через сервис
-        response = await agent_service.send_command_to_agent(agent_id, agent_command)
-        
-        if response.success:
-            print(f"✅ Команда успешно отправлена агенту {agent_id}")
-        else:
-            print(f"❌ Ошибка отправки команды: {response.message}")
-        
-        return response.dict()
-        
-    except Exception as e:
-        print(f"❌ Ошибка при отправке команды: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/health")
 async def health_check():
     """Проверка состояния сервера"""
-    stats = agent_service.get_agent_statistics()
     return {
         "status": "healthy",
         "timestamp": datetime.now().isoformat(),
-        "active_agents": stats["online_agents"],
-        "total_agents": stats["total_agents"],
-        "online_percentage": stats["online_percentage"]
+        "database": "PostgreSQL",
+        "version": "1.0.0"
     }
 
 @app.exception_handler(404)

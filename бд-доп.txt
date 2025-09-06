@@ -1,0 +1,124 @@
+Основные таблицы
+
+-- Основная таблица для хранения метрик
+CREATE TABLE agent_metrics (
+    id BIGSERIAL PRIMARY KEY,
+    agent_id VARCHAR(255) NOT NULL REFERENCES agents(agent_id) ON DELETE CASCADE,
+    timestamp TIMESTAMPTZ NOT NULL,
+    machine_type VARCHAR(50) NOT NULL CHECK (machine_type IN ('physical', 'virtual')),
+    machine_name VARCHAR(255) NOT NULL,
+    metric_type VARCHAR(20) NOT NULL CHECK (metric_type IN (
+        'cpu', 'memory', 'disk', 'network', 'gpu', 'hdd', 'user', 'inventory'
+    )),
+    
+    -- Общие числовые метрики (оптимизированы для запросов)
+    usage_percent FLOAT,
+    temperature FLOAT,
+    total_bytes BIGINT,
+    used_bytes BIGINT,
+    free_bytes BIGINT,
+    
+    -- Детальные данные в JSONB
+    details JSONB,
+    
+    -- Индексы
+    INDEX idx_agent_metrics_agent_id (agent_id),
+    INDEX idx_agent_metrics_timestamp (timestamp),
+    INDEX idx_agent_metrics_type (metric_type),
+    INDEX idx_agent_metrics_agent_timestamp (agent_id, timestamp),
+    INDEX idx_agent_metrics_usage (usage_percent) WHERE usage_percent IS NOT NULL,
+    INDEX idx_agent_metrics_details_gin ON agent_metrics USING GIN (details)
+);
+
+-- Таблица для сетевых соединений (отдельно, т.к. может быть много записей)
+CREATE TABLE metrics_network_connections (
+    id BIGSERIAL PRIMARY KEY,
+    metric_id BIGINT REFERENCES agent_metrics(id) ON DELETE CASCADE,
+    local_ip VARCHAR(45),
+    local_port INTEGER,
+    remote_ip VARCHAR(45),
+    remote_port INTEGER,
+    protocol VARCHAR(10) CHECK (protocol IN ('TCP', 'UDP')),
+    
+    INDEX idx_network_connections_metric (metric_id),
+    INDEX idx_network_connections_local (local_ip),
+    INDEX idx_network_connections_remote (remote_ip)
+);
+Структура JSONB для разных типов метрик
+
+CPU (metric_type = 'cpu'):
+
+details JSONB STRUCTURE:
+{
+  "core_temperatures": [0.0, 0.0, 0.0, 0.0],
+  "core_usage": [55.31, 36.82, 47.61, 41.44]
+}
+Memory (metric_type = 'memory'):
+
+-- Используются основные поля: total_bytes, used_bytes, free_bytes, usage_percent
+details JSONB STRUCTURE:
+{
+  "additional_info": "резерв для будущих полей"
+}
+Disk (metric_type = 'disk'):
+
+details JSONB STRUCTURE:
+{
+  "partitions": [
+    {
+      "filesystem": "NTFS",
+      "mount_point": "C:\\",
+      "total_bytes": 510913409024,
+      "used_bytes": 273198796800,
+      "free_bytes": 237714612224,
+      "usage_percent": 53.47
+    }
+  ]
+}
+Network (metric_type = 'network'):
+
+details JSONB STRUCTURE:
+{
+  "interfaces": [
+    {
+      "name": "Qualcomm Atheros QCA9377 Wireless Network Adapter",
+      "bytes_received": 2740425,
+      "bytes_sent": 1151581,
+      "packets_received": 0,
+      "packets_sent": 0,
+      "bandwidth_received": 6612.0,
+      "bandwidth_sent": 5715.0
+    }
+  ]
+}
+-- Сетевые соединения хранятся в отдельной таблице metrics_network_connections
+GPU (metric_type = 'gpu'):
+
+details JSONB STRUCTURE:
+{
+  "memory_total": 2147483648,
+  "memory_used": 0,
+  "model": "Intel(R) UHD Graphics 620"
+}
+HDD (metric_type = 'hdd'):
+
+details JSONB STRUCTURE:
+{
+  "drives": [
+    {
+      "model": "WDC PC SN520 SDAPNUW-512G-1014",
+      "size_bytes": 1797778964216,
+      "serial_number": "123456789"
+    }
+  ]
+}
+User (metric_type = 'user'):
+
+details JSONB STRUCTURE:
+{
+  "username": "rosih",
+  "domain": "DESKTOP-0G7J1CI",
+  "full_name": "rosih",
+  "user_sid": "unknown",
+  "is_active": true
+}

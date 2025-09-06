@@ -1,437 +1,200 @@
-from fastapi import APIRouter, HTTPException, BackgroundTasks
-from typing import List, Optional, Dict, Any
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
+from typing import List, Optional
 from datetime import datetime
-import asyncio
 
-from ..models.agent import (
-    AgentInfo, AgentConfig, AgentStatus, AgentCommand, 
-    AgentResponse, MetricsRequest, MetricType, AgentCommandRequest, AgentRegistration,
-    RunScriptRequest
+from ..database.connection import get_db
+from ..database.api import (
+    create_agent, get_agent, get_all_agents, update_agent_heartbeat, delete_agent,
+    save_metric, save_network_connections, get_agent_metrics, get_metrics_summary,
+    create_user_parameter, get_user_parameters, get_interpreters, get_metric_types,
+    agent_exists
 )
-from ..services.agent_service import agent_service, CommandStatus, CommandExecution
+from ..schemas import (
+    AgentCreate, AgentResponse, AgentHeartbeat, AgentListResponse,
+    MetricCreate, MetricResponse, MetricListResponse, MetricsSummaryResponse,
+    UserParameterCreate, UserParameterResponse, InterpreterResponse, MetricTypeResponse
+)
 
-router = APIRouter(prefix="/api/agents", tags=["agents"])
+router = APIRouter(prefix="/api/v1", tags=["agents"])
 
-@router.get("/", response_model=List[AgentInfo])
-async def get_agents():
-    """Получение списка всех агентов"""
-    return agent_service.get_all_agents()
+# ===== Эндпоинты агентов =====
 
-@router.get("/statistics")
-async def get_agent_statistics():
-    """Получение статистики по агентам"""
-    return agent_service.get_agent_statistics()
-
-@router.get("/{agent_id}", response_model=AgentInfo)
-async def get_agent(agent_id: str):
-    """Получение информации о конкретном агенте"""
-    agent = agent_service.get_agent(agent_id)
-    if not agent:
-        raise HTTPException(status_code=404, detail="Agent not found")
+@router.post("/agents", response_model=AgentResponse, status_code=status.HTTP_201_CREATED)
+async def register_agent(
+    agent_data: AgentCreate,
+    db: AsyncSession = Depends(get_db)
+):
+    """Регистрация нового агента"""
+    # Проверяем, не существует ли уже агент с таким ID
+    if await agent_exists(db, agent_data.agent_id):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Агент с ID {agent_data.agent_id} уже существует"
+        )
+    
+    agent = await create_agent(db, agent_data.dict())
     return agent
 
-@router.get("/{agent_id}/config", response_model=AgentConfig)
-async def get_agent_config(agent_id: str):
-    """Получение конфигурации агента"""
-    agent = agent_service.get_agent(agent_id)
-    if not agent:
-        raise HTTPException(status_code=404, detail="Agent not found")
-    return agent.config
+@router.get("/agents", response_model=AgentListResponse)
+async def list_agents(db: AsyncSession = Depends(get_db)):
+    """Получение списка всех агентов"""
+    agents = await get_all_agents(db)
+    return AgentListResponse(agents=agents, total=len(agents))
 
-
-
-@router.post("/{agent_id}/command")
-async def send_command_to_agent(
+@router.get("/agents/{agent_id}", response_model=AgentResponse)
+async def get_agent_by_id(
     agent_id: str, 
-    command: Dict[str, Any],
-    background_tasks: BackgroundTasks
+    db: AsyncSession = Depends(get_db)
 ):
-    """Универсальный эндпоинт для отправки команд агенту
-    
-    Поддерживаемые команды:
-    - update_config: изменение собираемых метрик и времени сбора
-    - collect_metrics: немедленный сбор выбранных метрик
-    - restart: перезапуск агента
-    - stop: остановка агента
-    """
-    agent = agent_service.get_agent(agent_id)
+    """Получение информации об агенте"""
+    agent = await get_agent(db, agent_id)
     if not agent:
-        raise HTTPException(status_code=404, detail="Agent not found")
-    
-    command_name = command.get("command", "")
-    command_data = command.get("data", {})
-    
-    # Создаем объект команды
-    agent_command = AgentCommand(
-        command=command_name,
-        data=command_data,
-        timestamp=datetime.now()
-    )
-    
-    print(f"🚀 Отправка команды '{command_name}' агенту {agent_id}")
-    print(f"   Данные: {command_data}")
-    
-    # Добавляем команду в очередь
-    agent_service.command_queue[agent_id].append(agent_command)
-    
-    # Отправляем команду агенту
-    background_tasks.add_task(agent_service.send_command_to_agent, agent_id, agent_command)
-    
-    return {"status": "success", "message": f"Command '{command_name}' sent to agent {agent_id}"}
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Агент с ID {agent_id} не найден"
+        )
+    return agent
 
-
-# --- Script execution convenience endpoints ---
-
-@router.post("/{agent_id}/run_script")
-async def run_script(agent_id: str, req: RunScriptRequest, background_tasks: BackgroundTasks):
-    """Запуск скрипта на агенте с валидацией payload."""
-    agent = agent_service.get_agent(agent_id)
-    if not agent:
-        raise HTTPException(status_code=404, detail="Agent not found")
-
-    # Базовая проверка наличия одного из полей
-    if not (req.script or req.script_path or req.key):
-        raise HTTPException(status_code=400, detail="One of script, script_path or key is required")
-
-    cmd = AgentCommand(
-        command="run_script",
-        data=req.dict(),
-        timestamp=datetime.now()
-    )
-    agent_service.command_queue[agent_id].append(cmd)
-    background_tasks.add_task(agent_service.send_command_to_agent, agent_id, cmd)
-    return {"status": "queued", "message": "run_script queued"}
-
-
-@router.get("/{agent_id}/jobs/{job_id}")
-async def get_job_output(agent_id: str, job_id: str):
-    """Получение статуса/вывода фоновой задачи на агенте."""
-    agent = agent_service.get_agent(agent_id)
-    if not agent:
-        raise HTTPException(status_code=404, detail="Agent not found")
-
-    cmd = AgentCommand(
-        command="get_job_output",
-        data={"job_id": job_id},
-        timestamp=datetime.now()
-    )
-    resp = await agent_service.send_command_to_agent(agent_id, cmd)
-    return resp.dict()
-
-
-@router.delete("/{agent_id}/jobs/{job_id}")
-async def kill_job(agent_id: str, job_id: str):
-    """Остановка фоновой задачи на агенте."""
-    agent = agent_service.get_agent(agent_id)
-    if not agent:
-        raise HTTPException(status_code=404, detail="Agent not found")
-
-    cmd = AgentCommand(
-        command="kill_job",
-        data={"job_id": job_id},
-        timestamp=datetime.now()
-    )
-    resp = await agent_service.send_command_to_agent(agent_id, cmd)
-    return resp.dict()
-
-
-@router.get("/{agent_id}/jobs")
-async def list_jobs(agent_id: str):
-    """Список фоновых задач на агенте."""
-    agent = agent_service.get_agent(agent_id)
-    if not agent:
-        raise HTTPException(status_code=404, detail="Agent not found")
-    cmd = AgentCommand(
-        command="list_jobs",
-        data={},
-        timestamp=datetime.now()
-    )
-    resp = await agent_service.send_command_to_agent(agent_id, cmd)
-    return resp.dict()
-
-
-@router.post("/{agent_id}/scripts")
-async def push_script(agent_id: str, body: Dict[str, Any]):
-    """Загрузка/обновление скрипта на агенте. body: {name, content, chmod?}"""
-    agent = agent_service.get_agent(agent_id)
-    if not agent:
-        raise HTTPException(status_code=404, detail="Agent not found")
-    name = body.get("name")
-    content = body.get("content")
-    if not name or not content:
-        raise HTTPException(status_code=400, detail="name and content required")
-    cmd = AgentCommand(
-        command="push_script",
-        data={"name": name, "content": content, **({"chmod": body.get("chmod")} if body.get("chmod") else {})},
-        timestamp=datetime.now()
-    )
-    resp = await agent_service.send_command_to_agent(agent_id, cmd)
-    return resp.dict()
-
-
-@router.get("/{agent_id}/scripts")
-async def list_scripts(agent_id: str):
-    agent = agent_service.get_agent(agent_id)
-    if not agent:
-        raise HTTPException(status_code=404, detail="Agent not found")
-    cmd = AgentCommand(command="list_scripts", data={}, timestamp=datetime.now())
-    resp = await agent_service.send_command_to_agent(agent_id, cmd)
-    return resp.dict()
-
-
-@router.delete("/{agent_id}/scripts/{name}")
-async def delete_script(agent_id: str, name: str):
-    agent = agent_service.get_agent(agent_id)
-    if not agent:
-        raise HTTPException(status_code=404, detail="Agent not found")
-    cmd = AgentCommand(command="delete_script", data={"name": name}, timestamp=datetime.now())
-    resp = await agent_service.send_command_to_agent(agent_id, cmd)
-    return resp.dict()
-
-@router.post("/command_all")
-async def send_command_to_all_agents(
-    command: Dict[str, Any],
-    background_tasks: BackgroundTasks
-):
-    """Отправка команды всем агентам
-    
-    Поддерживаемые команды:
-    - update_config: изменение собираемых метрик и времени сбора
-    - collect_metrics: немедленный сбор выбранных метрик
-    - restart: перезапуск агента
-    - stop: остановка агента
-    """
-    command_name = command.get("command", "")
-    command_data = command.get("data", {})
-    
-    # Создаем объект команды
-    agent_command = AgentCommand(
-        command=command_name,
-        data=command_data,
-        timestamp=datetime.now()
-    )
-    
-    print(f"🚀 Отправка команды '{command_name}' всем агентам")
-    print(f"   Данные: {command_data}")
-    
-    # Команда для всех агентов
-    results = {}
-    
-    for agent_id in agent_service.agents.keys():
-        agent_service.command_queue[agent_id].append(agent_command)
-        background_tasks.add_task(agent_service.send_command_to_agent, agent_id, agent_command)
-        results[agent_id] = True
-    
-    return {
-        "status": "success", 
-        "message": f"Command '{command_name}' sent to {len(results)} agents",
-        "results": results
-    }
-
-@router.get("/{agent_id}/commands")
-async def get_pending_commands(agent_id: str):
-    """Получение ожидающих команд для агента"""
-    commands = agent_service.get_pending_commands(agent_id)
-    return {"commands": commands}
-
-@router.delete("/{agent_id}/commands/{command_index}")
-async def remove_command(agent_id: str, command_index: int):
-    """Удаление команды из очереди"""
-    agent_service.remove_command(agent_id, command_index)
-    return {"status": "success", "message": "Command removed"}
-
-# Новые эндпоинты для мониторинга выполнения команд
-
-@router.get("/{agent_id}/command-executions")
-async def get_command_executions(agent_id: str):
-    """Получение истории выполнения команд для агента"""
-    agent = agent_service.get_agent(agent_id)
-    if not agent:
-        raise HTTPException(status_code=404, detail="Agent not found")
-    
-    executions = agent_service.get_command_executions(agent_id)
-    
-    # Конвертируем в JSON-совместимый формат
-    execution_data = []
-    for i, execution in enumerate(executions):
-        execution_data.append({
-            "index": i,
-            "command": execution.command.command,
-            "data": execution.command.data,
-            "status": execution.status,
-            "start_time": execution.start_time.isoformat() if execution.start_time else None,
-            "end_time": execution.end_time.isoformat() if execution.end_time else None,
-            "retry_count": execution.retry_count,
-            "error_message": execution.error_message,
-            "response": execution.response.dict() if execution.response else None
-        })
-    
-    return {
-        "agent_id": agent_id,
-        "total_executions": len(executions),
-        "executions": execution_data
-    }
-
-@router.get("/{agent_id}/command-executions/{execution_index}")
-async def get_command_execution_status(agent_id: str, execution_index: int):
-    """Получение статуса выполнения конкретной команды"""
-    agent = agent_service.get_agent(agent_id)
-    if not agent:
-        raise HTTPException(status_code=404, detail="Agent not found")
-    
-    execution = agent_service.get_command_status(agent_id, execution_index)
-    if not execution:
-        raise HTTPException(status_code=404, detail="Command execution not found")
-    
-    return {
-        "agent_id": agent_id,
-        "execution_index": execution_index,
-        "command": execution.command.command,
-        "data": execution.command.data,
-        "status": execution.status,
-        "start_time": execution.start_time.isoformat() if execution.start_time else None,
-        "end_time": execution.end_time.isoformat() if execution.end_time else None,
-        "retry_count": execution.retry_count,
-        "error_message": execution.error_message,
-        "response": execution.response.dict() if execution.response else None
-    }
-
-@router.get("/command-executions/status")
-async def get_all_command_executions_status():
-    """Получение общего статуса выполнения команд по всем агентам"""
-    all_executions = {}
-    total_executions = 0
-    total_completed = 0
-    total_failed = 0
-    total_pending = 0
-    total_in_progress = 0
-    
-    for agent_id in agent_service.agents.keys():
-        executions = agent_service.get_command_executions(agent_id)
-        all_executions[agent_id] = {
-            "total": len(executions),
-            "completed": sum(1 for ex in executions if ex.status == CommandStatus.COMPLETED),
-            "failed": sum(1 for ex in executions if ex.status in [CommandStatus.FAILED, CommandStatus.TIMEOUT]),
-            "pending": sum(1 for ex in executions if ex.status == CommandStatus.PENDING),
-            "in_progress": sum(1 for ex in executions if ex.status == CommandStatus.IN_PROGRESS)
-        }
-        
-        total_executions += all_executions[agent_id]["total"]
-        total_completed += all_executions[agent_id]["completed"]
-        total_failed += all_executions[agent_id]["failed"]
-        total_pending += all_executions[agent_id]["pending"]
-        total_in_progress += all_executions[agent_id]["in_progress"]
-    
-    return {
-        "summary": {
-            "total_agents": len(agent_service.agents),
-            "total_executions": total_executions,
-            "total_completed": total_completed,
-            "total_failed": total_failed,
-            "total_pending": total_pending,
-            "total_in_progress": total_in_progress,
-            "success_rate": (total_completed / total_executions * 100) if total_executions > 0 else 0
-        },
-        "agents": all_executions
-    }
-
-@router.post("/{agent_id}/command-executions/{execution_index}/retry")
-async def retry_command_execution(agent_id: str, execution_index: int, background_tasks: BackgroundTasks):
-    """Повторная попытка выполнения команды"""
-    agent = agent_service.get_agent(agent_id)
-    if not agent:
-        raise HTTPException(status_code=404, detail="Agent not found")
-    
-    execution = agent_service.get_command_status(agent_id, execution_index)
-    if not execution:
-        raise HTTPException(status_code=404, detail="Command execution not found")
-    
-    if execution.status not in [CommandStatus.FAILED, CommandStatus.TIMEOUT]:
-        raise HTTPException(status_code=400, detail="Can only retry failed or timed out commands")
-    
-    # Сбрасываем счетчик попыток и статус
-    execution.retry_count = 0
-    execution.status = CommandStatus.PENDING
-    execution.start_time = datetime.now()
-    execution.end_time = None
-    execution.error_message = None
-    execution.response = None
-    
-    # Повторно отправляем команду
-    background_tasks.add_task(agent_service.send_command_to_agent, agent_id, execution.command)
-    
-    return {
-        "status": "success", 
-        "message": f"Command retry initiated for execution #{execution_index}",
-        "execution_index": execution_index,
-        "new_status": CommandStatus.PENDING
-    }
-
-@router.delete("/{agent_id}/command-executions/{execution_index}")
-async def delete_command_execution(agent_id: str, execution_index: int):
-    """Удаление записи о выполнении команды"""
-    agent = agent_service.get_agent(agent_id)
-    if not agent:
-        raise HTTPException(status_code=404, detail="Agent not found")
-    
-    executions = agent_service.get_command_executions(agent_id)
-    if execution_index >= len(executions):
-        raise HTTPException(status_code=404, detail="Command execution not found")
-    
-    # Удаляем запись
-    executions.pop(execution_index)
-    
-    return {
-        "status": "success", 
-        "message": f"Command execution #{execution_index} deleted",
-        "remaining_executions": len(executions)
-    }
-
-@router.post("/register")
-async def register_new_agent(registration_data: AgentRegistration):
-    """Автоматическая регистрация нового агента (ID генерируется автоматически)"""
-    import time
-    import random
-    
-    # Генерируем уникальный ID агента
-    timestamp = int(time.time() * 1000)
-    random_suffix = random.randint(1000, 9999)
-    agent_id = f"agent_{timestamp}_{random_suffix}"
-    
-    print(f"🔧 Auto-registration attempt for new agent")
-    print(f"   Generated ID: {agent_id}")
-    print(f"   Machine name: {registration_data.machine_name}")
-    print(f"   Machine type: {registration_data.machine_type}")
-    print(f"   IP address: {registration_data.ip_address}")
-    
-    agent_info = agent_service.register_agent(
-        agent_id, 
-        registration_data
-    )
-    
-    print(f"✅ New agent {agent_id} auto-registered successfully")
-    return {
-        "agent_id": agent_id,
-        "status": "success",
-        "message": "Agent registered successfully",
-        "agent_info": agent_info
-    }
-
-@router.post("/{agent_id}/register")
-async def register_agent(
+@router.put("/agents/{agent_id}/heartbeat", response_model=dict)
+async def update_heartbeat(
     agent_id: str,
-    registration_data: AgentRegistration
+    db: AsyncSession = Depends(get_db)
 ):
-    """Регистрация нового агента с указанным ID"""
-    print(f"🔧 Registration attempt for agent {agent_id}")
-    print(f"   Machine name: {registration_data.machine_name}")
-    print(f"   Machine type: {registration_data.machine_type}")
-    print(f"   IP address: {registration_data.ip_address}")
+    """Обновление heartbeat агента"""
+    success = await update_agent_heartbeat(db, agent_id)
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Агент с ID {agent_id} не найден"
+        )
+    return {"message": "Heartbeat обновлен", "agent_id": agent_id, "timestamp": datetime.utcnow()}
+
+@router.delete("/agents/{agent_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def remove_agent(
+    agent_id: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """Удаление агента"""
+    success = await delete_agent(db, agent_id)
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Агент с ID {agent_id} не найден"
+        )
+
+# ===== Эндпоинты метрик =====
+
+@router.post("/agents/{agent_id}/metrics", response_model=MetricResponse, status_code=status.HTTP_201_CREATED)
+async def save_agent_metric(
+    agent_id: str,
+    metric_data: MetricCreate,
+    db: AsyncSession = Depends(get_db)
+):
+    """Сохранение метрики агента"""
+    # Проверяем существование агента
+    if not await agent_exists(db, agent_id):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Агент с ID {agent_id} не найден"
+        )
     
-    agent_info = agent_service.register_agent(
-        agent_id, 
-        registration_data
-    )
+    # Подготавливаем данные метрики
+    metric_dict = metric_data.dict()
+    metric_dict['agent_id'] = agent_id
     
-    print(f"✅ Agent {agent_id} registered successfully")
-    return agent_info 
+    # Убираем network_connections из данных метрики, так как они сохраняются отдельно
+    network_connections = metric_dict.pop('network_connections', None)
+    
+    # Сохраняем метрику
+    metric = await save_metric(db, metric_dict)
+    
+    # Если есть сетевые соединения, сохраняем их отдельно
+    if network_connections:
+        await save_network_connections(db, metric.id, network_connections)
+    
+    return metric
+
+@router.get("/agents/{agent_id}/metrics", response_model=MetricListResponse)
+async def get_agent_metrics_list(
+    agent_id: str,
+    metric_type: Optional[str] = None,
+    limit: int = 100,
+    db: AsyncSession = Depends(get_db)
+):
+    """Получение метрик агента"""
+    # Проверяем существование агента
+    if not await agent_exists(db, agent_id):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Агент с ID {agent_id} не найден"
+        )
+    
+    metrics = await get_agent_metrics(db, agent_id, metric_type, limit)
+    return MetricListResponse(metrics=metrics, total=len(metrics))
+
+@router.get("/agents/{agent_id}/metrics/summary", response_model=MetricsSummaryResponse)
+async def get_metrics_summary_endpoint(
+    agent_id: str,
+    hours: int = 24,
+    db: AsyncSession = Depends(get_db)
+):
+    """Получение сводки метрик агента"""
+    # Проверяем существование агента
+    if not await agent_exists(db, agent_id):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Агент с ID {agent_id} не найден"
+        )
+    
+    summary = await get_metrics_summary(db, agent_id, hours)
+    return MetricsSummaryResponse(agent_id=agent_id, summary=summary, hours=hours)
+
+# ===== Эндпоинты пользовательских параметров =====
+
+@router.post("/agents/{agent_id}/parameters", response_model=UserParameterResponse, status_code=status.HTTP_201_CREATED)
+async def create_agent_parameter(
+    agent_id: str,
+    parameter_data: UserParameterCreate,
+    db: AsyncSession = Depends(get_db)
+):
+    """Создание пользовательского параметра агента"""
+    # Проверяем существование агента
+    if not await agent_exists(db, agent_id):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Агент с ID {agent_id} не найден"
+        )
+    
+    param = await create_user_parameter(db, agent_id, parameter_data.parameter_key, parameter_data.command)
+    return param
+
+@router.get("/agents/{agent_id}/parameters", response_model=List[UserParameterResponse])
+async def get_agent_parameters(
+    agent_id: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """Получение пользовательских параметров агента"""
+    # Проверяем существование агента
+    if not await agent_exists(db, agent_id):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Агент с ID {agent_id} не найден"
+        )
+    
+    parameters = await get_user_parameters(db, agent_id)
+    return parameters
+
+# ===== Эндпоинты справочников =====
+
+@router.get("/interpreters", response_model=List[InterpreterResponse])
+async def list_interpreters(db: AsyncSession = Depends(get_db)):
+    """Получение списка всех интерпретаторов"""
+    interpreters = await get_interpreters(db)
+    return interpreters
+
+@router.get("/metric-types", response_model=List[MetricTypeResponse])
+async def list_metric_types(db: AsyncSession = Depends(get_db)):
+    """Получение списка всех типов метрик"""
+    metric_types = await get_metric_types(db)
+    return metric_types 

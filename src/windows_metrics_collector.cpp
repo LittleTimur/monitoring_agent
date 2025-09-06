@@ -39,6 +39,7 @@
 #include <stdio.h>
 #include <io.h>
 #include <fcntl.h>
+#include <algorithm>
 
 #pragma comment(lib, "pdh.lib")
 #pragma comment(lib, "iphlpapi.lib")
@@ -50,6 +51,120 @@ namespace monitoring {
 
 FILE* popen_hidden(const char* command, const char* mode);
 std::string detect_machine_type_windows();
+
+// Функция для проверки, является ли ПО системным Windows компонентом
+bool is_windows_system_software(const std::string& software_name) {
+    std::string lower_name = software_name;
+    std::transform(lower_name.begin(), lower_name.end(), lower_name.begin(), ::tolower);
+    
+    // Основные ключевые слова для системного ПО Windows
+    std::vector<std::string> system_keywords = {
+        "microsoft windows",
+        "microsoft .net",
+        "microsoft visual c++",
+        "microsoft visual studio",
+        "windows sdk",
+        "universal crt",
+        "winrt intellisense",
+        "application verifier",
+        "windows app certification kit",
+        "windows mobile extension sdk",
+        "windows desktop extension sdk",
+        "windows iot extension sdk",
+        "windows team extension sdk",
+        "windows subsystem for linux",
+        "microsoft sql server",
+        "microsoft office",
+        "microsoft system clr types",
+        "microsoft ole db driver",
+        "microsoft odbc driver",
+        "microsoft command line utilities",
+        "microsoft asp.net core",
+        "microsoft help viewer",
+        "entity framework",
+        "intellitraceprofilerproxy",
+        "diagnosticshub_collectionservice",
+        "vs_",
+        "icecap_",
+        "wpt",
+        "vcpp_crt",
+        "clickonce",
+        "nuget",
+        "package",
+        "redistributable",
+        "runtime",
+        "targeting pack",
+        "framework",
+        "sdk",
+        "tools",
+        "headers",
+        "libs",
+        "contracts",
+        "metadata",
+        "facade",
+        "bootstrapper",
+        "signing",
+        "deployment",
+        "intellisense",
+        "workload",
+        "manifest",
+        "template",
+        "toolset",
+        "host",
+        "resolver",
+        "apphost",
+        "shared",
+        "common",
+        "core",
+        "standard",
+        "desktop",
+        "mobile",
+        "iot",
+        "team",
+        "web",
+        "graphics",
+        "blend",
+        "tips",
+        "protocol",
+        "filehandler",
+        "minshell",
+        "community",
+        "professional",
+        "enterprise",
+        "ultimate",
+        "starter",
+        "home",
+        "pro",
+        "edition",
+        "version",
+        "update",
+        "service pack",
+        "hotfix",
+        "kb",
+        "security update",
+        "cumulative update",
+        "feature update",
+        "quality update"
+    };
+    
+    // Проверяем, содержит ли название ПО системные ключевые слова
+    for (const auto& keyword : system_keywords) {
+        if (lower_name.find(keyword) != std::string::npos) {
+            return true;
+        }
+    }
+    
+    // Дополнительные проверки для специфичных паттернов
+    if (lower_name.find("microsoft") == 0 && 
+        (lower_name.find("windows") != std::string::npos || 
+         lower_name.find("sdk") != std::string::npos ||
+         lower_name.find("framework") != std::string::npos ||
+         lower_name.find("runtime") != std::string::npos)) {
+        return true;
+    }
+    
+    return false;
+}
 
 /**
  * @class WindowsMetricsCollector
@@ -371,7 +486,13 @@ SystemMetrics WindowsMetricsCollector::collect() {
                         VARIANT vt;
                         if (SUCCEEDED(pObj->Get(L"Name", 0, &vt, 0, 0))) {
                             std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
-                            if (vt.bstrVal) inv.installed_software.push_back(conv.to_bytes(vt.bstrVal));
+                            if (vt.bstrVal) {
+                                std::string software_name = conv.to_bytes(vt.bstrVal);
+                                // Фильтруем только стороннее ПО, исключая системное Windows ПО
+                                if (!is_windows_system_software(software_name)) {
+                                    inv.installed_software.push_back(software_name);
+                                }
+                            }
                             VariantClear(&vt);
                         }
                         pObj->Release();

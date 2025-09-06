@@ -1,0 +1,83 @@
+1. Таблица agents (Основная сущность)
+
+Хранит основную информацию об агенте. Связна со всеми остальными таблицами.
+CREATE TABLE agents (
+    agent_id VARCHAR(255) PRIMARY KEY, -- Уникальный идентификатор агента (agent_1756226557571_9029)
+    machine_name VARCHAR(255) NOT NULL, -- Имя машины (DESKTOP-0G7J1CI)
+    auto_detect_id BOOLEAN DEFAULT TRUE, -- Флаг автоопределения ID
+    auto_detect_name BOOLEAN DEFAULT TRUE, -- Флаг автоопределения имени машины
+    command_server_host INET DEFAULT '0.0.0.0', -- IP для прослушивания команд
+    command_server_port INTEGER DEFAULT 8081, -- Порт для прослушивания команд
+    command_server_url TEXT, -- URL командного сервера агента
+    server_url TEXT NOT NULL, -- URL центрального сервера (http://localhost:8000)
+    scripts_dir TEXT DEFAULT 'scripts', -- Директория для скриптов
+    audit_log_enabled BOOLEAN DEFAULT FALSE, -- Включено ли логирование
+    audit_log_path TEXT, -- Путь к файлу лога (если включено)
+    enable_inline_commands BOOLEAN DEFAULT TRUE, -- Разрешены ли inline-команды
+    enable_user_parameters BOOOLEAN DEFAULT TRUE, -- Разрешены ли пользовательские параметры
+    job_retention_seconds INTEGER DEFAULT 3600, -- Время хранения результатов задач (сек.)
+    max_buffer_size INTEGER DEFAULT 10, -- Макс. размер буфера
+    max_concurrent_jobs INTEGER DEFAULT 3, -- Макс. число одновременных задач
+    max_output_bytes BIGINT DEFAULT 1000000, -- Макс. размер вывода (байт)
+    max_script_timeout_sec INTEGER DEFAULT 60, -- Макс. время выполнения скрипта (сек.)
+    send_timeout_ms INTEGER DEFAULT 2000, -- Таймаут отправки (мс)
+    update_frequency INTEGER DEFAULT 60, -- Частота обновления (сек.)
+    created_at TIMESTAMPTZ DEFAULT NOW(), -- Дата регистрации агента
+    last_heartbeat TIMESTAMPTZ -- Дата последнего "сердцебиения" агента
+);
+2. Таблица agent_allowed_interpreters
+
+Разрешенные интерпретаторы команд для агента. Связь "многие-ко-многим" (один агент -> много интерпретаторов, один интерпретатор -> много агентов).
+CREATE TABLE interpreters (
+    name VARCHAR(50) PRIMARY KEY -- Название интерпретатора (bash, python, etc.)
+);
+
+CREATE TABLE agent_allowed_interpreters (
+    agent_id VARCHAR(255) REFERENCES agents(agent_id) ON DELETE CASCADE,
+    interpreter_name VARCHAR(50) REFERENCES interpreters(name) ON DELETE CASCADE,
+    PRIMARY KEY (agent_id, interpreter_name) -- Составной первичный ключ
+);
+
+3. Таблица agent_enabled_metrics
+
+Включенные метрики для сбора агентом. Аналогично интерпретаторам, связь "многие-ко-многим".
+CREATE TABLE metric_types (
+    name VARCHAR(50) PRIMARY KEY -- Тип метрики (cpu, memory, etc.)
+);
+
+CREATE TABLE agent_enabled_metrics (
+    agent_id VARCHAR(255) REFERENCES agents(agent_id) ON DELETE CASCADE,
+    metric_name VARCHAR(50) REFERENCES metric_types(name) ON DELETE CASCADE,
+    PRIMARY KEY (agent_id, metric_name) -- Составной первичный ключ
+);
+4. Таблица agent_user_parameters
+
+Пользовательские параметры (кастомные команды) агента. Связь "один-ко-многим" (один агент -> много параметров).
+CREATE TABLE agent_user_parameters (
+    id SERIAL PRIMARY KEY,
+    agent_id VARCHAR(255) NOT NULL REFERENCES agents(agent_id) ON DELETE CASCADE,
+    parameter_key VARCHAR(255) NOT NULL, -- Ключ параметра (hello, app.status[*])
+    command TEXT NOT NULL, -- Команда для выполнения (echo hello..., /opt/app/check_status.sh...)
+    UNIQUE(agent_id, parameter_key) -- Один параметр с таким ключом на агента
+);
+Описание сущностей и их связей
+
+1. agents (Агенты)
+   · Описание: Центральная сущность системы. Каждая запись представляет собой уникальный экземпляр агента, установленный на физической или виртуальной машине. Содержит все основные настройки, определяющие поведение агента: куда подключаться, как слушать команды, какие ограничения использовать.
+   · Ключевые атрибуты: agent_id (первичный ключ), machine_name, server_url.
+   · Связи:
+     · 1 : N с agent_user_parameters (Один агент имеет много пользовательских параметров).
+     · N : M с interpreters через таблицу agent_allowed_interpreters (Агенту разрешено использовать множество интерпретаторов).
+     · N : M с metric_types через таблицу agent_enabled_metrics (Агент собирает множество типов метрик).
+2. interpreters (Интерпретаторы) и agent_allowed_interpreters (Разрешенные интерпретаторы)
+   · Описание: Справочная сущность interpreters содержит все возможные типы интерпретаторов (bash, cmd, python). Таблица agent_allowed_interpreters является таблицей-связкой, которая определяет, какие именно интерпретаторы разрешено использовать конкретному агенту. Это классическая реализация связи "многие-ко-многим".
+   · Ключевые атрибуты: interpreter_name (первичный ключ для interpreters), (agent_id, interpreter_name) (составной первичный ключ для связи).
+3. metric_types (Типы метрик) и agent_enabled_metrics (Включенные метрики)
+   · Описание: Аналогично интерпретаторам. metric_types - справочник всех доступных для сбора метрик (CPU, memory, disk и т.д.). agent_enabled_metrics - таблица-связка, определяющая, какие метрики включены для сбора на каждом агенте. Позволяет гибко настраивать профиль сбора данных для разных групп агентов.
+   · Ключевые атрибуты: metric_name (первичный ключ для metric_types), (agent_id, metric_name) (составной первичный ключ для связи).
+4. agent_user_parameters (Пользовательские параметры агента)
+   · Описание: Хранит кастомные команды, уникальные для каждого агента. Эти команды могут быть вызваны с сервера по короткому ключу (например, "hello" или "app.status[*]"). Это мощный механизм для расширения функциональности агентов без изменения его ядра.
+   · Ключевые атрибуты: id (суррогатный первичный ключ), agent_id (внешний ключ), parameter_key (уникальный ключ команды для данного агента), command (сама команда или скрипт для выполнения).
+   · Связи: N : 1 с agents (Многие параметры принадлежат одному агенту).
+
+

@@ -8,6 +8,7 @@
 CREATE TABLE agents (
     agent_id VARCHAR(255) PRIMARY KEY,
     machine_name VARCHAR(255) NOT NULL,
+    agent_ip INET,  -- Реальный IP адрес агента
     auto_detect_id BOOLEAN DEFAULT TRUE,
     auto_detect_name BOOLEAN DEFAULT TRUE,
     command_server_host INET DEFAULT '0.0.0.0',

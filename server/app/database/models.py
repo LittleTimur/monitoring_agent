@@ -13,6 +13,7 @@ class Agent(Base):
     
     agent_id = Column(String(255), primary_key=True)
     machine_name = Column(String(255), nullable=False)
+    agent_ip = Column(INET, nullable=True)  # Реальный IP адрес агента
     auto_detect_id = Column(Boolean, default=True)
     auto_detect_name = Column(Boolean, default=True)
     command_server_host = Column(INET, default='0.0.0.0')

@@ -191,3 +191,163 @@ async def agent_exists(db: AsyncSession, agent_id: str) -> bool:
     )
     return result.scalar_one_or_none() is not None
 
+# ===== Управление конфигурацией агента =====
+
+async def update_agent_config(db: AsyncSession, agent_id: str, config_data: Dict[str, Any]) -> Agent:
+    """Обновление конфигурации агента"""
+    agent = await get_agent(db, agent_id)
+    if not agent:
+        return None
+    
+    # Обновляем только переданные поля (исключаем relationship поля)
+    relationship_fields = {'enabled_metrics', 'allowed_interpreters', 'user_parameters', 'metrics', 'network_connections'}
+    for key, value in config_data.items():
+        if hasattr(agent, key) and key not in relationship_fields:
+            setattr(agent, key, value)
+    
+    await db.commit()
+    await db.refresh(agent)
+    return agent
+
+# ===== Управление пользовательскими параметрами =====
+
+async def create_user_parameter(db: AsyncSession, agent_id: str, parameter_data: Dict[str, Any]) -> AgentUserParameter:
+    """Создание пользовательского параметра"""
+    parameter = AgentUserParameter(
+        agent_id=agent_id,
+        parameter_key=parameter_data["parameter_key"],
+        command=parameter_data["command"]
+    )
+    db.add(parameter)
+    await db.commit()
+    await db.refresh(parameter)
+    return parameter
+
+async def get_user_parameters(db: AsyncSession, agent_id: str) -> List[AgentUserParameter]:
+    """Получение пользовательских параметров агента"""
+    result = await db.execute(
+        select(AgentUserParameter).where(AgentUserParameter.agent_id == agent_id)
+    )
+    return result.scalars().all()
+
+async def update_user_parameter(db: AsyncSession, param_id: int, parameter_data: Dict[str, Any]) -> Optional[AgentUserParameter]:
+    """Обновление пользовательского параметра"""
+    result = await db.execute(
+        select(AgentUserParameter).where(AgentUserParameter.id == param_id)
+    )
+    parameter = result.scalar_one_or_none()
+    
+    if not parameter:
+        return None
+    
+    # Обновляем поля
+    for key, value in parameter_data.items():
+        if hasattr(parameter, key):
+            setattr(parameter, key, value)
+    
+    await db.commit()
+    await db.refresh(parameter)
+    return parameter
+
+async def delete_user_parameter(db: AsyncSession, param_id: int) -> bool:
+    """Удаление пользовательского параметра"""
+    result = await db.execute(
+        select(AgentUserParameter).where(AgentUserParameter.id == param_id)
+    )
+    parameter = result.scalar_one_or_none()
+    
+    if not parameter:
+        return False
+    
+    await db.delete(parameter)
+    await db.commit()
+    return True
+
+# ===== Управление включенными метриками =====
+
+async def create_agent_enabled_metric(db: AsyncSession, agent_id: str, metric_name: str) -> AgentEnabledMetric:
+    """Создание записи о включенной метрике для агента"""
+    # Проверяем, что метрика существует
+    metric_type_result = await db.execute(
+        select(MetricType).where(MetricType.name == metric_name)
+    )
+    if not metric_type_result.scalar_one_or_none():
+        # Создаем тип метрики, если его нет
+        metric_type = MetricType(name=metric_name)
+        db.add(metric_type)
+        await db.commit()
+    
+    # Создаем связь агент-метрика
+    enabled_metric = AgentEnabledMetric(
+        agent_id=agent_id,
+        metric_name=metric_name
+    )
+    db.add(enabled_metric)
+    await db.commit()
+    await db.refresh(enabled_metric)
+    return enabled_metric
+
+# ===== Управление разрешенными интерпретаторами =====
+
+async def create_agent_allowed_interpreter(db: AsyncSession, agent_id: str, interpreter_name: str) -> AgentAllowedInterpreter:
+    """Создание записи о разрешенном интерпретаторе для агента"""
+    # Проверяем, что интерпретатор существует
+    interpreter_result = await db.execute(
+        select(Interpreter).where(Interpreter.name == interpreter_name)
+    )
+    if not interpreter_result.scalar_one_or_none():
+        # Создаем интерпретатор, если его нет
+        interpreter = Interpreter(name=interpreter_name)
+        db.add(interpreter)
+        await db.commit()
+    
+    # Создаем связь агент-интерпретатор
+    allowed_interpreter = AgentAllowedInterpreter(
+        agent_id=agent_id,
+        interpreter_name=interpreter_name
+    )
+    db.add(allowed_interpreter)
+    await db.commit()
+    await db.refresh(allowed_interpreter)
+    return allowed_interpreter
+
+async def delete_agent_enabled_metrics(db: AsyncSession, agent_id: str) -> bool:
+    """Удаление всех включенных метрик агента"""
+    result = await db.execute(
+        select(AgentEnabledMetric).where(AgentEnabledMetric.agent_id == agent_id)
+    )
+    metrics = result.scalars().all()
+    
+    for metric in metrics:
+        await db.delete(metric)
+    
+    await db.commit()
+    return True
+
+async def delete_agent_allowed_interpreters(db: AsyncSession, agent_id: str) -> bool:
+    """Удаление всех разрешенных интерпретаторов агента"""
+    result = await db.execute(
+        select(AgentAllowedInterpreter).where(AgentAllowedInterpreter.agent_id == agent_id)
+    )
+    interpreters = result.scalars().all()
+    
+    for interpreter in interpreters:
+        await db.delete(interpreter)
+    
+    await db.commit()
+    return True
+
+async def get_agent_enabled_metrics(db: AsyncSession, agent_id: str) -> List[AgentEnabledMetric]:
+    """Получение включенных метрик агента"""
+    result = await db.execute(
+        select(AgentEnabledMetric).where(AgentEnabledMetric.agent_id == agent_id)
+    )
+    return result.scalars().all()
+
+async def get_agent_allowed_interpreters(db: AsyncSession, agent_id: str) -> List[AgentAllowedInterpreter]:
+    """Получение разрешенных интерпретаторов агента"""
+    result = await db.execute(
+        select(AgentAllowedInterpreter).where(AgentAllowedInterpreter.agent_id == agent_id)
+    )
+    return result.scalars().all()
+

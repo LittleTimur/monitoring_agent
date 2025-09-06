@@ -1623,6 +1623,9 @@ nlohmann::json AgentManager::collect_metrics(const std::vector<std::string>& req
     j["agent_id"] = config_.agent_id;
     j["machine_name"] = config_.machine_name;
     
+    // Добавляем конфигурацию агента
+    j["config"] = config_.to_json();
+    
     // Добавляем метрики согласно enabled_metrics (убираем проверку config_.is_metric_enabled)
     for (const auto& metric_type : enabled_metrics) {
         if (metric_type == "cpu") {

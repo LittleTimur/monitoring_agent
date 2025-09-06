@@ -78,6 +78,7 @@ struct AgentConfig {
     void auto_detect_agent_info();
     std::string generate_agent_id();
     std::string get_machine_name();
+    std::string get_local_ip();
     
     // Работа с метриками
     bool is_metric_enabled(const std::string& metric_name) const;

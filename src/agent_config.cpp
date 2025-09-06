@@ -9,11 +9,16 @@
 #ifdef _WIN32
 #include <windows.h>
 #include <iphlpapi.h>
+#include <ws2tcpip.h>
+#include <winsock2.h>
 #pragma comment(lib, "iphlpapi.lib")
+#pragma comment(lib, "ws2_32.lib")
 #else
 #include <unistd.h>
 #include <sys/utsname.h>
 #include <linux/limits.h>
+#include <ifaddrs.h>
+#include <arpa/inet.h>
 #endif
 
 namespace agent {
@@ -250,6 +255,70 @@ std::string AgentConfig::get_machine_name() {
     return "Unknown-Machine";
 }
 
+std::string AgentConfig::get_local_ip() {
+#ifdef _WIN32
+    // Windows: используем простой способ через gethostname и gethostbyname
+    WSADATA wsaData;
+    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
+        return "127.0.0.1";
+    }
+    
+    char hostname[256];
+    if (gethostname(hostname, sizeof(hostname)) == SOCKET_ERROR) {
+        WSACleanup();
+        return "127.0.0.1";
+    }
+    
+    struct hostent* host_entry = gethostbyname(hostname);
+    if (host_entry == nullptr) {
+        WSACleanup();
+        return "127.0.0.1";
+    }
+    
+    // Получаем первый не-локальный IP адрес
+    for (int i = 0; host_entry->h_addr_list[i] != nullptr; i++) {
+        struct in_addr addr;
+        memcpy(&addr, host_entry->h_addr_list[i], sizeof(struct in_addr));
+        char* ip_str = inet_ntoa(addr);
+        
+        // Пропускаем локальные адреса
+        if (strncmp(ip_str, "127.", 4) != 0 && strncmp(ip_str, "169.254.", 8) != 0) {
+            WSACleanup();
+            return std::string(ip_str);
+        }
+    }
+    
+    WSACleanup();
+    return "127.0.0.1";
+#else
+    // Linux: получаем IP адрес через getifaddrs
+    struct ifaddrs *ifaddr, *ifa;
+    if (getifaddrs(&ifaddr) == -1) {
+        return "127.0.0.1";
+    }
+    
+    for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
+        if (ifa->ifa_addr == NULL) continue;
+        
+        if (ifa->ifa_addr->sa_family == AF_INET) {
+            struct sockaddr_in* sa_in = (struct sockaddr_in*)ifa->ifa_addr;
+            char ip_str[INET_ADDRSTRLEN];
+            inet_ntop(AF_INET, &(sa_in->sin_addr), ip_str, INET_ADDRSTRLEN);
+            
+            // Пропускаем локальные адреса и loopback
+            if (strncmp(ip_str, "127.", 4) != 0 && 
+                strncmp(ip_str, "169.254.", 8) != 0 &&
+                strcmp(ifa->ifa_name, "lo") != 0) {
+                freeifaddrs(ifaddr);
+                return std::string(ip_str);
+            }
+        }
+    }
+    freeifaddrs(ifaddr);
+#endif
+    return "127.0.0.1"; // Fallback
+}
+
 void AgentConfig::auto_detect_agent_info() {
     if (auto_detect_id && agent_id.empty()) {
         agent_id = generate_agent_id();
@@ -259,6 +328,13 @@ void AgentConfig::auto_detect_agent_info() {
     if (auto_detect_name && machine_name.empty()) {
         machine_name = get_machine_name();
         std::cout << "Auto-detected Machine Name: " << machine_name << std::endl;
+    }
+
+    
+    // Автоматически определяем IP и обновляем command_server_url
+    if (command_server_url == "http://localhost:8081" || command_server_url.empty()) {
+        std::string local_ip = get_local_ip();
+        command_server_url = "http://" + local_ip + ":" + std::to_string(command_server_port);
     }
 }
 

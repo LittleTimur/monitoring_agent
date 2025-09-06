@@ -1,40 +1,27 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List, Optional
+from typing import List, Optional, Dict
 from datetime import datetime
 
 from ..database.connection import get_db
 from ..database.api import (
-    create_agent, get_agent, get_all_agents, update_agent_heartbeat, delete_agent,
-    save_metric, save_network_connections, get_agent_metrics, get_metrics_summary,
-    create_user_parameter, get_user_parameters, get_interpreters, get_metric_types,
-    agent_exists
+    get_agent, get_all_agents, update_agent_heartbeat, delete_agent,
+    get_agent_metrics, get_metrics_summary, get_interpreters, get_metric_types,
+    agent_exists, update_agent_config, create_user_parameter, get_user_parameters,
+    update_user_parameter, delete_user_parameter
 )
 from ..schemas import (
-    AgentCreate, AgentResponse, AgentHeartbeat, AgentListResponse,
-    MetricCreate, MetricResponse, MetricListResponse, MetricsSummaryResponse,
-    UserParameterCreate, UserParameterResponse, InterpreterResponse, MetricTypeResponse
+    AgentResponse, AgentHeartbeat, AgentListResponse,
+    MetricListResponse, MetricsSummaryResponse,
+    InterpreterResponse, MetricTypeResponse,
+    AgentCommand, AgentCommandResponse, ScriptExecutionRequest, 
+    ConfigUpdateRequest, UserParameterCreate, UserParameterResponse
 )
+# Убрали импорт agent_service - теперь работаем только с БД
 
 router = APIRouter(prefix="/api/v1", tags=["agents"])
 
 # ===== Эндпоинты агентов =====
-
-@router.post("/agents", response_model=AgentResponse, status_code=status.HTTP_201_CREATED)
-async def register_agent(
-    agent_data: AgentCreate,
-    db: AsyncSession = Depends(get_db)
-):
-    """Регистрация нового агента"""
-    # Проверяем, не существует ли уже агент с таким ID
-    if await agent_exists(db, agent_data.agent_id):
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=f"Агент с ID {agent_data.agent_id} уже существует"
-        )
-    
-    agent = await create_agent(db, agent_data.dict())
-    return agent
 
 @router.get("/agents", response_model=AgentListResponse)
 async def list_agents(db: AsyncSession = Depends(get_db)):
@@ -72,7 +59,7 @@ async def update_heartbeat(
 
 @router.delete("/agents/{agent_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def remove_agent(
-    agent_id: str,
+    agent_id: str, 
     db: AsyncSession = Depends(get_db)
 ):
     """Удаление агента"""
@@ -85,39 +72,9 @@ async def remove_agent(
 
 # ===== Эндпоинты метрик =====
 
-@router.post("/agents/{agent_id}/metrics", response_model=MetricResponse, status_code=status.HTTP_201_CREATED)
-async def save_agent_metric(
-    agent_id: str,
-    metric_data: MetricCreate,
-    db: AsyncSession = Depends(get_db)
-):
-    """Сохранение метрики агента"""
-    # Проверяем существование агента
-    if not await agent_exists(db, agent_id):
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Агент с ID {agent_id} не найден"
-        )
-    
-    # Подготавливаем данные метрики
-    metric_dict = metric_data.dict()
-    metric_dict['agent_id'] = agent_id
-    
-    # Убираем network_connections из данных метрики, так как они сохраняются отдельно
-    network_connections = metric_dict.pop('network_connections', None)
-    
-    # Сохраняем метрику
-    metric = await save_metric(db, metric_dict)
-    
-    # Если есть сетевые соединения, сохраняем их отдельно
-    if network_connections:
-        await save_network_connections(db, metric.id, network_connections)
-    
-    return metric
-
 @router.get("/agents/{agent_id}/metrics", response_model=MetricListResponse)
 async def get_agent_metrics_list(
-    agent_id: str,
+    agent_id: str, 
     metric_type: Optional[str] = None,
     limit: int = 100,
     db: AsyncSession = Depends(get_db)
@@ -150,41 +107,6 @@ async def get_metrics_summary_endpoint(
     summary = await get_metrics_summary(db, agent_id, hours)
     return MetricsSummaryResponse(agent_id=agent_id, summary=summary, hours=hours)
 
-# ===== Эндпоинты пользовательских параметров =====
-
-@router.post("/agents/{agent_id}/parameters", response_model=UserParameterResponse, status_code=status.HTTP_201_CREATED)
-async def create_agent_parameter(
-    agent_id: str,
-    parameter_data: UserParameterCreate,
-    db: AsyncSession = Depends(get_db)
-):
-    """Создание пользовательского параметра агента"""
-    # Проверяем существование агента
-    if not await agent_exists(db, agent_id):
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Агент с ID {agent_id} не найден"
-        )
-    
-    param = await create_user_parameter(db, agent_id, parameter_data.parameter_key, parameter_data.command)
-    return param
-
-@router.get("/agents/{agent_id}/parameters", response_model=List[UserParameterResponse])
-async def get_agent_parameters(
-    agent_id: str,
-    db: AsyncSession = Depends(get_db)
-):
-    """Получение пользовательских параметров агента"""
-    # Проверяем существование агента
-    if not await agent_exists(db, agent_id):
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Агент с ID {agent_id} не найден"
-        )
-    
-    parameters = await get_user_parameters(db, agent_id)
-    return parameters
-
 # ===== Эндпоинты справочников =====
 
 @router.get("/interpreters", response_model=List[InterpreterResponse])
@@ -197,4 +119,376 @@ async def list_interpreters(db: AsyncSession = Depends(get_db)):
 async def list_metric_types(db: AsyncSession = Depends(get_db)):
     """Получение списка всех типов метрик"""
     metric_types = await get_metric_types(db)
-    return metric_types 
+    return metric_types
+
+# ===== Эндпоинты команд агента =====
+
+@router.post("/agents/{agent_id}/commands/collect-metrics", response_model=AgentCommandResponse)
+async def collect_agent_metrics(
+    agent_id: str,
+    metrics: Optional[Dict[str, bool]] = None,
+    db: AsyncSession = Depends(get_db)
+):
+    """Отправка команды агенту на сбор метрик"""
+    # Проверяем существование агента в базе данных
+    agent = await get_agent(db, agent_id)
+    if not agent:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Агент с ID {agent_id} не найден"
+        )
+    
+    # Агент найден в базе данных, продолжаем
+    
+    # Отправляем команду агенту через HTTP
+    try:
+        # Определяем URL командного сервера агента
+        # Используем только command_server_url из базы данных
+        if hasattr(agent, 'command_server_url') and agent.command_server_url:
+            command_server_url = agent.command_server_url
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Агент не имеет настроенного command_server_url"
+            )
+        
+        # Подготавливаем данные для отправки
+        command_data = {}
+        if metrics:
+            command_data["metrics"] = metrics
+        
+        # Отправляем HTTP запрос агенту
+        import aiohttp
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                f"{command_server_url}/command",
+                json={
+                    "command": "collect_metrics",
+                    "data": command_data,
+                    "timestamp": datetime.utcnow().isoformat()
+                },
+                timeout=aiohttp.ClientTimeout(total=5)
+            ) as response:
+                if response.status == 200:
+                    return AgentCommandResponse(
+                        success=True,
+                        message="Collect metrics command sent to agent",
+                        data=command_data,
+                        timestamp=datetime.utcnow().isoformat()
+                    )
+                else:
+                    return AgentCommandResponse(
+                        success=False,
+                        message=f"Failed to send command: HTTP {response.status}",
+                        data=None,
+                        timestamp=datetime.utcnow().isoformat()
+                    )
+    except Exception as e:
+        return AgentCommandResponse(
+            success=False,
+            message=f"Error sending command: {str(e)}",
+            data=None,
+            timestamp=datetime.utcnow().isoformat()
+        )
+
+@router.post("/agents/{agent_id}/commands/update-config", response_model=AgentCommandResponse)
+async def update_agent_config_command(
+    agent_id: str,
+    config_data: ConfigUpdateRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """Отправка команды агенту на обновление конфигурации"""
+    # Проверяем существование агента в базе данных
+    agent = await get_agent(db, agent_id)
+    if not agent:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Агент с ID {agent_id} не найден"
+        )
+    
+    # Агент найден в базе данных, продолжаем
+    
+    # Обновляем конфигурацию в базе данных
+    await update_agent_config(db, agent_id, config_data.dict(exclude_unset=True))
+    
+    # Обновляем включенные метрики, если они переданы
+    if config_data.enabled_metrics is not None:
+        from ..database.api import create_agent_enabled_metric, delete_agent_enabled_metrics
+        
+        # Удаляем старые метрики
+        await delete_agent_enabled_metrics(db, agent_id)
+        
+        # Добавляем новые метрики
+        for metric_name, enabled in config_data.enabled_metrics.items():
+            if enabled:
+                await create_agent_enabled_metric(db, agent_id, metric_name)
+    
+    # Обновляем разрешенные интерпретаторы, если они переданы
+    if hasattr(config_data, 'allowed_interpreters') and config_data.allowed_interpreters is not None:
+        from ..database.api import create_agent_allowed_interpreter, delete_agent_allowed_interpreters
+        
+        # Удаляем старые интерпретаторы
+        await delete_agent_allowed_interpreters(db, agent_id)
+        
+        # Добавляем новые интерпретаторы
+        for interpreter_name in config_data.allowed_interpreters:
+            await create_agent_allowed_interpreter(db, agent_id, interpreter_name)
+    
+    # Отправляем команду агенту через HTTP
+    try:
+        # Получаем информацию об агенте из БД для определения URL
+        agent = await get_agent(db, agent_id)
+        if not agent:
+            raise HTTPException(status_code=404, detail="Агент не найден")
+        
+        # Определяем URL командного сервера агента
+        # Используем только command_server_url из базы данных
+        if hasattr(agent, 'command_server_url') and agent.command_server_url:
+            command_server_url = agent.command_server_url
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Агент не имеет настроенного command_server_url"
+            )
+        
+        # Подготавливаем данные для отправки
+        config_dict = config_data.dict(exclude_unset=True)
+        
+        # Отправляем HTTP запрос агенту
+        import aiohttp
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                f"{command_server_url}/command",
+                json={
+                    "command": "update_config",
+                    "data": config_dict,
+                    "timestamp": datetime.utcnow().isoformat()
+                },
+                timeout=aiohttp.ClientTimeout(total=5)
+            ) as response:
+                if response.status == 200:
+                    return AgentCommandResponse(
+                        success=True,
+                        message="Configuration update command sent to agent",
+                        data=config_dict,
+                        timestamp=datetime.utcnow().isoformat()
+                    )
+                else:
+                    return AgentCommandResponse(
+                        success=False,
+                        message=f"Failed to send command: HTTP {response.status}",
+                        data=None,
+                        timestamp=datetime.utcnow().isoformat()
+                    )
+    except Exception as e:
+        return AgentCommandResponse(
+            success=False,
+            message=f"Error sending command: {str(e)}",
+            data=None,
+            timestamp=datetime.utcnow().isoformat()
+        )
+
+@router.post("/agents/{agent_id}/commands/restart", response_model=AgentCommandResponse)
+async def restart_agent_command(
+    agent_id: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """Отправка команды агенту на перезапуск"""
+    # Проверяем существование агента в базе данных
+    agent = await get_agent(db, agent_id)
+    if not agent:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Агент с ID {agent_id} не найден"
+        )
+    
+    # Агент найден в базе данных, продолжаем
+    
+    # Отправляем команду агенту через HTTP
+    try:
+        # Определяем URL командного сервера агента
+        # Используем только command_server_url из базы данных
+        if hasattr(agent, 'command_server_url') and agent.command_server_url:
+            command_server_url = agent.command_server_url
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Агент не имеет настроенного command_server_url"
+            )
+        
+        # Отправляем HTTP запрос агенту
+        import aiohttp
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                f"{command_server_url}/command",
+                json={
+                    "command": "restart",
+                    "timestamp": datetime.utcnow().isoformat()
+                },
+                timeout=aiohttp.ClientTimeout(total=5)
+            ) as response:
+                if response.status == 200:
+                    return AgentCommandResponse(
+                        success=True,
+                        message="Restart command sent to agent",
+                        data=None,
+                        timestamp=datetime.utcnow().isoformat()
+                    )
+                else:
+                    return AgentCommandResponse(
+                        success=False,
+                        message=f"Failed to send command: HTTP {response.status}",
+                        data=None,
+                        timestamp=datetime.utcnow().isoformat()
+                    )
+    except Exception as e:
+        return AgentCommandResponse(
+            success=False,
+            message=f"Error sending command: {str(e)}",
+            data=None,
+            timestamp=datetime.utcnow().isoformat()
+        )
+
+@router.post("/agents/{agent_id}/commands/stop", response_model=AgentCommandResponse)
+async def stop_agent_command(
+    agent_id: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """Отправка команды агенту на остановку"""
+    # Проверяем существование агента в базе данных
+    agent = await get_agent(db, agent_id)
+    if not agent:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Агент с ID {agent_id} не найден"
+        )
+    
+    # Агент найден в базе данных, продолжаем
+    
+    # Отправляем команду агенту через HTTP
+    try:
+        # Определяем URL командного сервера агента
+        # Используем только command_server_url из базы данных
+        if hasattr(agent, 'command_server_url') and agent.command_server_url:
+            command_server_url = agent.command_server_url
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Агент не имеет настроенного command_server_url"
+            )
+        
+        # Отправляем HTTP запрос агенту
+        import aiohttp
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                f"{command_server_url}/command",
+                json={
+                    "command": "stop",
+                    "timestamp": datetime.utcnow().isoformat()
+                },
+                timeout=aiohttp.ClientTimeout(total=5)
+            ) as response:
+                if response.status == 200:
+                    return AgentCommandResponse(
+                        success=True,
+                        message="Stop command sent to agent",
+                        data=None,
+                        timestamp=datetime.utcnow().isoformat()
+                    )
+                else:
+                    return AgentCommandResponse(
+                        success=False,
+                        message=f"Failed to send command: HTTP {response.status}",
+                        data=None,
+                        timestamp=datetime.utcnow().isoformat()
+                    )
+    except Exception as e:
+        return AgentCommandResponse(
+            success=False,
+            message=f"Error sending command: {str(e)}",
+            data=None,
+            timestamp=datetime.utcnow().isoformat()
+        )
+
+# ===== Эндпоинты пользовательских параметров =====
+
+@router.post("/agents/{agent_id}/parameters", response_model=UserParameterResponse)
+async def create_user_parameter_endpoint(
+    agent_id: str,
+    parameter_data: UserParameterCreate,
+    db: AsyncSession = Depends(get_db)
+):
+    """Создание пользовательского параметра для агента"""
+    # Проверяем существование агента
+    if not await agent_exists(db, agent_id):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Агент с ID {agent_id} не найден"
+        )
+    
+    # Создаем параметр
+    parameter = await create_user_parameter(db, agent_id, parameter_data.dict())
+    return parameter
+
+@router.get("/agents/{agent_id}/parameters", response_model=List[UserParameterResponse])
+async def get_user_parameters_endpoint(
+    agent_id: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """Получение пользовательских параметров агента"""
+    # Проверяем существование агента
+    if not await agent_exists(db, agent_id):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Агент с ID {agent_id} не найден"
+        )
+    
+    # Получаем параметры
+    parameters = await get_user_parameters(db, agent_id)
+    return parameters
+
+@router.put("/agents/{agent_id}/parameters/{param_id}", response_model=UserParameterResponse)
+async def update_user_parameter_endpoint(
+    agent_id: str,
+    param_id: int,
+    parameter_data: UserParameterCreate,
+    db: AsyncSession = Depends(get_db)
+):
+    """Обновление пользовательского параметра агента"""
+    # Проверяем существование агента
+    if not await agent_exists(db, agent_id):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Агент с ID {agent_id} не найден"
+        )
+    
+    # Обновляем параметр
+    parameter = await update_user_parameter(db, param_id, parameter_data.dict())
+    if not parameter:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Параметр с ID {param_id} не найден"
+        )
+    return parameter
+
+@router.delete("/agents/{agent_id}/parameters/{param_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_user_parameter_endpoint(
+    agent_id: str,
+    param_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    """Удаление пользовательского параметра агента"""
+    # Проверяем существование агента
+    if not await agent_exists(db, agent_id):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Агент с ID {agent_id} не найден"
+        )
+    
+    # Удаляем параметр
+    success = await delete_user_parameter(db, param_id)
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Параметр с ID {param_id} не найден"
+        ) 

@@ -1,0 +1,13 @@
+{
+  "enabled_metrics": {
+    "cpu": false,
+    "disk": false,
+    "gpu": false,
+    "hdd": false,
+    "inventory": false,
+    "memory": false,
+    "network": false,
+    "user": true
+  },
+  "update_frequency": 35
+}

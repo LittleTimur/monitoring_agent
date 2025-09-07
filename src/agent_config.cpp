@@ -116,9 +116,7 @@ AgentConfig AgentConfig::load_from_file(const std::string& filename) {
             nlohmann::json j;
             file >> j;
             config = from_json(j);
-            std::cout << "Configuration loaded from " << filename << std::endl;
         } else {
-            std::cout << "Configuration file not found, using defaults" << std::endl;
         }
     } catch (const std::exception& e) {
         std::cerr << "Error loading configuration: " << e.what() << std::endl;
@@ -184,7 +182,6 @@ void AgentConfig::save_to_file(const std::string& filename) const {
         std::ofstream file(filename);
         if (file.is_open()) {
             file << to_json().dump(2);
-            std::cout << "Configuration saved to " << filename << std::endl;
         }
     } catch (const std::exception& e) {
         std::cerr << "Error saving configuration: " << e.what() << std::endl;
@@ -322,12 +319,10 @@ std::string AgentConfig::get_local_ip() {
 void AgentConfig::auto_detect_agent_info() {
     if (auto_detect_id && agent_id.empty()) {
         agent_id = generate_agent_id();
-        std::cout << "Auto-detected Agent ID: " << agent_id << std::endl;
     }
     
     if (auto_detect_name && machine_name.empty()) {
         machine_name = get_machine_name();
-        std::cout << "Auto-detected Machine Name: " << machine_name << std::endl;
     }
 
     

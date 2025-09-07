@@ -124,7 +124,7 @@ if(USE_NEW_AGENT)
     if(WIN32)
         list(APPEND SOURCES_NEW src/windows_metrics_collector.cpp)
         add_executable(${PROJECT_NAME}_new ${SOURCES_NEW})
-        # set_target_properties(${PROJECT_NAME}_new PROPERTIES WIN32_EXECUTABLE TRUE)
+        set_target_properties(${PROJECT_NAME}_new PROPERTIES WIN32_EXECUTABLE TRUE)
         target_link_libraries(${PROJECT_NAME}_new PRIVATE
             cpr::cpr
             pdh
@@ -149,6 +149,11 @@ if(USE_NEW_AGENT)
             NOMINMAX
             WIN32_LEAN_AND_MEAN
         )
+        # Не используем статическую линковку, так как нужны DLL для cpr
+        # set_target_properties(${PROJECT_NAME}_new PROPERTIES
+        #     COMPILE_FLAGS_RELEASE "/MT"
+        #     COMPILE_FLAGS_DEBUG "/MTd"
+        # )
     endif()
     
     # Копирование DLL для новой версии

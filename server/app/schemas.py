@@ -173,6 +173,11 @@ class ConfigUpdateRequest(BaseModel):
     audit_log_enabled: Optional[bool] = Field(None, description="Включено логирование")
     audit_log_path: Optional[str] = Field(None, description="Путь к логу")
 
+class CollectMetricsRequest(BaseModel):
+    """Запрос на сбор метрик"""
+    metrics: Optional[Dict[str, bool]] = Field(None, description="Конкретные метрики для сбора")
+    immediate: Optional[bool] = Field(True, description="Немедленный сбор метрик")
+
 # ===== Схемы справочников =====
 
 class InterpreterResponse(BaseModel):

@@ -1242,7 +1242,9 @@ CommandResponse AgentManager::handle_collect_metrics(const Command& cmd) {
                     if (it.value().get<bool>()) {
                         requested_metrics.push_back(it.key());
                     }
+
                 }
+
             }
         }
         
@@ -1744,4 +1746,5 @@ void AgentManager::initialize_metrics_collector() {
 #endif
 }
 
-} // namespace agent 
+} // namespace agent } // namespace agent 
+

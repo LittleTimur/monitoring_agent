@@ -155,23 +155,19 @@ void signal_handler(int signal) {
  * @brief Точка входа в программу
  * @return 0 при успешном завершении, 1 при ошибке
  */
+#ifdef _WIN32
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
+#else
 int main() {
-    // Set console to UTF-8 for Windows
-    #ifdef _WIN32
-    SetConsoleCP(CP_UTF8);
-    SetConsoleOutputCP(CP_UTF8);
-    #endif
+#endif
     // Устанавливаем обработчик сигналов
     std::signal(SIGINT, signal_handler);
     std::signal(SIGTERM, signal_handler);
 
     try {
-        std::cout << "[START] Starting Monitoring Agent..." << std::endl;
         
         // Определяем путь к конфигурационному файлу рядом с исполняемым файлом
         std::string config_path = agent::AgentConfig::get_config_path("agent_config.json");
-        
-        std::cout << "Config path: " << config_path << std::endl;
         
         // Загружаем конфигурацию
         agent::AgentConfig config = agent::AgentConfig::load_from_file(config_path);
@@ -182,49 +178,32 @@ int main() {
         // Сохраняем конфигурацию с автоматически определенными значениями
         config.save_to_file(config_path);
         
-        std::cout << "Agent ID: " << config.agent_id << std::endl;
-        std::cout << "Machine: " << config.machine_name << std::endl;
-        std::cout << "Server URL: " << config.server_url << std::endl;
         // Используем config.update_frequency для интервала сбора метрик
-        std::cout << "Collecting metrics every " << config.update_frequency << " seconds" << std::endl;
         
         // Выводим информацию о включенных метриках
-        std::cout << "Enabled metrics:" << std::endl;
-        for (const auto& [metric, enabled] : config.enabled_metrics) {
-            std::cout << "   " << (enabled ? "ENABLED" : "DISABLED") << " " << metric << std::endl;
-        }
+       
         
         // Создаем и запускаем менеджер агента
         auto agent_manager = std::make_unique<agent::AgentManager>(config, config_path);
         
-        std::cout << "Starting agent manager..." << std::endl;
         agent_manager->start();
         
-        std::cout << "Agent started successfully!" << std::endl;
-        std::cout << "Listening for commands on port " << config.command_server_port << std::endl;
-        std::cout << "Collecting metrics every " << config.update_frequency << " seconds" << std::endl;
-        std::cout << "=" << std::string(50, '=') << std::endl;
         
         // Main loop
         while (g_running && agent_manager->is_running()) {
             try {
                 std::this_thread::sleep_for(std::chrono::seconds(1));
             } catch (const std::exception& e) {
-                std::cerr << "[ERROR] Error in main loop: " << e.what() << std::endl;
                 // Продолжаем работу, не завершаем агент
             } catch (...) {
-                std::cerr << "[ERROR] Unknown error in main loop" << std::endl;
                 // Продолжаем работу, не завершаем агент
             }
         }
         
-        std::cout << "\nStopping agent..." << std::endl;
         agent_manager->stop();
         
-        std::cout << "Agent stopped successfully!" << std::endl;
         
     } catch (const std::exception& e) {
-        std::cerr << "[ERROR] Error: " << e.what() << std::endl;
         return 1;
     }
     

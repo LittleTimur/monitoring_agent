@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Body
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional, Dict
 from datetime import datetime
@@ -15,7 +15,7 @@ from ..schemas import (
     MetricListResponse, MetricsSummaryResponse,
     InterpreterResponse, MetricTypeResponse,
     AgentCommand, AgentCommandResponse, ScriptExecutionRequest, 
-    ConfigUpdateRequest, UserParameterCreate, UserParameterResponse
+    ConfigUpdateRequest, CollectMetricsRequest, UserParameterCreate, UserParameterResponse
 )
 # Убрали импорт agent_service - теперь работаем только с БД
 
@@ -126,7 +126,7 @@ async def list_metric_types(db: AsyncSession = Depends(get_db)):
 @router.post("/agents/{agent_id}/commands/collect-metrics", response_model=AgentCommandResponse)
 async def collect_agent_metrics(
     agent_id: str,
-    metrics: Optional[Dict[str, bool]] = None,
+    request: CollectMetricsRequest = Body(default=CollectMetricsRequest()),
     db: AsyncSession = Depends(get_db)
 ):
     """Отправка команды агенту на сбор метрик"""
@@ -154,36 +154,69 @@ async def collect_agent_metrics(
         
         # Подготавливаем данные для отправки
         command_data = {}
-        if metrics:
-            command_data["metrics"] = metrics
+        if request.metrics:
+            command_data["metrics"] = request.metrics
+        else:
+            # Если метрики не указаны, отправляем пустой объект metrics для сбора всех метрик
+            command_data["metrics"] = {}
+        
+        # Добавляем поле immediate
+        command_data["immediate"] = request.immediate
         
         # Отправляем HTTP запрос агенту
+        json_payload = {
+            "command": "collect_metrics",
+            "data": command_data,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        print(f"📤 JSON payload для collect_metrics: {json_payload}")
+        print(f"📤 URL для отправки: {command_server_url}/command")
+        
         import aiohttp
         async with aiohttp.ClientSession() as session:
             async with session.post(
                 f"{command_server_url}/command",
-                json={
-                    "command": "collect_metrics",
-                    "data": command_data,
-                    "timestamp": datetime.utcnow().isoformat()
-                },
-                timeout=aiohttp.ClientTimeout(total=5)
+                json=json_payload,
+                timeout=aiohttp.ClientTimeout(total=180)
             ) as response:
+                response_text = await response.text()
+                print(f"📥 Ответ от агента: HTTP {response.status}")
+                print(f"📥 Содержимое ответа: {response_text}")
+                
                 if response.status == 200:
-                    return AgentCommandResponse(
-                        success=True,
-                        message="Collect metrics command sent to agent",
-                        data=command_data,
-                        timestamp=datetime.utcnow().isoformat()
-                    )
+                    try:
+                        # Парсим ответ от агента
+                        import json
+                        agent_response = json.loads(response_text)
+                        
+                        # Возвращаем ответ агента как есть
+                        return AgentCommandResponse(
+                            success=agent_response.get("success", True),
+                            message=agent_response.get("message", "Command executed"),
+                            data=agent_response.get("data"),
+                            timestamp=agent_response.get("timestamp", datetime.utcnow().isoformat())
+                        )
+                    except json.JSONDecodeError as e:
+                        print(f"❌ Ошибка парсинга JSON ответа агента: {e}")
+                        return AgentCommandResponse(
+                            success=False,
+                            message=f"Invalid JSON response from agent: {str(e)}",
+                            data=None,
+                            timestamp=datetime.utcnow().isoformat()
+                        )
                 else:
                     return AgentCommandResponse(
                         success=False,
-                        message=f"Failed to send command: HTTP {response.status}",
+                        message=f"Failed to send command: HTTP {response.status} - {response_text}",
                         data=None,
                         timestamp=datetime.utcnow().isoformat()
                     )
     except Exception as e:
+        print(f"❌ Ошибка отправки команды collect-metrics: {repr(e)}")
+        print(f"❌ Тип ошибки: {type(e).__name__}")
+        print(f"❌ Детали ошибки: {str(e)}")
+        import traceback
+        print(f"❌ Traceback: {traceback.format_exc()}")
         return AgentCommandResponse(
             success=False,
             message=f"Error sending command: {str(e)}",
@@ -264,7 +297,7 @@ async def update_agent_config_command(
                     "data": config_dict,
                     "timestamp": datetime.utcnow().isoformat()
                 },
-                timeout=aiohttp.ClientTimeout(total=5)
+                timeout=aiohttp.ClientTimeout(total=180)
             ) as response:
                 if response.status == 200:
                     return AgentCommandResponse(
@@ -325,7 +358,7 @@ async def restart_agent_command(
                     "command": "restart",
                     "timestamp": datetime.utcnow().isoformat()
                 },
-                timeout=aiohttp.ClientTimeout(total=5)
+                timeout=aiohttp.ClientTimeout(total=180)
             ) as response:
                 if response.status == 200:
                     return AgentCommandResponse(
@@ -386,7 +419,7 @@ async def stop_agent_command(
                     "command": "stop",
                     "timestamp": datetime.utcnow().isoformat()
                 },
-                timeout=aiohttp.ClientTimeout(total=5)
+                timeout=aiohttp.ClientTimeout(total=180)
             ) as response:
                 if response.status == 200:
                     return AgentCommandResponse(
@@ -403,6 +436,195 @@ async def stop_agent_command(
                         timestamp=datetime.utcnow().isoformat()
                     )
     except Exception as e:
+        return AgentCommandResponse(
+            success=False,
+            message=f"Error sending command: {str(e)}",
+            data=None,
+            timestamp=datetime.utcnow().isoformat()
+        )
+
+@router.post("/agents/{agent_id}/commands/run-script", response_model=AgentCommandResponse)
+async def run_script_command(
+    agent_id: str,
+    script_request: ScriptExecutionRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """Отправка команды агенту на выполнение скрипта"""
+    # Проверяем существование агента в базе данных
+    agent = await get_agent(db, agent_id)
+    if not agent:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Агент с ID {agent_id} не найден"
+        )
+    
+    # Агент найден в базе данных, продолжаем
+    
+    # Отправляем команду агенту через HTTP
+    try:
+        # Определяем URL командного сервера агента
+        if hasattr(agent, 'command_server_url') and agent.command_server_url:
+            command_server_url = agent.command_server_url
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Агент не имеет настроенного command_server_url"
+            )
+        
+        # Подготавливаем данные для отправки
+        script_data = script_request.dict(exclude_unset=True)
+        
+        # Отправляем HTTP запрос агенту
+        json_payload = {
+            "command": "run_script",
+            "data": script_data,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        print(f"📤 JSON payload для run_script: {json_payload}")
+        print(f"📤 URL для отправки: {command_server_url}/command")
+        
+        import aiohttp
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                f"{command_server_url}/command",
+                json=json_payload,
+                timeout=aiohttp.ClientTimeout(total=180)
+            ) as response:
+                response_text = await response.text()
+                print(f"📥 Ответ от агента: HTTP {response.status}")
+                print(f"📥 Содержимое ответа: {response_text}")
+                
+                if response.status == 200:
+                    try:
+                        # Парсим ответ от агента
+                        import json
+                        agent_response = json.loads(response_text)
+                        
+                        # Возвращаем ответ агента как есть
+                        return AgentCommandResponse(
+                            success=agent_response.get("success", True),
+                            message=agent_response.get("message", "Script executed"),
+                            data=agent_response.get("data"),
+                            timestamp=agent_response.get("timestamp", datetime.utcnow().isoformat())
+                        )
+                    except json.JSONDecodeError as e:
+                        print(f"❌ Ошибка парсинга JSON ответа агента: {e}")
+                        return AgentCommandResponse(
+                            success=False,
+                            message=f"Invalid JSON response from agent: {str(e)}",
+                            data=None,
+                            timestamp=datetime.utcnow().isoformat()
+                        )
+                else:
+                    return AgentCommandResponse(
+                        success=False,
+                        message=f"Failed to send command: HTTP {response.status} - {response_text}",
+                        data=None,
+                        timestamp=datetime.utcnow().isoformat()
+                    )
+    except Exception as e:
+        print(f"❌ Ошибка отправки команды run-script: {repr(e)}")
+        print(f"❌ Тип ошибки: {type(e).__name__}")
+        print(f"❌ Детали ошибки: {str(e)}")
+        import traceback
+        print(f"❌ Traceback: {traceback.format_exc()}")
+        return AgentCommandResponse(
+            success=False,
+            message=f"Error sending command: {str(e)}",
+            data=None,
+            timestamp=datetime.utcnow().isoformat()
+        )
+
+@router.post("/agents/{agent_id}/commands/run-script", response_model=AgentCommandResponse)
+async def run_script_command(
+    agent_id: str,
+    script_request: ScriptExecutionRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """Выполнение скрипта на агенте с валидацией payload"""
+    # Проверяем существование агента в базе данных
+    agent = await get_agent(db, agent_id)
+    if not agent:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Агент с ID {agent_id} не найден"
+        )
+    
+    # Базовая проверка наличия одного из полей
+    if not (script_request.script or script_request.script_path):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="One of script or script_path is required"
+        )
+    
+    # Отправляем команду агенту через HTTP
+    try:
+        # Определяем URL командного сервера агента
+        if hasattr(agent, 'command_server_url') and agent.command_server_url:
+            command_server_url = agent.command_server_url
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Агент не имеет настроенного command_server_url"
+            )
+        
+        # Подготавливаем данные для отправки
+        script_data = script_request.dict(exclude_unset=True)
+        
+        # Отправляем HTTP запрос агенту
+        json_payload = {
+            "command": "run_script",
+            "data": script_data,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        print(f"📤 JSON payload для run_script: {json_payload}")
+        print(f"📤 URL для отправки: {command_server_url}/command")
+        
+        import aiohttp
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                f"{command_server_url}/command",
+                json=json_payload,
+                timeout=aiohttp.ClientTimeout(total=180)
+            ) as response:
+                response_text = await response.text()
+                print(f"📥 Ответ от агента: HTTP {response.status}")
+                print(f"📥 Содержимое ответа: {response_text}")
+                
+                if response.status == 200:
+                    try:
+                        # Парсим ответ от агента
+                        import json
+                        agent_response = json.loads(response_text)
+                        
+                        # Возвращаем ответ агента как есть
+                        return AgentCommandResponse(
+                            success=agent_response.get("success", True),
+                            message=agent_response.get("message", "Script executed"),
+                            data=agent_response.get("data"),
+                            timestamp=agent_response.get("timestamp", datetime.utcnow().isoformat())
+                        )
+                    except json.JSONDecodeError as e:
+                        print(f"❌ Ошибка парсинга JSON ответа агента: {e}")
+                        return AgentCommandResponse(
+                            success=False,
+                            message=f"Invalid JSON response from agent: {str(e)}",
+                            data=None,
+                            timestamp=datetime.utcnow().isoformat()
+                        )
+                else:
+                    return AgentCommandResponse(
+                        success=False,
+                        message=f"Failed to send command: HTTP {response.status} - {response_text}",
+                        data=None,
+                        timestamp=datetime.utcnow().isoformat()
+                    )
+    except Exception as e:
+        print(f"❌ Ошибка отправки команды run-script: {repr(e)}")
+        print(f"❌ Тип ошибки: {type(e).__name__}")
+        print(f"❌ Детали ошибки: {str(e)}")
+        import traceback
+        print(f"❌ Traceback: {traceback.format_exc()}")
         return AgentCommandResponse(
             success=False,
             message=f"Error sending command: {str(e)}",

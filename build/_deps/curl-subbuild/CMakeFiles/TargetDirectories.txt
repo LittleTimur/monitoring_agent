@@ -1,3 +1,0 @@
-C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/_deps/curl-subbuild/CMakeFiles/curl-populate.dir
-C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/_deps/curl-subbuild/CMakeFiles/ALL_BUILD.dir
-C:/Users/rosih/OneDrive/Desktop/Работа/Cursor/monitoring_agent/build/_deps/curl-subbuild/CMakeFiles/ZERO_CHECK.dir

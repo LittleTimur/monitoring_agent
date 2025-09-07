@@ -121,8 +121,8 @@ async def receive_metrics(metrics: MetricsData, request: Request):
                 agent_data = {
                     "agent_id": agent_id,
                     "machine_name": metrics.machine_name or "Unknown Machine",
-                    "agent_ip": client_ip,  # Сохраняем реальный IP агента
-                    "server_url": f"http://{client_ip}:8000",
+                    "agent_ip": client_ip,  # Используем реальный IP адрес агента 
+                    "server_url": metrics.config.get("server_url", f"http://{client_ip}:8000"),  # Используем server_url из конфига агента
                     "auto_detect_id": True,
                     "auto_detect_name": True
                 }

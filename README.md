@@ -42,4 +42,5 @@ Monitoring Agent (C++)     →     Monitoring Server (FastAPI)
 
 ## 📄 Лицензия
 
+
 MIT License
